@@ -20,7 +20,15 @@ Required Python version: 3.10+
 
 ## Documentation
 
-The documentation is automatically generated at `/docs`
+The documentation is automatically generated at `/docs` and `/redoc`. For production `/docs` is disabled
+
+## Styles and formatting
+
+[WIP]
+
+## Deploy
+
+[WIP]
 
 ## Authors
 

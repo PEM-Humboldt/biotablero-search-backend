@@ -58,7 +58,7 @@ async def get_areas_by_defined_area(
 async def get_areas_by_polygon(
     metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
     polygon: Polygon,
-):
+):  # TODO: Define return type
     """
     Given a metric and a polygon, get the area values for each category in the metric inside the polygon
     """
@@ -71,7 +71,7 @@ async def get_areas_by_polygon(
 async def get_layer_by_defined_area(
     metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
     defined_area: Annotated[dict, fastapi.Depends(defined_areas_params)],
-):
+):  # TODO: Define return type
     """
     Given a metric and a predefined area of interest, get the layer of the metric cut by the indicated area
     """

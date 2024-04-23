@@ -71,7 +71,7 @@ async def get_layer_by_defined_area(
     defined_area: Annotated[dict, fastapi.Depends(defined_areas_params)],
 ):
     """
-    Given a metric and a predefined area of interest, get the layer of the metric vut by the indicated area
+    Given a metric and a predefined area of interest, get the layer of the metric cut by the indicated area
     """
     return {"layer": "response to be defined"}
 
@@ -82,6 +82,6 @@ async def get_layer_by_polygon(
     polygon: Polygon,
 ):
     """
-    Given a metric and a predefined area of interest, get the layer of the metric vut by the indicated area
+    Given a metric and a predefined area of interest, get the layer of the metric cut by the indicated area
     """
     return {"layer": "response to be defined"}

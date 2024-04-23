@@ -49,7 +49,9 @@ async def get_areas_by_defined_area(
     """
     Given a metric and a predefined area of interest, get the area values for each category in the metric inside the indicated area
     """
-    return {"response": "WIP"}
+    return [
+        {"Perdida": 2035, "Persistencia": 40843, "No bosque": 207122},
+    ]
 
 
 @router.post("/{metric_id}/areas")

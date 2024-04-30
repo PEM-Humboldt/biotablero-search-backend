@@ -13,4 +13,4 @@ jobs:
         with:
           options: "--check --verbose"
           src: "./app"
-          use_pyproject: true
+          version: "~= 22.0"

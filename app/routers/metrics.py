@@ -54,7 +54,7 @@ async def get_areas_by_defined_area(
 
 @router.post("/{metric_id}/areas")
 async def get_areas_by_polygon(
-    metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
+     metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
     polygon: Polygon,
 ):
     """

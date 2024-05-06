@@ -1,6 +1,6 @@
 from typing import Annotated, Literal
 import fastapi
-from pydantic import BaseModel, Field
+from .polygon import Polygon
 
 router = fastapi.APIRouter(
     prefix="/metrics",
@@ -30,13 +30,6 @@ async def defined_areas_params(
     return {"area_type": area_type, "area_id": area_id}
 
 
-class Polygon(BaseModel):
-    polygon: str = Field(
-        description="GeoJSON polygon to determine the query area"
-        # TODO: Add input example
-    )
-
-
 # TODO: Successful response examples for /areas
 # TODO: 422 response examples for /areas and /layer
 
@@ -58,7 +51,7 @@ async def get_areas_by_defined_area(
 async def get_areas_by_polygon(
     metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
     polygon: Polygon,
-):  # TODO: Define return type
+) -> list[dict[str, float]]:  # TODO: Define return type
     """
     Given a metric and a polygon, get the area values for each category in the metric inside the polygon
     """

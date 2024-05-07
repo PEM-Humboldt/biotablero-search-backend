@@ -1,11 +1,38 @@
-from typing import Annotated, Literal
+from typing import Annotated, Literal, List
 import fastapi
+from pydantic import BaseModel, Field
 from .polygon import Polygon
+
+validation_error_example = {
+    "detail": [
+        {
+            "type": "missing",
+            "loc": ["body", "polygon"],
+            "msg": "Field required",
+            "input": {},
+        }
+    ]
+}
+
+
+class AreasResponse(BaseModel):
+    key: str = Field(
+        description="Name or Id of the property", example="Perdida"
+    )
+    value: float = Field(description="Value of the property", example=2035)
+
 
 router = fastapi.APIRouter(
     prefix="/metrics",
     tags=["metrics"],
-    responses={404: {"description": "Not found"}},
+    responses={
+        404: {"description": "Not found"},
+        422: {
+            "content": {
+                "application/json": {"example": validation_error_example}
+            },
+        },
+    },
 )
 
 
@@ -30,11 +57,7 @@ async def defined_areas_params(
     return {"area_type": area_type, "area_id": area_id}
 
 
-# TODO: Successful response examples for /areas
-# TODO: 422 response examples for /areas and /layer
-
-
-@router.get("/{metric_id}/areas")
+@router.get("/{metric_id}/areas", response_model=List[AreasResponse])
 async def get_areas_by_defined_area(
     metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
     defined_area: Annotated[dict, fastapi.Depends(defined_areas_params)],
@@ -47,7 +70,7 @@ async def get_areas_by_defined_area(
     ]
 
 
-@router.post("/{metric_id}/areas")
+@router.post("/{metric_id}/areas", response_model=List[AreasResponse])
 async def get_areas_by_polygon(
     metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
     polygon: Polygon,

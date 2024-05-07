@@ -6,7 +6,7 @@ on:
       - develop
 
 jobs:
-  lint:
+  black-format:
     runs-on: ubuntu-latest
     steps:
       - name: Check out source repository

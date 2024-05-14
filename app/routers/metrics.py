@@ -1,7 +1,7 @@
-from typing import Annotated, Literal, List
+from typing import Annotated, Literal, List, Dict
 import fastapi
 from pydantic import BaseModel, Field
-from .polygon import Polygon
+from ..schemas.polygon import Polygon
 
 validation_error_example = {
     "detail": [
@@ -66,7 +66,9 @@ async def get_areas_by_defined_area(
     Given a metric and a predefined area of interest, get the area values for each category in the metric inside the indicated area
     """
     return [
-        {"Perdida": 2035, "Persistencia": 40843, "No bosque": 207122},
+        {"key": "Perdida", "value": 2035},
+        {"key": "Persistencia", "value": 40843},
+        {"key": "No bosque", "value": 207122},
     ]
 
 
@@ -74,12 +76,14 @@ async def get_areas_by_defined_area(
 async def get_areas_by_polygon(
     metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
     polygon: Polygon,
-) -> list[dict[str, float]]:  # TODO: Define return type
+) -> list[dict[str, float]]:
     """
     Given a metric and a polygon, get the area values for each category in the metric inside the polygon
     """
     return [
-        {"Perdida": 2035, "Persistencia": 40843, "No bosque": 207122},
+        {"key": "Perdida", "value": 2035},
+        {"key": "Persistencia", "value": 40843},
+        {"key": "No bosque", "value": 207122},
     ]
 
 

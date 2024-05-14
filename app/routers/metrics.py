@@ -1,4 +1,4 @@
-from typing import Annotated, Literal, List, Dict
+from typing import Annotated, Literal, List
 import fastapi
 from pydantic import BaseModel, Field
 from ..schemas.polygon import Polygon

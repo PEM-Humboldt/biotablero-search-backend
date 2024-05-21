@@ -15,6 +15,7 @@ geojson_polygon = {
     "geometry": {"type": "Polygon", "coordinates": [coordinates]},
 }
 
+
 class Polygon(BaseModel):
     polygon: Feature = Field(
         description="GeoJSON polygon to determine the query area",

@@ -1,7 +1,6 @@
-from typing import Annotated, Literal, List
-
 import fastapi
-from fastapi import APIRouter, HTTPException, Response
+from fastapi import HTTPException, Response
+from typing import Annotated, Literal, List
 from pydantic import BaseModel, Field
 from ..schemas.polygon import Polygon
 from app.services.metrics import clip_layer_by_polygon
@@ -111,7 +110,6 @@ async def get_layer_by_polygon(
     Given a metric and a predefined area of interest, get the layer of the metric cut by the indicated area
     """
     try:
-        print('settings.stac_url', settings.stac_url)
         polygon_shape = shape(polygon.polygon.geometry.dict())
         raster_bytes = clip_layer_by_polygon(polygon_shape)
         return Response(content=raster_bytes, media_type="image/png")

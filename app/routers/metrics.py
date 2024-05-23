@@ -1,5 +1,4 @@
 import fastapi
-from fastapi import HTTPException, Response
 from typing import Annotated, Literal, List
 from pydantic import BaseModel, Field
 from ..schemas.polygon import Polygon
@@ -112,6 +111,6 @@ async def get_layer_by_polygon(
     try:
         polygon_shape = shape(polygon.polygon.geometry.dict())
         raster_bytes = clip_layer_by_polygon(polygon_shape)
-        return Response(content=raster_bytes, media_type="image/png")
+        return fastapi.Response(content=raster_bytes, media_type="image/png")
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise fastapi.HTTPException(status_code=500, detail=str(e))

@@ -1,7 +1,11 @@
 from typing import Annotated, Literal, List
+
 import fastapi
 from pydantic import BaseModel, Field
-from ..schemas.polygon import Polygon
+from shapely.geometry import shape
+
+from app.schemas.polygon import Polygon
+from app.services.metrics import Metrics as metrics_service
 
 validation_error_example = {
     "detail": [
@@ -106,4 +110,9 @@ async def get_layer_by_polygon(
     """
     Given a metric and a predefined area of interest, get the layer of the metric cut by the indicated area
     """
-    return {"layer": "response to be defined"}
+    try:
+        polygon_shape = shape(polygon.polygon.geometry.dict())
+        raster_bytes = metrics_service.get_layer_by_polygon(polygon_shape)
+        return fastapi.Response(content=raster_bytes, media_type="image/png")
+    except Exception as e:
+        raise fastapi.HTTPException(status_code=500, detail=str(e))

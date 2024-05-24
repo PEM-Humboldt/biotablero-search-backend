@@ -3,7 +3,7 @@ import app.utils.raster as raster_utils
 
 class Metrics:
 
-    def get_areas_by_defined_area(area_type,area_id):
+    def get_areas_by_defined_area(area_type, area_id):
         # TODO: Implement service
         return ""
 
@@ -11,7 +11,7 @@ class Metrics:
         # TODO: Implement service
         return ""
 
-    def get_layer_by_defined_area(area_type,area_id):
+    def get_layer_by_defined_area(area_type, area_id):
         # TODO: Implement service
         return ""
 

@@ -10,13 +10,13 @@ raster_cloud_path = "https://staccatalog.blob.core.windows.net/cog-test/Colombia
 
 # TODO: become generic in order to be able to reuse
 def get_binaries_png(raster_data, raster_metadata):
-    cmap_colores = [
+    cmap_colors = [
         (1.0, 0.0, 0.0),
         (0.5, 0.8, 0.4),
         (0.91, 0.84, 0.42),
         (1, 1, 1),
     ]
-    cmap = ListedColormap(cmap_colores)
+    cmap = ListedColormap(cmap_colors)
 
     cmap.set_bad(alpha=0.0)
     fig, ax = plt.subplots(

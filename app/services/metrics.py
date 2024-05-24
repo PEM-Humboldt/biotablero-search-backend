@@ -1,76 +1,25 @@
-import io
-
-import rasterio
-from rasterio.mask import mask
-from matplotlib import pyplot as plt, colors
-
-# TODO: read raster from STAC
-raster_cloud_path = "https://staccatalog.blob.core.windows.net/cog-test/Colombia_pp-2015_12_31-pp_2011_2015.tif"
+import app.utils.raster as util_raster
 
 
-# TODO: become generic in order to be able to reuse
-def get_binaries_png(raster_data, raster_metadata):
-    cmap_colors = [
-        (1.0, 0.0, 0.0),
-        (0.5, 0.8, 0.4),
-        (0.91, 0.84, 0.42),
-        (1, 1, 1),
-    ]
-    cmap = colors.ListedColormap(cmap_colors)
+class Metrics:
 
-    cmap.set_bad(alpha=0.0)
-    fig, ax = plt.subplots(
-        figsize=(
-            raster_metadata["width"] / 100,
-            raster_metadata["height"] / 100,
+    def get_areas_by_defined_area(polygon):
+        # TODO: Implement service
+        return ""
+
+    def get_areas_by_polygon(polygon):
+        # TODO: Implement service
+        return ""
+
+    def get_layer_by_defined_area(polygon):
+        # TODO: Implement service
+        return ""
+
+    def get_layer_by_polygon(polygon):
+        # TODO: read raster from STAC
+        raster_cloud_path = "https://staccatalog.blob.core.windows.net/cog-test/Colombia_pp-2015_12_31-pp_2011_2015.tif"
+
+        out_image, out_meta = util_raster.crop_raster(
+            raster_cloud_path, polygon
         )
-    )
-    ax.axis("off")
-    ax.imshow(
-        raster_data[0],
-        cmap=cmap,
-        extent=[
-            raster_metadata["transform"][2],
-            raster_metadata["transform"][2]
-            + raster_metadata["width"] * raster_metadata["transform"][0],
-            raster_metadata["transform"][5]
-            + raster_metadata["height"] * raster_metadata["transform"][4],
-            raster_metadata["transform"][5],
-        ],
-        interpolation="nearest",
-    )
-
-    buf = io.BytesIO()
-    plt.savefig(
-        buf,
-        format="png",
-        bbox_inches="tight",
-        pad_inches=0,
-        dpi=300,
-        transparent=True,
-    )
-    buf.seek(0)
-    plt.close(fig)
-    return buf.getvalue()
-
-
-# TODO: become generic in order to be able to reuse
-def crop_raster(polygon):
-    with rasterio.open(raster_cloud_path) as src:
-        out_image, out_transform = rasterio.mask.mask(src, [polygon], crop=True, nodata=3)
-        out_meta = src.meta.copy()
-    out_meta.update(
-        {
-            "driver": "GTiff",
-            "height": out_image.shape[1],
-            "width": out_image.shape[2],
-            "transform": out_transform,
-            "nodata": 3,
-        }
-    )
-    return out_image, out_meta
-
-
-def clip_layer_by_polygon(polygon):
-    out_image, out_meta = crop_raster(polygon)
-    return get_binaries_png(out_image, out_meta)
+        return util_raster.get_binaries_png(out_image, out_meta)

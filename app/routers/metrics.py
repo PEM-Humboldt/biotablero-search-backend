@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 from shapely.geometry import shape
 
 from app.schemas.polygon import Polygon
-from app.services.metrics import clip_layer_by_polygon
+from app.services.metrics import Metrics as metrics_service
 
 validation_error_example = {
     "detail": [
@@ -112,7 +112,7 @@ async def get_layer_by_polygon(
     """
     try:
         polygon_shape = shape(polygon.polygon.geometry.dict())
-        raster_bytes = clip_layer_by_polygon(polygon_shape)
+        raster_bytes = metrics_service.get_layer_by_polygon(polygon_shape)
         return fastapi.Response(content=raster_bytes, media_type="image/png")
     except Exception as e:
         raise fastapi.HTTPException(status_code=500, detail=str(e))

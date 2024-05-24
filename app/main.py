@@ -1,6 +1,7 @@
 from fastapi import FastAPI
-from .routers import metrics
-from .config import get_settings
+
+from app.routers import metrics
+from app.config import get_settings
 
 settings = get_settings()
 

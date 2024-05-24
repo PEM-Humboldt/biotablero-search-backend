@@ -1,8 +1,8 @@
-import rasterio
-import matplotlib.pyplot as plt
 import io
-from matplotlib.colors import ListedColormap
+
+import rasterio
 from rasterio.mask import mask
+from matplotlib import pyplot as plt, colors
 
 # TODO: read raster from STAC
 raster_cloud_path = "https://staccatalog.blob.core.windows.net/cog-test/Colombia_pp-2015_12_31-pp_2011_2015.tif"
@@ -16,7 +16,7 @@ def get_binaries_png(raster_data, raster_metadata):
         (0.91, 0.84, 0.42),
         (1, 1, 1),
     ]
-    cmap = ListedColormap(cmap_colors)
+    cmap = colors.ListedColormap(cmap_colors)
 
     cmap.set_bad(alpha=0.0)
     fig, ax = plt.subplots(
@@ -57,7 +57,7 @@ def get_binaries_png(raster_data, raster_metadata):
 # TODO: become generic in order to be able to reuse
 def crop_raster(polygon):
     with rasterio.open(raster_cloud_path) as src:
-        out_image, out_transform = mask(src, [polygon], crop=True, nodata=3)
+        out_image, out_transform = rasterio.mask.mask(src, [polygon], crop=True, nodata=3)
         out_meta = src.meta.copy()
     out_meta.update(
         {

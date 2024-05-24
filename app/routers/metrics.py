@@ -1,9 +1,11 @@
-import fastapi
 from typing import Annotated, Literal, List
+
+import fastapi
 from pydantic import BaseModel, Field
-from ..schemas.polygon import Polygon
-from app.services.metrics import clip_layer_by_polygon
 from shapely.geometry import shape
+
+from app.schemas.polygon import Polygon
+from app.services.metrics import clip_layer_by_polygon
 
 validation_error_example = {
     "detail": [

@@ -1,9 +1,9 @@
-import app.utils.raster as util_raster
+import app.utils.raster as raster_utils
 
 
 class Metrics:
 
-    def get_areas_by_defined_area(polygon):
+    def get_areas_by_defined_area(area_type,area_id):
         # TODO: Implement service
         return ""
 
@@ -11,7 +11,7 @@ class Metrics:
         # TODO: Implement service
         return ""
 
-    def get_layer_by_defined_area(polygon):
+    def get_layer_by_defined_area(area_type,area_id):
         # TODO: Implement service
         return ""
 
@@ -19,7 +19,7 @@ class Metrics:
         # TODO: read raster from STAC
         raster_cloud_path = "https://staccatalog.blob.core.windows.net/cog-test/Colombia_pp-2015_12_31-pp_2011_2015.tif"
 
-        out_image, out_meta = util_raster.crop_raster(
+        out_image, out_meta = raster_utils.crop_raster(
             raster_cloud_path, polygon
         )
-        return util_raster.get_binaries_png(out_image, out_meta)
+        return raster_utils.get_binaries_png(out_image, out_meta)

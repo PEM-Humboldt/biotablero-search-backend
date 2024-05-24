@@ -8,9 +8,7 @@ from matplotlib import pyplot as plt, colors
 # TODO: become generic in order to be able to reuse
 def crop_raster(raster_path, polygon):
     with rasterio.open(raster_path) as src:
-        out_image, out_transform = rasterio.mask.mask(
-            src, [polygon], crop=True, nodata=3
-        )
+        out_image, out_transform = mask(src, [polygon], crop=True, nodata=3)
         out_meta = src.meta.copy()
     out_meta.update(
         {

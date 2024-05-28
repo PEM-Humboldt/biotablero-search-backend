@@ -1,3 +1,4 @@
+import traceback
 from typing import Annotated, Literal, List
 
 import fastapi
@@ -111,8 +112,11 @@ async def get_layer_by_polygon(
     Given a metric and a predefined area of interest, get the layer of the metric cut by the indicated area
     """
     try:
-        polygon_shape = shape(polygon.polygon.geometry.dict())
-        raster_bytes = metrics_service.get_layer_by_polygon(polygon_shape)
+        raster_bytes = metrics_service.get_layer_by_polygon(
+            polygon.polygon.model_dump()
+        )
         return fastapi.Response(content=raster_bytes, media_type="image/png")
     except Exception as e:
+        # TODO Log error instead of printing
+        print(traceback.format_exc())
         raise fastapi.HTTPException(status_code=500, detail=str(e))

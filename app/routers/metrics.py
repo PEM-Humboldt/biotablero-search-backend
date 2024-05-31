@@ -3,7 +3,6 @@ from typing import Annotated, Literal, List
 
 import fastapi
 from pydantic import BaseModel, Field
-from shapely.geometry import shape
 
 from app.schemas.polygon import Polygon
 from app.services.metrics import Metrics as metrics_service

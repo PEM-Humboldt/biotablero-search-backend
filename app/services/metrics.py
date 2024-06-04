@@ -19,7 +19,5 @@ class Metrics:
         # TODO: read raster from STAC
         raster_cloud_path = "https://staccatalog.blob.core.windows.net/cog-test/Colombia_pp-2015_12_31-pp_2011_2015.tif"
 
-        out_image, out_meta = raster_utils.crop_raster(
-            raster_cloud_path, polygon
-        )
-        return raster_utils.get_binaries_png(out_image, out_meta)
+        out_image = raster_utils.crop_raster(raster_cloud_path, polygon)
+        return out_image

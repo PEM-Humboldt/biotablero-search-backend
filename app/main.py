@@ -4,6 +4,7 @@ from app.routers import metrics
 from app.config import get_settings
 
 settings = get_settings()
+settings.configure_logging()
 
 app = FastAPI(
     title="BioTableroSearch",

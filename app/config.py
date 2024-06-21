@@ -5,7 +5,7 @@ from logging import basicConfig, INFO
 
 class Settings(BaseSettings):
 
-    stac_url: str = "http://localhost:8082"
+    stac_url: str = "http://localhost:8080"
     env: str = "dev"
 
     model_config = SettingsConfigDict(env_file=".env")

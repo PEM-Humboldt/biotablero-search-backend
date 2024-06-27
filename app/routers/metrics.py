@@ -1,4 +1,3 @@
-import traceback
 from typing import Annotated, Literal, List
 
 import fastapi

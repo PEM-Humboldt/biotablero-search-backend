@@ -7,7 +7,6 @@ from pydantic import BaseModel, Field
 from app.schemas.polygon import Polygon
 from app.services.metrics import Metrics as metrics_service
 from logging import getLogger
-from urllib.parse import urlparse
 
 validation_error_example = {
     "detail": [

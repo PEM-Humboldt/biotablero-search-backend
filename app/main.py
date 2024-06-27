@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI
 
 from app.routers import metrics
 from app.config import get_settings
@@ -33,14 +33,21 @@ app = FastAPI(
 
 @app.exception_handler(StarletteHTTPException)
 async def http_exception_handler(request, exc):
-    logger.error(f"HTTP Exception: {exc}")
+    logger.error(
+        f"HTTP Exception: {exc} - Path: {request.url} - Method: {request.method}"
+    )
     return JSONResponse(exc.detail, status_code=exc.status_code)
 
 
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request, exc):
-    logger.error(f"Validation Error: {exc}")
-    return JSONResponse(exc)
+    logger.error(
+        f"Validation error: {exc.errors()} - Path: {request.url} - Method: {request.method}"
+    )
+    return JSONResponse(
+        status_code=422,
+        content={"detail": exc.errors()},
+    )
 
 
 app.include_router(metrics.router)

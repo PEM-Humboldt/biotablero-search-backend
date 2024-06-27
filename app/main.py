@@ -1,20 +1,12 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, exceptions, responses
 
 from app.routers import metrics
 from app.config import get_settings
 from logging import getLogger
-from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
-from starlette.exceptions import HTTPException as StarletteHTTPException
 
 settings = get_settings()
 settings.configure_logging()
 logger = getLogger(__name__)
-
-
-class UnicornException(Exception):
-    def __init__(self, name: str):
-        self.name = name
 
 
 app = FastAPI(
@@ -31,22 +23,22 @@ app = FastAPI(
 )
 
 
-@app.exception_handler(StarletteHTTPException)
+@app.exception_handler(exceptions.HTTPException)
 async def http_exception_handler(request, exc):
     logger.error(
         f"HTTP Exception: {exc} - Path: {request.url} - Method: {request.method}"
     )
-    return JSONResponse(exc.detail, status_code=exc.status_code)
+    return responses.JSONResponse(exc.detail, status_code=exc.status_code)
 
 
-@app.exception_handler(RequestValidationError)
+@app.exception_handler(exceptions.RequestValidationError)
 async def validation_exception_handler(request, exc):
     logger.error(
         f"Validation error: {exc.errors()} - Path: {request.url} - Method: {request.method}"
     )
-    return JSONResponse(
+    return responses.JSONResponse(
         status_code=422,
-        content={"detail": exc.errors()},
+        content={"detail": str(exc.errors())},
     )
 
 

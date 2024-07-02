@@ -29,8 +29,8 @@ def get_raster_values(raster_path, polygon):
             masked_data.compressed(), return_counts=True
         )
         values = dict(zip(unique_values, counts))
-        lista_combinada = [
+        output_data = [
             {"key": key, "value": int(values[categories[key]])}
             for key in categories
         ]
-        return lista_combinada
+        return output_data

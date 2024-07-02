@@ -84,11 +84,13 @@ async def get_areas_by_polygon(
     """
     Given a metric and a polygon, get the area values for each category in the metric inside the polygon
     """
-    return [
-        {"key": "Perdida", "value": 2035},
-        {"key": "Persistencia", "value": 40843},
-        {"key": "No bosque", "value": 207122},
-    ]
+    try:
+        data = metrics_service.get_areas_by_polygon(
+            polygon.polygon.model_dump()
+        )
+        return data
+    except Exception as e:
+        raise fastapi.HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/{metric_id}/layer")

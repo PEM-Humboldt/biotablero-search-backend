@@ -3,6 +3,7 @@ from fastapi import FastAPI, exceptions, responses
 from app.routers import metrics
 from app.config import get_settings
 from logging import getLogger
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 settings = get_settings()
 settings.configure_logging()
@@ -23,7 +24,7 @@ app = FastAPI(
 )
 
 
-@app.exception_handler(exceptions.HTTPException)
+@app.exception_handler(StarletteHTTPException)
 async def http_exception_handler(request, exc):
     logger.error(
         f"HTTP Exception: {exc} - Path: {request.url} - Method: {request.method}"

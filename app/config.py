@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     def configure_logging(self):
         basicConfig(
             level=INFO,
-            filename="app/logs/app.log",
+            filename="logs/app.log",
             format="%(asctime)s.%(msecs)03d %(levelname)s - %(name)s - %(module)s - %(message)s",
             datefmt="%Y-%m-%d %H:%M:%S",
         )

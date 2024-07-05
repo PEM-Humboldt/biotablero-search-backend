@@ -1,6 +1,6 @@
 from fastapi import FastAPI, exceptions, responses
 
-from app.routers import metrics
+from app.routes import metrics
 from app.config import get_settings
 from logging import getLogger
 from starlette.exceptions import HTTPException as StarletteHTTPException

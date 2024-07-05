@@ -1,4 +1,3 @@
-import traceback
 from typing import Annotated, Literal, List
 
 import fastapi
@@ -6,6 +5,7 @@ from pydantic import BaseModel, Field
 
 from app.schemas.polygon import Polygon
 from app.services.metrics import Metrics as metrics_service
+from logging import getLogger
 
 validation_error_example = {
     "detail": [
@@ -106,16 +106,22 @@ async def get_layer_by_defined_area(
 async def get_layer_by_polygon(
     metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
     polygon: Polygon,
+    request: fastapi.Request,
 ):
     """
     Given a metric and a predefined area of interest, get the layer of the metric cut by the indicated area
     """
+    logger = getLogger(__name__)
+    url_request = request.url
+
+    logger.info(f"Access to: {url_request}")
+
     try:
         raster_bytes = metrics_service.get_layer_by_polygon(
             polygon.polygon.model_dump()
         )
+        logger.info(f"Response to: {url_request}")
         return fastapi.Response(content=raster_bytes, media_type="image/png")
     except Exception as e:
-        # TODO Log error instead of printing
-        print(traceback.format_exc())
+        logger.error(f"Execution error: {e}")
         raise fastapi.HTTPException(status_code=500, detail=str(e))

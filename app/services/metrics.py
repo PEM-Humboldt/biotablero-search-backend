@@ -31,18 +31,18 @@ class Metrics:
 
     def get_layer_by_polygon(metric_id, polygon):
 
-        collection = next(
+        collection_metric = next(
             (
-                iterator
-                for iterator in collections
-                if iterator["id"] == metric_id
+                collection
+                for collection in collections
+                if collection["id"] == metric_id
             ),
             None,
         )
 
         # TODO: Handle error when colection in no defined or the cog attribute does not exist
-        if collection and "cog" in collection:
-            cog_url = collection["cog"]
+        if collection_metric and "cog" in collection_metric:
+            cog_url = collection_metric["cog"]
 
         out_image = raster_utils.crop_raster(cog_url, polygon)
         return out_image

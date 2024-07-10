@@ -1,9 +1,11 @@
-from fastapi import FastAPI, exceptions, responses
+from fastapi import FastAPI
+from fastapi import Request, exceptions, responses
 
 from app.routes import metrics
 from app.config import get_settings
 from logging import getLogger
 from starlette.exceptions import HTTPException as StarletteHTTPException
+from uuid import uuid4
 
 settings = get_settings()
 settings.configure_logging()
@@ -22,6 +24,20 @@ app = FastAPI(
     },
     docs_url=None if settings.env.lower() == "prod" else "/docs",
 )
+
+
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    request_id = str(uuid4())
+    logger.info(
+        f"Request ID: {request_id} - Method: {request.method} - URL: {request.url}"
+    )
+
+    response = await call_next(request)
+    logger.info(
+        f"Request ID: {request_id} - Response status: {response.status_code }"
+    )
+    return response
 
 
 @app.exception_handler(StarletteHTTPException)

@@ -107,22 +107,16 @@ async def get_layer_by_defined_area(
 @router.post("/{metric_id}/layer")
 async def get_layer_by_polygon(
     metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
-    polygon: Polygon,
-    request: fastapi.Request,
+    polygon: Polygon
 ):
     """
     Given a metric and a predefined area of interest, get the layer of the metric cut by the indicated area
     """
     logger = getLogger(__name__)
-    url_request = request.url
-
-    logger.info(f"Access to: {url_request}")
-
     try:
         raster_bytes = metrics_service.get_layer_by_polygon(
             metric_id["metric_id"], polygon.polygon.model_dump()
         )
-        logger.info(f"Response to: {url_request}")
         return fastapi.Response(content=raster_bytes, media_type="image/png")
     except Exception as e:
         logger.error(f"Execution error: {e}")

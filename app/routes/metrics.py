@@ -3,7 +3,7 @@ from typing import Annotated, Literal, List
 import fastapi
 from pydantic import BaseModel, Field
 
-from app.schemas.polygon import Polygon
+from app.routes.schemas.polygon import Polygon
 from app.services.metrics import Metrics as metrics_service
 from logging import getLogger
 
@@ -84,11 +84,13 @@ async def get_areas_by_polygon(
     """
     Given a metric and a polygon, get the area values for each category in the metric inside the polygon
     """
-    return [
-        {"key": "Perdida", "value": 2035},
-        {"key": "Persistencia", "value": 40843},
-        {"key": "No bosque", "value": 207122},
-    ]
+    try:
+        data = metrics_service.get_areas_by_polygon(
+            polygon.polygon.model_dump()
+        )
+        return data
+    except Exception as e:
+        raise fastapi.HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/{metric_id}/layer")
@@ -118,7 +120,7 @@ async def get_layer_by_polygon(
 
     try:
         raster_bytes = metrics_service.get_layer_by_polygon(
-            polygon.polygon.model_dump()
+            metric_id["metric_id"], polygon.polygon.model_dump()
         )
         logger.info(f"Response to: {url_request}")
         return fastapi.Response(content=raster_bytes, media_type="image/png")

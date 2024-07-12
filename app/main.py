@@ -1,5 +1,4 @@
-from fastapi import FastAPI
-from fastapi import Request, exceptions, responses
+import fastapi
 
 from app.routes import metrics
 from app.config import get_settings
@@ -12,7 +11,7 @@ settings.configure_logging()
 logger = getLogger(__name__)
 
 
-app = FastAPI(
+app = fastapi.FastAPI(
     title="BioTableroSearch",
     description="Get metrics by predefined or custom (polygon) areas.",
     summary="Metrics for BioTablero Search module",
@@ -27,7 +26,7 @@ app = FastAPI(
 
 
 @app.middleware("http")
-async def log_requests(request: Request, call_next):
+async def log_requests(request: fastapi.Request, call_next):
     request_id = str(uuid4())
     logger.info(
         f"Request ID: {request_id} - Method: {request.method} - URL: {request.url}"
@@ -45,15 +44,17 @@ async def http_exception_handler(request, exc):
     logger.error(
         f"HTTP Exception: {exc} - Path: {request.url} - Method: {request.method}"
     )
-    return responses.JSONResponse(exc.detail, status_code=exc.status_code)
+    return fastapi.responses.JSONResponse(
+        exc.detail, status_code=exc.status_code
+    )
 
 
-@app.exception_handler(exceptions.RequestValidationError)
+@app.exception_handler(fastapi.exceptions.RequestValidationError)
 async def validation_exception_handler(request, exc):
     logger.error(
         f"Validation error: {exc.errors()} - Path: {request.url} - Method: {request.method}"
     )
-    return responses.JSONResponse(
+    return fastapi.responses.JSONResponse(
         status_code=422,
         content={"detail": str(exc.errors())},
     )

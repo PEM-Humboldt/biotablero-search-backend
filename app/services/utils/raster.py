@@ -19,6 +19,7 @@ def crop_raster(raster_path, polygon):
     )
 
 
+# TODO: Test the data resulting from the areas
 def get_raster_values(raster_path, polygon):
     crs = "EPSG:9377"
     categories = {"Perdida": 0, "Persistencia": 1, "No bosque": 2}

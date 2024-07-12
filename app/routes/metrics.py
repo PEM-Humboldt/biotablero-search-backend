@@ -6,6 +6,9 @@ from pydantic import BaseModel, Field
 from app.routes.schemas.polygon import Polygon
 from app.services.metrics import Metrics as metrics_service
 from logging import getLogger
+from app.services.utils import context_vars
+
+request_id_context = context_vars.request_id_context
 
 validation_error_example = {
     "detail": [
@@ -119,5 +122,8 @@ async def get_layer_by_polygon(
         )
         return fastapi.Response(content=raster_bytes, media_type="image/png")
     except Exception as e:
-        logger.error(f"Execution error: {e}")
+        logger.error(
+            f"Execution error: {e}",
+            extra={"request_id": request_id_context.get()},
+        )
         raise fastapi.HTTPException(status_code=500, detail=str(e))

@@ -14,7 +14,7 @@ class Settings(BaseSettings):
         basicConfig(
             level=INFO,
             filename="logs/app.log",
-            format="%(asctime)s.%(msecs)03d %(levelname)s - %(name)s - %(module)s - %(message)s",
+            format="%(asctime)s.%(msecs)03d %(levelname)s - %(request_id)s - %(name)s - %(module)s - %(message)s",
             datefmt="%Y-%m-%d %H:%M:%S",
         )
 

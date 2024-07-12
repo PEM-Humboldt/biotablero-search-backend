@@ -18,10 +18,11 @@ def crop_raster(raster_path, polygon):
 
 
 def get_raster_values(raster_path, polygon):
+    crs = "EPSG:9377"
     categories = {"Perdida": 0, "Persistencia": 1, "No bosque": 2}
 
     with Reader(raster_path) as cog:
-        data, mask = cog.feature(polygon)
+        data, mask = cog.feature(polygon, dst_crs=crs)
         masked_data = numpy.ma.masked_array(data, mask=~mask).astype(
             numpy.int32
         )

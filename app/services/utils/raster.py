@@ -1,5 +1,7 @@
 from rio_tiler.io import Reader
-import numpy
+from rasterio import features
+from geopandas import GeoDataFrame
+from shapely import geometry
 
 
 # TODO: become generic in order to be able to reuse
@@ -22,16 +24,28 @@ def get_raster_values(raster_path, polygon):
     categories = {"Perdida": 0, "Persistencia": 1, "No bosque": 2}
 
     with Reader(raster_path) as cog:
-        data, mask = cog.feature(polygon, dst_crs=crs)
-        masked_data = numpy.ma.masked_array(data, mask=~mask).astype(
-            numpy.int32
+        data = cog.feature(polygon, dst_crs=crs)
+        transform = data.transform
+        mask = data.mask != 0
+
+        data_shapes = features.shapes(
+            data.data[0], mask=mask, transform=transform
         )
-        unique_values, counts = numpy.unique(
-            masked_data.compressed(), return_counts=True
-        )
-        values = dict(zip(unique_values, counts))
+
+        geometries = []
+        values = []
+        for geom, value in data_shapes:
+            geometries.append(geometry.shape(geom))
+            values.append(value)
+
+        dataFrame = GeoDataFrame({"value": values, "geometry": geometries})
+
+        dataFrame["area"] = dataFrame.geometry.area
+
+        areas = dataFrame.groupby("value")["area"].sum() / 10000
+
         output_data = [
-            {"key": key, "value": int(values[categories[key]])}
-            for key in categories
+            {"key": key, "value": areas[categories[key]]} for key in categories
         ]
+
         return output_data

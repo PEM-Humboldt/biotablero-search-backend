@@ -1,11 +1,15 @@
-from typing import Annotated, Literal, List,Union
+from typing import Annotated, Literal, List, Union
 
 import fastapi
 from fastapi import Depends, HTTPException, Path
 from pydantic import BaseModel, Field
 from geojson_pydantic import Feature
 
-from app.routes.schemas.polygon import PolygonRequest, FeatureRequest, WrappedFeatureRequest
+from app.routes.schemas.polygon import (
+    PolygonRequest,
+    FeatureRequest,
+    WrappedFeatureRequest,
+)
 from app.services.metrics import Metrics as metrics_service
 from logging import getLogger
 from app.services.utils import context_vars
@@ -22,6 +26,7 @@ validation_error_example = {
         }
     ]
 }
+
 
 class AreasResponse(BaseModel):
     key: str = Field(
@@ -47,7 +52,7 @@ router = fastapi.APIRouter(
 async def metric_id_param(
     metric_id: Annotated[
         Literal["LossPersistence", "Coverage"],
-        Path(description="Metric you wish to query")
+        Path(description="Metric you wish to query"),
     ]
 ) -> str:
     return metric_id
@@ -67,9 +72,9 @@ async def defined_areas_params(
 
 @router.post("/{metric_id}/areas", response_model=List[AreasResponse])
 async def get_areas_by_polygon(
-        metric_id: str,
-        polygon: Union[FeatureRequest, WrappedFeatureRequest],
-        metric_id_param: str = Depends(metric_id_param),
+    metric_id: str,
+    polygon: Union[FeatureRequest, WrappedFeatureRequest],
+    metric_id_param: str = Depends(metric_id_param),
 ) -> List[AreasResponse]:
     """
     Dado un métrico y un polígono, obtiene los valores de área para cada categoría en el métrico dentro del polígono.

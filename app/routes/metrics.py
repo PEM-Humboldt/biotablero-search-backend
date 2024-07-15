@@ -70,6 +70,21 @@ async def defined_areas_params(
     return {"area_type": area_type, "area_id": area_id}
 
 
+@router.get("/{metric_id}/areas", response_model=List[AreasResponse])
+async def get_areas_by_defined_area(
+    metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
+    defined_area: Annotated[dict, fastapi.Depends(defined_areas_params)],
+) -> list[dict[str, float]]:
+    """
+    Given a metric and a predefined area of interest, get the area values for each category in the metric inside the indicated area
+    """
+    return [
+        {"key": "Perdida", "value": 2035},
+        {"key": "Persistencia", "value": 40843},
+        {"key": "No bosque", "value": 207122},
+    ]
+
+
 @router.post("/{metric_id}/areas", response_model=List[AreasResponse])
 async def get_areas_by_polygon(
     metric_id: str,
@@ -77,7 +92,7 @@ async def get_areas_by_polygon(
     metric_id_param: str = Depends(metric_id_param),
 ) -> List[AreasResponse]:
     """
-    Dado un métrico y un polígono, obtiene los valores de área para cada categoría en el métrico dentro del polígono.
+    Given a metric and a polygon, get the area values for each category in the metric inside the polygon
     """
     try:
         if isinstance(polygon, WrappedFeatureRequest):
@@ -102,6 +117,17 @@ async def get_areas_by_polygon(
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.get("/{metric_id}/layer")
+async def get_layer_by_defined_area(
+    metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
+    defined_area: Annotated[dict, fastapi.Depends(defined_areas_params)],
+):  # TODO: Define return type
+    """
+    Given a metric and a predefined area of interest, get the layer of the metric cut by the indicated area
+    """
+    return {"layer": "response to be defined"}
+
+
 @router.post("/{metric_id}/areas/defined", response_model=List[AreasResponse])
 async def get_areas_by_predefined_polygon(
     metric_id: str,
@@ -123,17 +149,6 @@ async def get_areas_by_predefined_polygon(
         raise HTTPException(status_code=400, detail=str(ve))
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.get("/{metric_id}/layer")
-async def get_layer_by_defined_area(
-    metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
-    defined_area: Annotated[dict, fastapi.Depends(defined_areas_params)],
-):  # TODO: Define return type
-    """
-    Given a metric and a predefined area of interest, get the layer of the metric cut by the indicated area
-    """
-    return {"layer": "response to be defined"}
 
 
 @router.post("/{metric_id}/layer")

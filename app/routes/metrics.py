@@ -1,7 +1,5 @@
 from typing import Annotated, Literal, List, Union
-
 import fastapi
-from fastapi import Depends, HTTPException, Path
 from pydantic import BaseModel, Field
 from geojson_pydantic import Feature
 
@@ -52,7 +50,7 @@ router = fastapi.APIRouter(
 async def metric_id_param(
     metric_id: Annotated[
         Literal["LossPersistence", "Coverage"],
-        Path(description="Metric you wish to query"),
+        fastapi.Path(description="Metric you wish to query"),
     ]
 ) -> str:
     return metric_id
@@ -89,7 +87,7 @@ async def get_areas_by_defined_area(
 async def get_areas_by_polygon(
     metric_id: str,
     polygon: Union[FeatureRequest, WrappedFeatureRequest],
-    metric_id_param: str = Depends(metric_id_param),
+    metric_id_param: str = fastapi.Depends(metric_id_param),
 ) -> List[AreasResponse]:
     """
     Given a metric and a polygon, get the area values for each category in the metric inside the polygon
@@ -112,9 +110,9 @@ async def get_areas_by_polygon(
         ]
 
     except ValueError as ve:
-        raise HTTPException(status_code=400, detail=str(ve))
+        raise fastapi.HTTPException(status_code=400, detail=str(ve))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise fastapi.HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/{metric_id}/layer")
@@ -132,7 +130,7 @@ async def get_layer_by_defined_area(
 async def get_areas_by_predefined_polygon(
     metric_id: str,
     polygon: Union[FeatureRequest, WrappedFeatureRequest],
-    metric_id_param: str = Depends(metric_id_param),
+    metric_id_param: str = fastapi.Depends(metric_id_param),
 ) -> List[AreasResponse]:
     """
     Given a metric and a predefined polygon, get the area values for each category in the metric inside the polygon
@@ -146,9 +144,9 @@ async def get_areas_by_predefined_polygon(
         data = metrics_service.get_areas_by_polygon(polygon.model_dump())
         return data
     except ValueError as ve:
-        raise HTTPException(status_code=400, detail=str(ve))
+        raise fastapi.HTTPException(status_code=400, detail=str(ve))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        raise fastapi.HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/{metric_id}/layer")

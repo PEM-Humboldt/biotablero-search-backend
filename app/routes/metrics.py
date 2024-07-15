@@ -1,9 +1,11 @@
-from typing import Annotated, Literal, List
+from typing import Annotated, Literal, List,Union
 
 import fastapi
+from fastapi import Depends, HTTPException, Path
 from pydantic import BaseModel, Field
+from geojson_pydantic import Feature
 
-from app.routes.schemas.polygon import Polygon
+from app.routes.schemas.polygon import PolygonRequest, FeatureRequest, WrappedFeatureRequest
 from app.services.metrics import Metrics as metrics_service
 from logging import getLogger
 from app.services.utils import context_vars
@@ -20,7 +22,6 @@ validation_error_example = {
         }
     ]
 }
-
 
 class AreasResponse(BaseModel):
     key: str = Field(
@@ -46,10 +47,10 @@ router = fastapi.APIRouter(
 async def metric_id_param(
     metric_id: Annotated[
         Literal["LossPersistence", "Coverage"],
-        fastapi.Path(description="metric you whish to query"),
+        Path(description="Metric you wish to query")
     ]
-):
-    return {"metric_id": metric_id}
+) -> str:
+    return metric_id
 
 
 async def defined_areas_params(
@@ -64,36 +65,59 @@ async def defined_areas_params(
     return {"area_type": area_type, "area_id": area_id}
 
 
-@router.get("/{metric_id}/areas", response_model=List[AreasResponse])
-async def get_areas_by_defined_area(
-    metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
-    defined_area: Annotated[dict, fastapi.Depends(defined_areas_params)],
-) -> list[dict[str, float]]:
-    """
-    Given a metric and a predefined area of interest, get the area values for each category in the metric inside the indicated area
-    """
-    return [
-        {"key": "Perdida", "value": 2035},
-        {"key": "Persistencia", "value": 40843},
-        {"key": "No bosque", "value": 207122},
-    ]
-
-
 @router.post("/{metric_id}/areas", response_model=List[AreasResponse])
 async def get_areas_by_polygon(
-    metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
-    polygon: Polygon,
-) -> list[dict[str, float]]:
+        metric_id: str,
+        polygon: Union[FeatureRequest, WrappedFeatureRequest],
+        metric_id_param: str = Depends(metric_id_param),
+) -> List[AreasResponse]:
     """
-    Given a metric and a polygon, get the area values for each category in the metric inside the polygon
+    Dado un métrico y un polígono, obtiene los valores de área para cada categoría en el métrico dentro del polígono.
     """
     try:
-        data = metrics_service.get_areas_by_polygon(
-            polygon.polygon.model_dump()
-        )
-        return data
+        if isinstance(polygon, WrappedFeatureRequest):
+            geometry = polygon.polygon.geometry
+        else:
+            geometry = polygon.geometry
+
+        # Validación adicional si se desea
+        if geometry.bbox is None:
+            raise ValueError("Bounding box (bbox) is required in geometry.")
+
+        # Lógica para obtener áreas basadas en el polígono
+        return [
+            {"key": "Perdida", "value": 2035},
+            {"key": "Persistencia", "value": 40843},
+            {"key": "No bosque", "value": 207122},
+        ]
+
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
     except Exception as e:
-        raise fastapi.HTTPException(status_code=500, detail=str(e))
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/{metric_id}/areas/defined", response_model=List[AreasResponse])
+async def get_areas_by_predefined_polygon(
+    metric_id: str,
+    polygon: Union[FeatureRequest, WrappedFeatureRequest],
+    metric_id_param: str = Depends(metric_id_param),
+) -> List[AreasResponse]:
+    """
+    Given a metric and a predefined polygon, get the area values for each category in the metric inside the polygon
+    """
+    try:
+        # Validación del bbox utilizando la función importada
+        if polygon.geometry.bbox is None:
+            raise ValueError("Bounding box (bbox) is required in geometry.")
+
+        # Lógica para obtener áreas basadas en el polígono
+        data = metrics_service.get_areas_by_polygon(polygon.model_dump())
+        return data
+    except ValueError as ve:
+        raise HTTPException(status_code=400, detail=str(ve))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/{metric_id}/layer")
@@ -110,7 +134,7 @@ async def get_layer_by_defined_area(
 @router.post("/{metric_id}/layer")
 async def get_layer_by_polygon(
     metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
-    polygon: Polygon,
+    polygon: FeatureRequest,
 ):
     """
     Given a metric and a predefined area of interest, get the layer of the metric cut by the indicated area
@@ -118,7 +142,7 @@ async def get_layer_by_polygon(
     logger = getLogger(__name__)
     try:
         raster_bytes = metrics_service.get_layer_by_polygon(
-            metric_id["metric_id"], polygon.polygon.model_dump()
+            metric_id, polygon.model_dump()
         )
         return fastapi.Response(content=raster_bytes, media_type="image/png")
     except Exception as e:

@@ -1,34 +1,98 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 from geojson_pydantic import Feature
+from typing import List, Optional
 
-coordinates = [
-    [-74.66791948382932, 3.9616641000901702],
-    [-74.54883485657162, 3.6278270139496063],
-    [-73.91938754106665, 3.8258815720871353],
-    [-74.3787139604892, 4.312330649691575],
-    [-74.66791948382932, 3.9616641000901702],
-]
+from app.services.utils import context_vars
 
-bbox = [
-    -74.66791948382932,
-    3.6278270139496063,
-    -73.91938754106665,
-    4.312330649691575,
-]
+class PolygonRequest(BaseModel):
+    type: str
+    coordinates: List[List[List[float]]]
+    bbox: Optional[List[float]] = None
 
-geojson_polygon = {
-    "type": "Feature",
-    "properties": {},
-    "geometry": {
-        "type": "Polygon",
-        "bbox": bbox,
-        "coordinates": [coordinates],
-    },
-}
+    @field_validator('bbox')
+    def validate_bbox(cls, v):
+        if v is not None:
+            if len(v) not in [4, 6]:
+                raise ValueError("Bounding box (bbox) must have 4 o 6 elements.")
+            min_lon, min_lat, max_lon, max_lat = v[:4]
+            if not (-180 <= min_lon <= 180) or not (-180 <= max_lon <= 180):
+                raise ValueError("Longitude values must be between -180 and 180.")
+            if not (-90 <= min_lat <= 90) or not (-90 <= max_lat <= 90):
+                raise ValueError("Latitude values must be between -90 y 90.")
+            if min_lon > max_lon:
+                raise ValueError("Minimum longitude cannot be greater than maximum longitude.")
+            if min_lat > max_lat:
+                raise ValueError("Minimum latitude cannot be greater than maximum latitude.")
+            if len(v) == 6:
+                min_alt, max_alt = v[4], v[5]
+                if min_alt > max_alt:
+                    raise ValueError("Minimum altitude cannot be greater than maximum altitude.")
+        return v
 
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "type": "Polygon",
+                "coordinates": [
+                    [
+                        [102.0, 2.0],
+                        [103.0, 2.0],
+                        [103.0, 3.0],
+                        [102.0, 3.0],
+                        [102.0, 2.0]
+                    ]
+                ],
+                "bbox": [102.0, 2.0, 103.0, 3.0]
+            }
+        }
 
-class Polygon(BaseModel):
-    polygon: Feature = Field(
-        description="GeoJSON polygon to determine the query area",
-        example=geojson_polygon,
-    )
+class FeatureRequest(BaseModel):
+    type: str
+    properties: dict
+    geometry: PolygonRequest
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "type": "Feature",
+                "properties": {},
+                "geometry": {
+                    "type": "Polygon",
+                    "coordinates": [
+                        [
+                            [102.0, 2.0],
+                            [103.0, 2.0],
+                            [103.0, 3.0],
+                            [102.0, 3.0],
+                            [102.0, 2.0]
+                        ]
+                    ],
+                    "bbox": [102.0, 2.0, 103.0, 3.0]
+                }
+            }
+        }
+
+class WrappedFeatureRequest(BaseModel):
+    polygon: FeatureRequest
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "polygon": {
+                    "type": "Feature",
+                    "properties": {},
+                    "geometry": {
+                        "type": "Polygon",
+                        "bbox": [-76.2114265687811, 4.66464238363919, -75.3755113620596],
+                        "coordinates": [
+                            [
+                                [-76.008254260126, 5.56368303184647],
+                                [-76.0024992672274, 5.56019970305395],
+                                [-76.0022908115716, 5.55269347472411],
+                                [-75.9989734130925, 5.54151494575816]
+                            ]
+                        ]
+                    }
+                }
+            }
+        }

@@ -1,4 +1,4 @@
-from typing import Annotated, Literal, List, Union
+import typing
 import fastapi
 from pydantic import BaseModel, Field
 from geojson_pydantic import Feature
@@ -48,8 +48,8 @@ router = fastapi.APIRouter(
 
 
 async def metric_id_param(
-    metric_id: Annotated[
-        Literal["LossPersistence", "Coverage"],
+    metric_id: typing.Annotated[
+        typing.Literal["LossPersistence", "Coverage"],
         fastapi.Path(description="Metric you wish to query"),
     ]
 ) -> str:
@@ -57,21 +57,23 @@ async def metric_id_param(
 
 
 async def defined_areas_params(
-    area_type: Annotated[
+    area_type: typing.Annotated[
         str,
         fastapi.Query(description="type of the predefined area", example="ea"),
     ],
-    area_id: Annotated[
+    area_id: typing.Annotated[
         str, fastapi.Query(description="id of the area", example="CAR")
     ],
 ):
     return {"area_type": area_type, "area_id": area_id}
 
 
-@router.get("/{metric_id}/areas", response_model=List[AreasResponse])
+@router.get("/{metric_id}/areas", response_model=typing.List[AreasResponse])
 async def get_areas_by_defined_area(
-    metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
-    defined_area: Annotated[dict, fastapi.Depends(defined_areas_params)],
+    metric_id: typing.Annotated[str, fastapi.Depends(metric_id_param)],
+    defined_area: typing.Annotated[
+        dict, fastapi.Depends(defined_areas_params)
+    ],
 ) -> list[dict[str, float]]:
     """
     Given a metric and a predefined area of interest, get the area values for each category in the metric inside the indicated area
@@ -83,12 +85,12 @@ async def get_areas_by_defined_area(
     ]
 
 
-@router.post("/{metric_id}/areas", response_model=List[AreasResponse])
+@router.post("/{metric_id}/areas", response_model=typing.List[AreasResponse])
 async def get_areas_by_polygon(
     metric_id: str,
-    polygon: Union[FeatureRequest, WrappedFeatureRequest],
+    polygon: typing.Union[FeatureRequest, WrappedFeatureRequest],
     metric_id_param: str = fastapi.Depends(metric_id_param),
-) -> List[AreasResponse]:
+) -> typing.List[AreasResponse]:
     """
     Given a metric and a polygon, get the area values for each category in the metric inside the polygon
     """
@@ -117,8 +119,10 @@ async def get_areas_by_polygon(
 
 @router.get("/{metric_id}/layer")
 async def get_layer_by_defined_area(
-    metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
-    defined_area: Annotated[dict, fastapi.Depends(defined_areas_params)],
+    metric_id: typing.Annotated[str, fastapi.Depends(metric_id_param)],
+    defined_area: typing.Annotated[
+        dict, fastapi.Depends(defined_areas_params)
+    ],
 ):  # TODO: Define return type
     """
     Given a metric and a predefined area of interest, get the layer of the metric cut by the indicated area
@@ -126,12 +130,14 @@ async def get_layer_by_defined_area(
     return {"layer": "response to be defined"}
 
 
-@router.post("/{metric_id}/areas/defined", response_model=List[AreasResponse])
+@router.post(
+    "/{metric_id}/areas/defined", response_model=typing.List[AreasResponse]
+)
 async def get_areas_by_predefined_polygon(
     metric_id: str,
-    polygon: Union[FeatureRequest, WrappedFeatureRequest],
+    polygon: typing.Union[FeatureRequest, WrappedFeatureRequest],
     metric_id_param: str = fastapi.Depends(metric_id_param),
-) -> List[AreasResponse]:
+) -> typing.List[AreasResponse]:
     """
     Given a metric and a predefined polygon, get the area values for each category in the metric inside the polygon
     """
@@ -151,7 +157,7 @@ async def get_areas_by_predefined_polygon(
 
 @router.post("/{metric_id}/layer")
 async def get_layer_by_polygon(
-    metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
+    metric_id: typing.Annotated[str, fastapi.Depends(metric_id_param)],
     polygon: FeatureRequest,
 ):
     """

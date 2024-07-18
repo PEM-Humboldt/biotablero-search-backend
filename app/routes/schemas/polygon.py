@@ -1,10 +1,16 @@
+<<<<<<< Updated upstream
 from pydantic import BaseModel, Field, field_validator
 from geojson_pydantic import Feature
 from typing import List, Optional
+=======
+from pydantic import BaseModel, Field
+from geojson_pydantic.geometries import Polygon
+>>>>>>> Stashed changes
 
 from app.services.utils import context_vars
 
 
+<<<<<<< Updated upstream
 class PolygonRequest(BaseModel):
     type: str
     coordinates: List[List[List[float]]]
@@ -113,3 +119,12 @@ class WrappedFeatureRequest(BaseModel):
                 }
             }
         }
+=======
+class FeatureWithPolygon(BaseModel):
+    type: str
+    properties: dict
+    geometry: Polygon = Field(
+        description="GeoJSON polygon to determine the query area",
+        example=geojson_polygon,
+    )
+>>>>>>> Stashed changes

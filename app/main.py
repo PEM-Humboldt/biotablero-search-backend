@@ -1,11 +1,15 @@
 import fastapi
 
+from app.middleware import MethodBasedAuthMiddleware
 from app.routes import metrics
 from app.config import get_settings
 from logging import getLogger
 from starlette.exceptions import HTTPException as StarletteHTTPException
 from uuid import uuid4
 from app.services.utils import context_vars
+
+from app.routes.metrics import router as metrics_router
+from app.routes.auth import router as auth_router
 
 settings = get_settings()
 settings.configure_logging()
@@ -25,6 +29,10 @@ app = fastapi.FastAPI(
     docs_url=None if settings.env.lower() == "prod" else "/docs",
 )
 
+app.include_router(metrics_router)
+app.include_router(auth_router)
+app.add_middleware(MethodBasedAuthMiddleware)
+
 
 @app.middleware("http")
 async def log_requests(request: fastapi.Request, call_next):
@@ -38,7 +46,7 @@ async def log_requests(request: fastapi.Request, call_next):
 
     response = await call_next(request)
     logger.info(
-        f"Response status: {response.status_code }",
+        f"Response status: {response.status_code}",
         extra={"request_id": request_id},
     )
     return response

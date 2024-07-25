@@ -1,6 +1,7 @@
 from typing import Annotated, Literal, List
 
 import fastapi
+from fastapi import Depends
 from pydantic import BaseModel, Field
 
 from app.routes.schemas.polygon import Polygon
@@ -44,30 +45,30 @@ router = fastapi.APIRouter(
 
 
 async def metric_id_param(
-    metric_id: Annotated[
-        Literal["LossPersistence", "Coverage"],
-        fastapi.Path(description="metric you whish to query"),
-    ]
+        metric_id: Annotated[
+            Literal["LossPersistence", "Coverage"],
+            fastapi.Path(description="metric you whish to query"),
+        ]
 ):
     return {"metric_id": metric_id}
 
 
 async def defined_areas_params(
-    area_type: Annotated[
-        str,
-        fastapi.Query(description="type of the predefined area", example="ea"),
-    ],
-    area_id: Annotated[
-        str, fastapi.Query(description="id of the area", example="CAR")
-    ],
+        area_type: Annotated[
+            str,
+            fastapi.Query(description="type of the predefined area", example="ea"),
+        ],
+        area_id: Annotated[
+            str, fastapi.Query(description="id of the area", example="CAR")
+        ],
 ):
     return {"area_type": area_type, "area_id": area_id}
 
 
 @router.get("/{metric_id}/areas", response_model=List[AreasResponse])
 async def get_areas_by_defined_area(
-    metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
-    defined_area: Annotated[dict, fastapi.Depends(defined_areas_params)],
+        metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
+        defined_area: Annotated[dict, fastapi.Depends(defined_areas_params)],
 ) -> list[dict[str, float]]:
     """
     Given a metric and a predefined area of interest, get the area values for each category in the metric inside the indicated area
@@ -81,8 +82,8 @@ async def get_areas_by_defined_area(
 
 @router.post("/{metric_id}/areas", response_model=List[AreasResponse])
 async def get_areas_by_polygon(
-    metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
-    polygon: Polygon,
+        metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
+        polygon: Polygon,
 ) -> list[dict[str, float]]:
     """
     Given a metric and a polygon, get the area values for each category in the metric inside the polygon
@@ -98,8 +99,8 @@ async def get_areas_by_polygon(
 
 @router.get("/{metric_id}/layer")
 async def get_layer_by_defined_area(
-    metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
-    defined_area: Annotated[dict, fastapi.Depends(defined_areas_params)],
+        metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
+        defined_area: Annotated[dict, fastapi.Depends(defined_areas_params)],
 ):  # TODO: Define return type
     """
     Given a metric and a predefined area of interest, get the layer of the metric cut by the indicated area
@@ -109,8 +110,8 @@ async def get_layer_by_defined_area(
 
 @router.post("/{metric_id}/layer")
 async def get_layer_by_polygon(
-    metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
-    polygon: Polygon,
+        metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
+        polygon: Polygon,
 ):
     """
     Given a metric and a predefined area of interest, get the layer of the metric cut by the indicated area

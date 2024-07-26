@@ -15,7 +15,7 @@ Required Python version: 3.10+
 1. __Install dependencies__
 
    `pip install -r requirements.txt`
-1. Verify that the values in the .env file are as follows
+1. Create an env mirror file of env.sample and update the values of the existing variables.
 
    ```
    STAC_URL="" # STAC server URL

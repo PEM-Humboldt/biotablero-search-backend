@@ -6,7 +6,7 @@ from pydantic import BaseModel, Field
 from app.routes.schemas.polygon import Polygon
 from app.services.metrics import Metrics as metrics_service
 from logging import getLogger
-from app.services.utils import context_vars
+from app.utils import context_vars
 
 request_id_context = context_vars.request_id_context
 

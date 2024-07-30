@@ -2,7 +2,6 @@ import fastapi
 
 from app.utils import context_vars
 from logging import getLogger
-from starlette.exceptions import HTTPException as StarletteHTTPException
 
 logger = getLogger(__name__)
 request_id_context = context_vars.request_id_context

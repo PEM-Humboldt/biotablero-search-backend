@@ -1,9 +1,11 @@
-import fastapi
-from app.routes import metrics
-from app.utils.config import get_settings
 from logging import getLogger
-from app.utils import context_vars, exception_handlers, middleware
+
+import fastapi
 from starlette.exceptions import HTTPException as StarletteHTTPException
+
+from app.routes import metrics
+from app.utils import context_vars, exception_handlers, middleware
+from app.utils.config import get_settings
 
 settings = get_settings()
 settings.configure_logging()

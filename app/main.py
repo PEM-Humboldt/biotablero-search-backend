@@ -27,7 +27,6 @@ app = fastapi.FastAPI(
 )
 
 app.middleware("http")(log_requests)
-
 app.add_exception_handler(StarletteHTTPException, http_exception_handler)
 app.add_exception_handler(fastapi.exceptions.RequestValidationError, validation_exception_handler)
 

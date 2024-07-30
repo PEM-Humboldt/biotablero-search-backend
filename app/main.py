@@ -27,8 +27,13 @@ app = fastapi.FastAPI(
 
 app.middleware("http")(middleware.log_requests)
 
-app.add_exception_handler(StarletteHTTPException, exception_handlers.http_exception_handler)
-app.add_exception_handler(fastapi.exceptions.RequestValidationError, exception_handlers.validation_exception_handler)
+app.add_exception_handler(
+    StarletteHTTPException, exception_handlers.http_exception_handler
+)
+app.add_exception_handler(
+    fastapi.exceptions.RequestValidationError,
+    exception_handlers.validation_exception_handler,
+)
 
 app.include_router(metrics.router)
 # TODO: disable swagger on production: https://fastapi.tiangolo.com/tutorial/metadata/#docs-urls

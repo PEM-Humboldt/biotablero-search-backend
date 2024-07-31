@@ -5,7 +5,7 @@ from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.routes import metrics
 from app.utils import context_vars
-from app.middleware import exception_handlers,log_middleware
+from app.middleware import exception_handlers, log_middleware
 from app.utils.config import get_settings
 
 settings = get_settings()

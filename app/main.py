@@ -4,7 +4,8 @@ import fastapi
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.routes import metrics
-from app.utils import context_vars, exception_handlers, middleware
+from app.utils import context_vars
+from app.middleware import exception_handlers,log_middleware
 from app.utils.config import get_settings
 
 settings = get_settings()
@@ -25,7 +26,7 @@ app = fastapi.FastAPI(
     docs_url=None if settings.env.lower() == "prod" else "/docs",
 )
 
-app.middleware("http")(middleware.log_requests)
+app.middleware("http")(log_middleware.log_requests)
 
 app.add_exception_handler(
     StarletteHTTPException, exception_handlers.http_exception_handler

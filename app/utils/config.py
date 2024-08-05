@@ -7,6 +7,7 @@ class Settings(BaseSettings):
 
     stac_url: str = "http://localhost:8080"
     env: str = "dev"
+    cog_base_url: str = "https://staccatalog.blob.core.windows.net/cog-test"
 
     model_config = SettingsConfigDict(env_file=".env")
 

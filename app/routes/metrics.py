@@ -1,9 +1,9 @@
-from typing import Annotated, Literal, List
+from typing import Annotated, Literal, List, Dict, Any
 
 import fastapi
 from pydantic import BaseModel, Field
 
-from app.routes.schemas.polygon import Polygon
+from app.routes.schemas.polygon import Polygon, PolygonGeometry
 from app.services.metrics import Metrics as metrics_service
 from logging import getLogger
 from app.utils import context_vars
@@ -80,17 +80,16 @@ async def get_areas_by_defined_area(
 
 
 @router.post("/{metric_id}/areas", response_model=List[AreasResponse])
-async def get_areas_by_polygon(
-    metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
-    polygon: Polygon,
-) -> list[dict[str, float]]:
+async def get_areas_by_polygon_endpoint(
+    metric_id: str,
+    polygon: Polygon
+) -> dict[str, Any]:
     """
-    Given a metric and a polygon, get the area values for each category in the metric inside the polygon
+    Given a metric and a polygon, get the area values for each category in the metric inside the polygon.
     """
     try:
-        data = metrics_service.get_areas_by_polygon(
-            polygon.polygon.model_dump()
-        )
+        polygon_geometry = polygon.polygon.geometry
+        data = metrics_service.get_areas_by_polygon(polygon_geometry, metric_id)
         return data
     except Exception as e:
         raise fastapi.HTTPException(status_code=500, detail=str(e))
@@ -118,7 +117,8 @@ async def get_layer_by_polygon(
     logger = getLogger(__name__)
     try:
         raster_bytes = metrics_service.get_layer_by_polygon(
-            metric_id["metric_id"], polygon.polygon.model_dump()
+            metric_id,
+            polygon.polygon
         )
         return fastapi.Response(content=raster_bytes, media_type="image/png")
     except Exception as e:

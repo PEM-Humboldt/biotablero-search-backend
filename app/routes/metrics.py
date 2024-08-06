@@ -81,15 +81,16 @@ async def get_areas_by_defined_area(
 
 @router.post("/{metric_id}/areas", response_model=List[AreasResponse])
 async def get_areas_by_polygon(
-    metric_id: str,
-    polygon: Polygon
+    metric_id: str, polygon: Polygon
 ) -> dict[str, Any]:
     """
     Given a metric and a polygon, get the area values for each category in the metric inside the polygon.
     """
     try:
         polygon_geometry = polygon.polygon.geometry
-        data = metrics_service.get_areas_by_polygon(polygon_geometry, metric_id)
+        data = metrics_service.get_areas_by_polygon(
+            polygon_geometry, metric_id
+        )
         return data
     except Exception as e:
         raise fastapi.HTTPException(status_code=500, detail=str(e))
@@ -118,8 +119,7 @@ async def get_layer_by_polygon(
     try:
         polygon_geometry = polygon.polygon.geometry
         raster_bytes = metrics_service.get_layer_by_polygon(
-            metric_id,
-            polygon_geometry
+            metric_id, polygon_geometry
         )
         return fastapi.Response(content=raster_bytes, media_type="image/png")
     except Exception as e:

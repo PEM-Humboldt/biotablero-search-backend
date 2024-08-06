@@ -1,21 +1,11 @@
 from typing import Dict, Any
 
 import app.services.utils.raster as raster_utils
-from app.services.read_coleccion import load_collection_items
+from app.services.read_coleccion import find_collection_url, get_collection_items_url, load_first_item_asset
 from app.utils import config
 from app.routes.schemas.polygon import PolygonFeature, PolygonGeometry
 
-# TODO: Read the collections list from STAC. Id collection should be match to metric id
-collections = [
-    {
-        "id": "LossPersistence",
-        "cog": "https://staccatalog.blob.core.windows.net/cog-test/Colombia_pp-2015_12_31-pp_2011_2015.tif",
-    },
-    {
-        "id": "Coverage",
-        "cog": "https://coverage-example.tif",
-    },
-]
+
 
 settings = config.get_settings()
 
@@ -26,18 +16,23 @@ class Metrics:
         # TODO: Implement service
         return ""
 
-    def get_areas_by_polygon(polygon: PolygonGeometry, collection_id: str) -> dict[str, Any]:
-        items = load_collection_items(f"{settings.stac_url}", collection_id)
+    def get_areas_by_polygon(polygon: PolygonGeometry, metric_id: str) -> dict[str, Any]:
+        collection_url = find_collection_url(settings.stac_url, metric_id)
 
-        if not items:
-            raise ValueError(f"No items found for collection id: {collection_id}")
+        if not collection_url:
+            raise ValueError(f"No collection found for id: {metric_id}")
 
-        first_item = items[0]
+        items_url = get_collection_items_url(collection_url)
 
-        if not first_item:
-            raise ValueError(f"No valid item found for collection id: {collection_id}")
+        if not items_url:
+            raise ValueError(f"No items URL found for collection id: {metric_id}")
 
-        raster_cloud_path = f"{settings.cog_base_url}/{first_item['assets']['input_file']}"
+        first_asset = load_first_item_asset(items_url)
+
+        if not first_asset:
+            raise ValueError(f"No valid asset found for metric id: {metric_id}")
+
+        raster_cloud_path = first_asset['href']
 
         out_data = raster_utils.get_raster_values(raster_cloud_path, polygon)
 
@@ -47,17 +42,22 @@ class Metrics:
         # TODO: Implement service
         return ""
 
-    def get_layer_by_polygon(metric_id: str, polygon_feature: PolygonFeature):
-        items = load_collection_items(f"{settings.stac_url}", metric_id)
+    def get_layer_by_polygon(metric_id: str, polygon: PolygonGeometry):
+        collection_url = find_collection_url(settings.stac_url, metric_id)
 
-        if not items:
-            raise ValueError(f"No items found for collection id: {metric_id}")
+        if not collection_url:
+            raise ValueError(f"No collection found for id: {metric_id}")
 
-        first_item = items[0]
+        items_url = get_collection_items_url(collection_url)
 
-        if not first_item:
-            raise ValueError(f"No valid item found for metric id: {metric_id}")
+        if not items_url:
+            raise ValueError(f"No items URL found for collection id: {metric_id}")
 
-        raster_cloud_path = f"{config.Settings.COG_BASE_URL}/{first_item['assets']['input_file']}"
-        out_data = raster_utils.get_raster_values(raster_cloud_path, polygon_feature)
-        return out_data
+        first_asset = load_first_item_asset(items_url)
+
+        if not first_asset:
+            raise ValueError(f"No valid asset found for metric id: {metric_id}")
+
+        raster_cloud_path = first_asset['href']
+        out_image = raster_utils.crop_raster(raster_cloud_path, polygon)
+        return out_image

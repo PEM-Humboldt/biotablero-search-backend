@@ -1,25 +1,41 @@
-from typing import Optional
+from typing import Optional, Dict, Any
 
 import requests
 
-from typing import Dict, Any
 
-from app.utils.config import get_settings
-
-settings = get_settings()
-
-
-def load_collection_items(url: str, collection_id: str) -> Optional[Dict[str, Any]]:
-    response = requests.get(url)
+def find_collection_url(base_url: str, collection_id: str) -> Optional[str]:
+    response = requests.get(base_url)
     response.raise_for_status()
-    collections_data = response.json()
+    root_data = response.json()
 
-    collection = next((col for col in collections_data.get('collections', []) if col['id'] == collection_id), None)
-    print(collection)
-    if collection:
-        items = collection.get('items', [])
-        if items:
-            return items
+    for link in root_data.get('links', []):
+        if link['rel'] == 'child' and collection_id in link['href']:
+            return link['href']
+
     return None
 
 
+def get_collection_items_url(collection_url: str) -> Optional[str]:
+    response = requests.get(collection_url)
+    response.raise_for_status()
+    collection_data = response.json()
+
+    for link in collection_data.get('links', []):
+        if link['rel'] == 'items':
+            return link['href']
+
+    return None
+
+
+def load_first_item_asset(items_url: str) -> Optional[Dict[str, Any]]:
+    response = requests.get(items_url)
+    response.raise_for_status()
+    items_data = response.json()
+
+    if items_data.get('features'):
+        first_item = items_data['features'][0]
+        assets = first_item.get('assets', {})
+        if assets:
+            return list(assets.values())[0]
+
+    return None

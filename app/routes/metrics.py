@@ -1,9 +1,9 @@
-from typing import Annotated, Literal, List, Dict, Any
+from typing import Annotated, Literal, List, Any
 
 import fastapi
 from pydantic import BaseModel, Field
 
-from app.routes.schemas.polygon import Polygon, PolygonGeometry
+from app.routes.schemas.polygon import Polygon
 from app.services.metrics import Metrics as metrics_service
 from logging import getLogger
 from app.utils import context_vars
@@ -80,7 +80,7 @@ async def get_areas_by_defined_area(
 
 
 @router.post("/{metric_id}/areas", response_model=List[AreasResponse])
-async def get_areas_by_polygon_endpoint(
+async def get_areas_by_polygon(
     metric_id: str,
     polygon: Polygon
 ) -> dict[str, Any]:
@@ -108,7 +108,7 @@ async def get_layer_by_defined_area(
 
 @router.post("/{metric_id}/layer")
 async def get_layer_by_polygon(
-    metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
+    metric_id: str,
     polygon: Polygon,
 ):
     """
@@ -116,9 +116,10 @@ async def get_layer_by_polygon(
     """
     logger = getLogger(__name__)
     try:
+        polygon_geometry = polygon.polygon.geometry
         raster_bytes = metrics_service.get_layer_by_polygon(
             metric_id,
-            polygon.polygon
+            polygon_geometry
         )
         return fastapi.Response(content=raster_bytes, media_type="image/png")
     except Exception as e:

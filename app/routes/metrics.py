@@ -46,10 +46,10 @@ router = fastapi.APIRouter(
 async def metric_id_param(
     metric_id: Annotated[
         Literal["LossPersistence", "Coverage"],
-        fastapi.Path(description="metric you whish to query"),
+        fastapi.Path(description="Metric you wish to query"),
     ]
-):
-    return {"metric_id": metric_id}
+) -> str:
+    return metric_id
 
 
 async def defined_areas_params(

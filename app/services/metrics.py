@@ -21,7 +21,6 @@ class Metrics:
         polygon: PolygonGeometry, metric_id: str
     ) -> list[dict[str, float]]:
         collection_url = find_collection_url(settings.stac_url, metric_id)
-
         if not collection_url:
             raise ValueError(f"No collection found for id: {metric_id}")
 
@@ -39,7 +38,10 @@ class Metrics:
                 f"No valid asset found for metric id: {metric_id}"
             )
 
-        raster_cloud_path = first_asset["href"]
+        raster_cloud_path = first_asset.get("href")
+
+        if not raster_cloud_path:
+            raise ValueError("No 'href' found in the first asset.")
 
         out_data = raster_utils.get_raster_values(raster_cloud_path, polygon)
 

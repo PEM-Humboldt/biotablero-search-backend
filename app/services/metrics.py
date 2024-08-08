@@ -1,13 +1,11 @@
-from typing import Dict, Any
-
 import app.services.utils.raster as raster_utils
-from app.services.read_coleccion import (
+from app.services.collection import (
     find_collection_url,
     get_collection_items_url,
     load_first_item_asset,
 )
 from app.utils import config
-from app.routes.schemas.polygon import PolygonFeature, PolygonGeometry
+from app.routes.schemas.polygon import PolygonGeometry
 
 
 settings = config.get_settings()
@@ -21,7 +19,7 @@ class Metrics:
 
     def get_areas_by_polygon(
         polygon: PolygonGeometry, metric_id: str
-    ) -> dict[str, Any]:
+    ) -> list[dict[str, float]]:
         collection_url = find_collection_url(settings.stac_url, metric_id)
 
         if not collection_url:

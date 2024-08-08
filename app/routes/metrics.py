@@ -1,4 +1,4 @@
-from typing import Annotated, Literal, List, Any
+from typing import Annotated, Literal, List
 
 import fastapi
 from pydantic import BaseModel, Field
@@ -81,8 +81,9 @@ async def get_areas_by_defined_area(
 
 @router.post("/{metric_id}/areas", response_model=List[AreasResponse])
 async def get_areas_by_polygon(
-    metric_id: str, polygon: Polygon
-) -> dict[str, Any]:
+    metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
+    polygon: Polygon,
+) -> list[dict[str, float]]:
     """
     Given a metric and a polygon, get the area values for each category in the metric inside the polygon.
     """
@@ -109,7 +110,7 @@ async def get_layer_by_defined_area(
 
 @router.post("/{metric_id}/layer")
 async def get_layer_by_polygon(
-    metric_id: str,
+    metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
     polygon: Polygon,
 ):
     """

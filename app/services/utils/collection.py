@@ -3,32 +3,11 @@ from typing import Optional, Dict, Any
 import requests
 
 
-def find_collection_url(base_url: str, collection_id: str) -> Optional[str]:
-    response = requests.get(base_url)
-    response.raise_for_status()
-    root_data = response.json()
-
-    collection_url = None
-    for link in root_data.get("links", []):
-        href = link.get("href")
-        if (
-            isinstance(href, str)
-            and link.get("rel") == "child"
-            and collection_id in href
-        ):
-            collection_url = href
-            break
-
-    if not collection_url:
-        raise ValueError(
-            f"No collection found for id at URL: {base_url}/collections/{collection_id}"
-        )
-
-    return collection_url
-
-
-def get_collection_items_url(collection_url: str) -> Optional[str]:
-    response = requests.get(collection_url)
+def get_collection_items_url(
+    base_url: str, collection_id: str
+) -> Optional[str]:
+    url = base_url + collection_id
+    response = requests.get(url)
     response.raise_for_status()
     collection_data = response.json()
 
@@ -40,7 +19,7 @@ def get_collection_items_url(collection_url: str) -> Optional[str]:
 
     if not items_url:
         raise ValueError(
-            f"No items URL found for collection at URL: {collection_url}/items"
+            f"No items URL found for collection at URL: {url}/items"
         )
 
     return items_url
@@ -62,3 +41,16 @@ def load_first_item_asset(items_url: str) -> Optional[Dict[str, Any]]:
         raise ValueError(f"No valid asset found at items URL: {items_url}")
 
     return first_asset
+
+
+def get_first_item_asset_from_collection(
+    base_url: str, collection_id: str
+) -> Optional[Dict[str, Any]]:
+    items_url = get_collection_items_url(base_url, collection_id)
+
+    first_asset = load_first_item_asset(items_url)
+    value_href = first_asset.get("href")
+
+    if not value_href:
+        raise ValueError("No 'href' found in the first asset.")
+    return value_href

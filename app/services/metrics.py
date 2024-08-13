@@ -14,7 +14,7 @@ class Metrics:
         return ""
 
     def get_areas_by_polygon(
-        polygon: PolygonGeometry, metric_id: str
+        metric_id: str, polygon: PolygonGeometry
     ) -> list[dict[str, float]]:
 
         first_asset = get_first_item_asset_from_collection(metric_id)

@@ -90,7 +90,7 @@ async def get_areas_by_polygon(
     try:
         polygon_geometry = polygon.polygon.geometry
         data = metrics_service.get_areas_by_polygon(
-            polygon_geometry, metric_id
+            metric_id, polygon_geometry
         )
         return data
     except Exception as e:

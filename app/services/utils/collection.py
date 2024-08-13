@@ -66,7 +66,7 @@ def load_first_item_asset(items_url: str) -> Optional[Dict[str, Any]]:
     try:
         response = requests.get(items_url)
         response.raise_for_status()
-    except requests.exceptions.HTTPError as http_err:
+    except requests.exceptions.HTTPError:
         if response.status_code == 404:
             raise HTTPException(
                 status_code=404, detail=f"Items not found at URL: {items_url}"
@@ -74,7 +74,7 @@ def load_first_item_asset(items_url: str) -> Optional[Dict[str, Any]]:
         else:
             raise HTTPException(
                 status_code=response.status_code,
-                detail=f"HTTP error occurred while accessing {items_url}: {http_err}",
+                detail=f"HTTP error occurred while accessing {items_url}",
             )
 
     items_data = response.json()

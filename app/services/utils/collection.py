@@ -1,31 +1,27 @@
 from typing import Optional, Dict, Any
 
 import requests
+from requests import RequestException
+
+from app.utils import config
+
+settings = config.get_settings()
 
 
-def get_collection_items_url(
-    base_url: str, collection_id: str
-) -> Optional[str]:
-    url = base_url + collection_id
+def get_collection_items_url(collection_id: str) -> Optional[str]:
+    url = settings.stac_url + collection_id
     response = requests.get(url)
     response.raise_for_status()
     collection_data = response.json()
 
-    items_url = None
-    for link in collection_data.get("links", []):
-        if link.get("rel") == "items":
-            items_url = link["href"]
-            break
+    if not collection_data:
+        raise ValueError(f"No collection found at URL: {url}")
 
-    if not items_url:
-        raise ValueError(
-            f"No items URL found for collection at URL: {url}/items"
-        )
-
-    return items_url
+    return url
 
 
-def load_first_item_asset(items_url: str) -> Optional[Dict[str, Any]]:
+def load_first_item_asset(url: str) -> Optional[Dict[str, Any]]:
+    items_url = url + "/items"
     response = requests.get(items_url)
     response.raise_for_status()
     items_data = response.json()
@@ -44,9 +40,9 @@ def load_first_item_asset(items_url: str) -> Optional[Dict[str, Any]]:
 
 
 def get_first_item_asset_from_collection(
-    base_url: str, collection_id: str
+    collection_id: str,
 ) -> Optional[Dict[str, Any]]:
-    items_url = get_collection_items_url(base_url, collection_id)
+    items_url = get_collection_items_url(collection_id)
 
     first_asset = load_first_item_asset(items_url)
     value_href = first_asset.get("href")

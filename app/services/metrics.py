@@ -17,12 +17,9 @@ class Metrics:
         polygon: PolygonGeometry, metric_id: str
     ) -> list[dict[str, float]]:
 
-        first_asset = get_first_item_asset_from_collection(
-            settings.stac_url, metric_id
-        )
-        raster_cloud_path = first_asset
+        first_asset = get_first_item_asset_from_collection(metric_id)
 
-        out_data = raster_utils.get_raster_values(raster_cloud_path, polygon)
+        out_data = raster_utils.get_raster_values(first_asset, polygon)
 
         return out_data
 
@@ -32,10 +29,7 @@ class Metrics:
 
     def get_layer_by_polygon(metric_id: str, polygon: PolygonGeometry):
 
-        first_asset = get_first_item_asset_from_collection(
-            settings.stac_url, metric_id
-        )
+        first_asset = get_first_item_asset_from_collection(metric_id)
 
-        raster_cloud_path = first_asset
-        out_image = raster_utils.crop_raster(raster_cloud_path, polygon)
+        out_image = raster_utils.crop_raster(first_asset, polygon)
         return out_image

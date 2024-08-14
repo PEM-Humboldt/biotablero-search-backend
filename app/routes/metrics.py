@@ -48,8 +48,8 @@ async def metric_id_param(
         Literal["LossPersistence", "Coverage"],
         fastapi.Path(description="metric you whish to query"),
     ]
-):
-    return {"metric_id": metric_id}
+) -> str:
+    return metric_id
 
 
 async def defined_areas_params(
@@ -85,11 +85,12 @@ async def get_areas_by_polygon(
     polygon: Polygon,
 ) -> list[dict[str, float]]:
     """
-    Given a metric and a polygon, get the area values for each category in the metric inside the polygon
+    Given a metric and a polygon, get the area values for each category in the metric inside the polygon.
     """
     try:
+        polygon_geometry = polygon.polygon.geometry
         data = metrics_service.get_areas_by_polygon(
-            polygon.polygon.model_dump()
+            metric_id, polygon_geometry
         )
         return data
     except Exception as e:
@@ -117,8 +118,9 @@ async def get_layer_by_polygon(
     """
     logger = getLogger(__name__)
     try:
+        polygon_geometry = polygon.polygon.geometry
         raster_bytes = metrics_service.get_layer_by_polygon(
-            metric_id["metric_id"], polygon.polygon.model_dump()
+            metric_id, polygon_geometry
         )
         return fastapi.Response(content=raster_bytes, media_type="image/png")
     except Exception as e:

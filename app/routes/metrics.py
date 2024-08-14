@@ -64,7 +64,7 @@ async def defined_areas_params(
     return {"area_type": area_type, "area_id": area_id}
 
 
-@router.get("/{metric_id}/areas", response_model=List[AreasResponse])
+@router.get("/{metric_id}/values", response_model=List[AreasResponse])
 async def get_areas_by_defined_area(
     metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
     defined_area: Annotated[dict, fastapi.Depends(defined_areas_params)],
@@ -79,7 +79,7 @@ async def get_areas_by_defined_area(
     ]
 
 
-@router.post("/{metric_id}/areas", response_model=List[AreasResponse])
+@router.post("/{metric_id}/values", response_model=List[AreasResponse])
 async def get_areas_by_polygon(
     metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
     polygon: Polygon,

@@ -1,6 +1,9 @@
+from typing import Annotated, Literal, List
+
 import app.services.utils.raster as raster_utils
 from app.services.utils.collection import get_items_asset_url
 from app.routes.schemas.polygon import PolygonGeometry
+from app.routes.schemas.MetricValues import MetricResponse
 from app.services.utils.metrics_config import (
     value_category_config,
     metric_group_key,
@@ -9,13 +12,13 @@ from app.services.utils.metrics_config import (
 
 class Metrics:
 
-    def get_areas_by_defined_area(area_type, area_id):
+    def get_areas_by_defined_area(area_type, area_id) -> List[MetricResponse]:
         # TODO: Implement service
         return ""
 
     def get_areas_by_polygon(
         metric_id: str, polygon: PolygonGeometry
-    ) -> list[dict[str, float]]:
+    ) -> List[MetricResponse]:
 
         assets_url = get_items_asset_url(metric_id)
         result = []

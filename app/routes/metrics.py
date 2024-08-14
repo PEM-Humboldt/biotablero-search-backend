@@ -1,9 +1,8 @@
 from typing import Annotated, Literal, List
-
 import fastapi
-from pydantic import BaseModel, Field
 
 from app.routes.schemas.polygon import Polygon
+from app.routes.schemas.MetricValues import MetricResponse
 from app.services.metrics import Metrics as metrics_service
 from logging import getLogger
 from app.utils import context_vars
@@ -20,13 +19,6 @@ validation_error_example = {
         }
     ]
 }
-
-
-class AreasResponse(BaseModel):
-    key: str = Field(
-        description="Name or Id of the property", example="Perdida"
-    )
-    value: float = Field(description="Value of the property", example=2035)
 
 
 router = fastapi.APIRouter(
@@ -64,26 +56,29 @@ async def defined_areas_params(
     return {"area_type": area_type, "area_id": area_id}
 
 
-@router.get("/{metric_id}/values", response_model=List[AreasResponse])
+@router.get("/{metric_id}/values", response_model=List[MetricResponse])
 async def get_areas_by_defined_area(
     metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
     defined_area: Annotated[dict, fastapi.Depends(defined_areas_params)],
-) -> list[dict[str, float]]:
+) -> List[MetricResponse]:
     """
     Given a metric and a predefined area of interest, get the area values for each category in the metric inside the indicated area
     """
     return [
-        {"key": "Perdida", "value": 2035},
-        {"key": "Persistencia", "value": 40843},
-        {"key": "No bosque", "value": 207122},
+        {
+            "Perdida": 2035,
+            "Persistencia": 40843,
+            "No_bosque": 207122,
+            "periodo": "dummy"
+        }
     ]
 
 
-@router.post("/{metric_id}/values", response_model=List[AreasResponse])
+@router.post("/{metric_id}/values", response_model=List[MetricResponse])
 async def get_areas_by_polygon(
     metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
     polygon: Polygon,
-) -> list[dict[str, float]]:
+) -> List[MetricResponse]:
     """
     Given a metric and a polygon, get the area values for each category in the metric inside the polygon.
     """

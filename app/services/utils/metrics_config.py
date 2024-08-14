@@ -6,7 +6,7 @@ def value_category_config(metric_id: str) -> Optional[Dict[Any, Any]]:
     For every known metric return the map of category-value for their raster
     """
     if metric_id == "LossPersistence":
-        return {"Perdida": 0, "Persistencia": 1, "No bosque": 2}
+        return {"perdida": 0, "persistencia": 1, "no_bosque": 2}
     return None
 
 

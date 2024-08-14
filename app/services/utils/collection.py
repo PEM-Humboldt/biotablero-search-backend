@@ -50,14 +50,6 @@ def get_collection_items_url(collection_id: str) -> Optional[str]:
                 detail=f"HTTP error occurred while accessing {items_url}",
             )
 
-    items_data = response.json()
-
-    if not items_data.get("features"):
-        raise HTTPException(
-            status_code=404,
-            detail=f"No items found in the collection at URL: {items_url}",
-        )
-
     return items_url
 
 

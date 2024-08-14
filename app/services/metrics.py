@@ -1,10 +1,6 @@
 import app.services.utils.raster as raster_utils
 from app.services.utils.collection import get_first_item_asset_from_collection
-from app.utils import config
 from app.routes.schemas.polygon import PolygonGeometry
-
-
-settings = config.get_settings()
 
 
 class Metrics:

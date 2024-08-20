@@ -1,12 +1,13 @@
-from rio_tiler.io import Reader
+from rio_tiler.io.rasterio import Reader
 from rasterio import features
 from geopandas import GeoDataFrame
 from shapely import geometry
+from typing import Any
 
 
 # TODO: become generic in order to be able to reuse
 def crop_raster(raster_path, polygon):
-    with Reader(raster_path) as image:
+    with Reader(input= raster_path, options={}) as image:
         img = image.feature(polygon)
 
     return img.render(
@@ -20,10 +21,10 @@ def crop_raster(raster_path, polygon):
 
 
 # TODO: Test the data resulting from the areas
-def get_raster_values(raster_path, polygon, categories):
+def get_raster_values(raster_path, polygon, categories) -> dict[str, Any]:
     crs = "EPSG:9377"
 
-    with Reader(raster_path) as cog:
+    with Reader(input=raster_path, options={}) as cog:
         data = cog.feature(polygon, dst_crs=crs)
         transform = data.transform
         mask = data.mask != 0

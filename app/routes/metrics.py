@@ -3,7 +3,7 @@ import fastapi
 
 from app.routes.schemas.polygon import Polygon
 from app.routes.schemas.MetricValues import MetricResponse
-from app.services.metrics import Metrics as metrics_service
+import app.services.metrics as metrics_service
 from logging import getLogger
 from app.utils import context_vars
 
@@ -64,14 +64,9 @@ async def get_areas_by_defined_area(
     """
     Given a metric and a predefined area of interest, get the area values for each category in the metric inside the indicated area
     """
-    return [
-        {
-            "perdida": 2035,
-            "persistencia": 40843,
-            "no_bosque": 207122,
-            "periodo": "dummy"
-        }
-    ]
+    area_type = defined_area["area_type"]
+    area_id = defined_area["area_id"]
+    return metrics_service.get_areas_by_defined_area(metric_id, area_type, area_id)
 
 
 @router.post("/{metric_id}/values", response_model=List[MetricResponse])

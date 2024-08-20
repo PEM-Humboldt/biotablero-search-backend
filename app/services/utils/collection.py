@@ -7,8 +7,7 @@ from app.utils import config
 settings = config.get_settings()
 
 
-def get_collection_items_url(collection_id: str) -> typing.Optional[str]:
-    response = None
+def get_collection_items_url(collection_id: str) -> str:
     collection_url = f"{settings.stac_url}/collections/{collection_id}"
 
     try:
@@ -42,7 +41,6 @@ def get_items_asset_url(
 ) -> typing.Dict[str, typing.Any]:
     items_url = get_collection_items_url(collection_id)
 
-    response = None
     try:
         response = requests.get(items_url)
         response.raise_for_status()

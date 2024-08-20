@@ -7,4 +7,5 @@ class LossPersistenceResponse(BaseModel):
     no_bosque: float
     periodo: str
 
-MetricResponse = Union[LossPersistenceResponse]
+# dict is temporal because of the type checking, remove after adding another type
+MetricResponse = Union[LossPersistenceResponse, dict]

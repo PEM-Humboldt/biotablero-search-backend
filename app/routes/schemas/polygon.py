@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field, field_validator
-from geojson_pydantic import Feature, geometries, types
+from geojson_pydantic import Feature, geometries
 from typing import Union
 
 coordinates = [
@@ -29,7 +29,10 @@ geojson_polygon = {
 
 
 class PolygonGeometry(geometries.Polygon):
-    bbox: types.BBox
+    def __init__(self, **args):
+        if 'bbox' not in args:
+            raise ValueError("bbox attribute in polygon geometry is required.")
+        super().__init__(**args)
 
     @field_validator("bbox", mode="before")
     def validate_bbox(cls, v):
@@ -58,11 +61,11 @@ class PolygonGeometry(geometries.Polygon):
 
 
 class PolygonFeature(Feature):
-    geometry: Union[PolygonGeometry, None]
+    geometry: PolygonGeometry
 
 
 class Polygon(BaseModel):
     polygon: PolygonFeature = Field(
         description="GeoJSON polygon to determine the query area",
-        example=geojson_polygon,
+        examples=[geojson_polygon],
     )

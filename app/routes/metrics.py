@@ -57,7 +57,7 @@ async def defined_areas_params(
 
 
 @router.get("/{metric_id}/values", response_model=List[MetricResponse])
-async def get_areas_by_defined_area(
+async def get_values_by_defined_area(
     metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
     defined_area: Annotated[dict, fastapi.Depends(defined_areas_params)],
 ) -> List[MetricResponse]:
@@ -70,7 +70,7 @@ async def get_areas_by_defined_area(
 
 
 @router.post("/{metric_id}/values", response_model=List[MetricResponse])
-async def get_areas_by_polygon(
+async def get_values_by_polygon(
     metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
     polygon: Polygon,
 ) -> List[MetricResponse]:

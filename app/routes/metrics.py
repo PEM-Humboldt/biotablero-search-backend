@@ -66,9 +66,9 @@ async def get_areas_by_defined_area(
     """
     return [
         {
-            "Perdida": 2035,
-            "Persistencia": 40843,
-            "No_bosque": 207122,
+            "perdida": 2035,
+            "persistencia": 40843,
+            "no_bosque": 207122,
             "periodo": "dummy"
         }
     ]

@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field, field_validator
 from geojson_pydantic import Feature, geometries, types
-from typing import Union, Tuple
+from typing import Union
 
 coordinates = [
     [-74.66791948382932, 3.9616641000901702],

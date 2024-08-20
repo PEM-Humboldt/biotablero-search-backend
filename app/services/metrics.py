@@ -38,9 +38,10 @@ class Metrics:
     def get_layer_by_polygon(metric_id: str, polygon: PolygonGeometry):
 
         # TODO: change this line when the optimization strategy is implemented
-        first_asset = get_items_asset_url(metric_id)[0]
+        assets = get_items_asset_url(metric_id)
+        first_asset = list(assets.values())[0]
 
         out_image = raster_utils.crop_raster(
-            first_asset, polygon, value_category_config(metric_id)
+            first_asset, polygon
         )
         return out_image

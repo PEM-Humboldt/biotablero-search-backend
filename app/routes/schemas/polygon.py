@@ -30,7 +30,7 @@ geojson_polygon = {
 
 class PolygonGeometry(geometries.Polygon):
     def __init__(self, **args):
-        if 'bbox' not in args:
+        if "bbox" not in args:
             raise ValueError("bbox attribute in polygon geometry is required.")
         super().__init__(**args)
 

@@ -7,7 +7,7 @@ from typing import Any
 
 # TODO: become generic in order to be able to reuse
 def crop_raster(raster_path, polygon):
-    with Reader(input= raster_path, options={}) as image:
+    with Reader(input=raster_path, options={}) as image:
         img = image.feature(polygon)
 
     return img.render(

@@ -10,17 +10,19 @@ from app.services.utils.metrics_config import (
 )
 
 
-
-def get_areas_by_defined_area(metric_id, area_type, area_id) -> List[MetricResponse]:
+def get_areas_by_defined_area(
+    metric_id, area_type, area_id
+) -> List[MetricResponse]:
     # TODO: Implement service
     return [
-    {
-        "perdida": 2035,
-        "persistencia": 40843,
-        "no_bosque": 207122,
-        "periodo": "dummy"
-    }
-]
+        {
+            "perdida": 2035,
+            "persistencia": 40843,
+            "no_bosque": 207122,
+            "periodo": "dummy",
+        }
+    ]
+
 
 def get_areas_by_polygon(
     metric_id: str, polygon: PolygonGeometry
@@ -33,7 +35,7 @@ def get_areas_by_polygon(
             v, polygon, value_category_config(metric_id)
         )
         group = metric_group_key(metric_id)
-        if (group is None):
+        if group is None:
             # TODO: Change Exception for specific class
             raise Exception("there is not a defined category for this metric")
         values[group] = k
@@ -41,9 +43,11 @@ def get_areas_by_polygon(
 
     return result
 
+
 def get_layer_by_defined_area(metric_id, area_type, area_id):
     # TODO: Implement service
     return ""
+
 
 def get_layer_by_polygon(metric_id: str, polygon: PolygonGeometry):
 
@@ -51,7 +55,5 @@ def get_layer_by_polygon(metric_id: str, polygon: PolygonGeometry):
     assets = get_items_asset_url(metric_id)
     first_asset = list(assets.values())[0]
 
-    out_image = raster_utils.crop_raster(
-        first_asset, polygon
-    )
+    out_image = raster_utils.crop_raster(first_asset, polygon)
     return out_image

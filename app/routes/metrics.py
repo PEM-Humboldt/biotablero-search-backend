@@ -66,7 +66,9 @@ async def get_values_by_defined_area(
     """
     area_type = defined_area["area_type"]
     area_id = defined_area["area_id"]
-    return metrics_service.get_areas_by_defined_area(metric_id, area_type, area_id)
+    return metrics_service.get_areas_by_defined_area(
+        metric_id, area_type, area_id
+    )
 
 
 @router.post("/{metric_id}/values", response_model=List[MetricResponse])

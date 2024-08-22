@@ -1,4 +1,4 @@
-from typing import Annotated, Literal, List
+from typing import List
 
 import app.services.utils.raster as raster_utils
 from app.services.utils.collection import get_items_asset_url

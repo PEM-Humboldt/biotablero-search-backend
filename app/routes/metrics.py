@@ -1,14 +1,14 @@
 from typing import Annotated, Literal, List
-
 import fastapi
 from pydantic import BaseModel, Field
-
 from app.routes.schemas.polygon import Polygon
 from app.services.metrics import Metrics as metrics_service
 from logging import getLogger
 from app.utils import context_vars
 
+
 request_id_context = context_vars.request_id_context
+logger = getLogger(__name__)
 
 validation_error_example = {
     "detail": [
@@ -34,7 +34,8 @@ router = fastapi.APIRouter(
     tags=["metrics"],
     responses={
         404: {"description": "Not found"},
-        422: {
+        500: {
+            "description": "Internal server error",
             "content": {
                 "application/json": {"example": validation_error_example}
             },
@@ -45,7 +46,7 @@ router = fastapi.APIRouter(
 
 async def metric_id_param(
     metric_id: Annotated[
-        Literal["LossPersistence", "Coverage"],
+        Literal["LossPersistence21", "Coverage"],
         fastapi.Path(description="metric you whish to query"),
     ]
 ) -> str:
@@ -87,14 +88,9 @@ async def get_areas_by_polygon(
     """
     Given a metric and a polygon, get the area values for each category in the metric inside the polygon.
     """
-    try:
-        polygon_geometry = polygon.polygon.geometry
-        data = metrics_service.get_areas_by_polygon(
-            metric_id, polygon_geometry
-        )
-        return data
-    except Exception as e:
-        raise fastapi.HTTPException(status_code=500, detail=str(e))
+    polygon_geometry = polygon.polygon.geometry
+    data = metrics_service.get_areas_by_polygon(metric_id, polygon_geometry)
+    return data
 
 
 @router.get("/{metric_id}/layer")
@@ -112,20 +108,13 @@ async def get_layer_by_defined_area(
 async def get_layer_by_polygon(
     metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
     polygon: Polygon,
+    request: fastapi.Request,
 ):
     """
     Given a metric and a predefined area of interest, get the layer of the metric cut by the indicated area
     """
-    logger = getLogger(__name__)
-    try:
-        polygon_geometry = polygon.polygon.geometry
-        raster_bytes = metrics_service.get_layer_by_polygon(
-            metric_id, polygon_geometry
-        )
-        return fastapi.Response(content=raster_bytes, media_type="image/png")
-    except Exception as e:
-        logger.error(
-            f"Execution error: {e}",
-            extra={"request_id": request_id_context.get()},
-        )
-        raise fastapi.HTTPException(status_code=500, detail=str(e))
+    polygon_geometry = polygon.polygon.geometry
+    raster_bytes = metrics_service.get_layer_by_polygon(
+        metric_id, polygon_geometry
+    )
+    return fastapi.Response(content=raster_bytes, media_type="image/png")

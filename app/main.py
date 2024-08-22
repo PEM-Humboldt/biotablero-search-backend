@@ -1,11 +1,13 @@
 from logging import getLogger
 
 import fastapi
-from starlette.exceptions import HTTPException as StarletteHTTPException
-
+from app.middleware.exception_handlers import (
+    generic_exception_handler,
+    validation_exception_handler,
+)
+from app.middleware.log_middleware import log_requests
 from app.routes import metrics
 from app.utils import context_vars
-from app.middleware import exception_handlers, log_middleware
 from app.utils.config import get_settings
 
 settings = get_settings()
@@ -26,14 +28,11 @@ app = fastapi.FastAPI(
     docs_url=None if settings.env.lower() == "prod" else "/docs",
 )
 
-app.middleware("http")(log_middleware.log_requests)
+app.middleware("http")(log_requests)
 
+app.add_exception_handler(Exception, generic_exception_handler)
 app.add_exception_handler(
-    StarletteHTTPException, exception_handlers.http_exception_handler
-)
-app.add_exception_handler(
-    fastapi.exceptions.RequestValidationError,
-    exception_handlers.validation_exception_handler,
+    fastapi.exceptions.RequestValidationError, validation_exception_handler
 )
 
 app.include_router(metrics.router)

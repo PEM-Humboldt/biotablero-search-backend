@@ -6,7 +6,6 @@ from app.utils.errors import raise_http_exception
 settings = config.get_settings()
 
 
-
 def get_collection_items_url(collection_id: str) -> str:
     collection_url = f"{settings.stac_url}/collections/{collection_id}"
 
@@ -22,7 +21,6 @@ def get_collection_items_url(collection_id: str) -> str:
     collection_data = response.json()
     if not collection_data:
         raise_http_exception(404, "no_features", collection_url)
-
 
     items_url = f"{collection_url}/items"
     try:
@@ -54,7 +52,6 @@ def get_items_asset_url(
     items_data = response.json()
     if not items_data.get("features"):
         raise_http_exception(404, "no_features", items_url)
-
 
     def get_asset_url(item):
         assets = item.get("assets", {})

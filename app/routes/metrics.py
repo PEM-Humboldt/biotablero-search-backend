@@ -39,7 +39,7 @@ router = fastapi.APIRouter(
 
 async def metric_id_param(
     metric_id: Annotated[
-        Literal["LossPersistence21", "Coverage"],
+        Literal["LossPersistence", "Coverage"],
         fastapi.Path(description="metric you whish to query"),
     ]
 ) -> str:
@@ -101,7 +101,6 @@ async def get_layer_by_defined_area(
 async def get_layer_by_polygon(
     metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
     polygon: Polygon,
-    request: fastapi.Request,
 ):
     """
     Given a metric and a predefined area of interest, get the layer of the metric cut by the indicated area

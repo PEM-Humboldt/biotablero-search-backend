@@ -80,3 +80,16 @@ def get_items_asset_url(
     )
 
     return {k: v for k, v in assets_urls.items() if v is not None}
+
+
+def get_asset_href_by_item_id(collection_id: str, item_id: str) -> str:
+    assets_urls = get_items_asset_url(collection_id)
+
+    asset_href = assets_urls.get(item_id)
+    if not asset_href:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Asset URL not found for item ID {item_id} in the collection {collection_id}.",
+        )
+
+    return asset_href

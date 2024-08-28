@@ -100,7 +100,7 @@ async def get_layer_by_defined_area(
     return {"layer": "response to be defined"}
 
 
-@router.post("/{metric_id}/layer/")
+@router.post("/{metric_id}/layer")
 async def get_layer_by_polygon(
     metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
     polygon: Polygon,

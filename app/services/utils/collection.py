@@ -86,9 +86,8 @@ def get_asset_href_by_item_id(collection_id: str, item_id: str) -> str:
     stac_url = (
         f"{settings.stac_url}/collections/{collection_id}/items/{item_id}"
     )
-    print(stac_url)
+
     response = requests.get(stac_url)
-    print(response)
     if response.status_code == 404:
         raise HTTPException(
             status_code=404,

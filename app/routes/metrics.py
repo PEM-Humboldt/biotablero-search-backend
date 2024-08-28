@@ -104,6 +104,13 @@ async def get_layer_by_defined_area(
 async def get_layer_by_polygon(
     metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
     polygon: Polygon,
+    item_id: Annotated[
+        str,
+        fastapi.Query(
+            description="The ID of the item to retrieve",
+            example="example_item_id",
+        ),
+    ],
 ):
     """
     Given a metric and a predefined area of interest, get the layer of the metric cut by the indicated area
@@ -112,7 +119,7 @@ async def get_layer_by_polygon(
     try:
         polygon_geometry = polygon.polygon.geometry
         raster_bytes = metrics_service.get_layer_by_polygon(
-            metric_id, polygon_geometry
+            metric_id, polygon_geometry, item_id
         )
         return fastapi.Response(content=raster_bytes, media_type="image/png")
     except Exception as e:

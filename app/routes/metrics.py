@@ -100,11 +100,11 @@ async def get_layer_by_defined_area(
     return {"layer": "response to be defined"}
 
 
-@router.post("/{metric_id}/layer/{item_id}")
+@router.post("/{metric_id}/layer/")
 async def get_layer_by_polygon(
     metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
     polygon: Polygon,
-    item_id: str,
+    item_id: Annotated[str, fastapi.Query(...)],
 ):
     """
     Given a metric and a predefined area of interest, get the layer of the metric cut by the indicated area

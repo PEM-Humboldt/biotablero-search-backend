@@ -1,7 +1,6 @@
 from pydantic import BaseModel, Field, field_validator
 from geojson_pydantic import Feature, geometries
-
-from app.utils.errors import raise_http_exception
+from app.middleware.exceptions import BBoxValidationError
 
 coordinates = [
     [-74.66791948382932, 3.9616641000901702],
@@ -32,27 +31,44 @@ geojson_polygon = {
 class PolygonGeometry(geometries.Polygon):
     def __init__(self, **args):
         if "bbox" not in args:
-            raise ValueError("bbox attribute in polygon geometry is required.")
+            raise BBoxValidationError(
+                [], "bbox attribute in polygon geometry is required."
+            )
         super().__init__(**args)
 
     @field_validator("bbox", mode="before")
-    def validate_bbox(cls, v):
-        if len(v) not in [4, 6]:
-            raise_http_exception(422, "bbox_length", url="None")
-        min_lon, min_lat, max_lon, max_lat = v[:4]
+    def validate_bbox(bbox: list):
+        if len(bbox) not in [4, 6]:
+            raise BBoxValidationError(
+                bbox, "Bounding box (bbox) must have 4 or 6 elements."
+            )
+
+        min_lon, min_lat, max_lon, max_lat = bbox[:4]
         if not (-180 <= min_lon <= 180) or not (-180 <= max_lon <= 180):
-            raise_http_exception(422, "bbox_longitude", url="None")
+            raise BBoxValidationError(
+                bbox, "Longitude values must be between -180 and 180."
+            )
         if not (-90 <= min_lat <= 90) or not (-90 <= max_lat <= 90):
-            raise_http_exception(422, "bbox_latitude", url="None")
+            raise BBoxValidationError(
+                bbox, "Latitude values must be between -90 and 90."
+            )
         if min_lon > max_lon:
-            raise_http_exception(422, "bbox_min_max_longitude", url="None")
+            raise BBoxValidationError(
+                bbox,
+                "Minimum longitude cannot be greater than maximum longitude.",
+            )
         if min_lat > max_lat:
-            raise_http_exception(422, "bbox_min_max_latitude", url="None")
-        if len(v) == 6:
-            min_alt, max_alt = v[4], v[5]
+            raise BBoxValidationError(
+                bbox,
+                "Minimum latitude cannot be greater than maximum latitude.",
+            )
+        if len(bbox) == 6:
+            min_alt, max_alt = bbox[4], bbox[5]
             if min_alt > max_alt:
-                raise_http_exception(422, "bbox_min_max_altitude", url="None")
-        return v
+                raise BBoxValidationError(
+                    bbox,
+                    "Minimum altitude cannot be greater than maximum altitude.",
+                )
 
 
 class PolygonFeature(Feature):

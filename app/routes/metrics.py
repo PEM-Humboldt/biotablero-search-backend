@@ -3,34 +3,36 @@ import fastapi
 from app.routes.schemas.polygon import Polygon
 from app.routes.schemas.MetricValues import MetricResponse
 import app.services.metrics as metrics_service
-from logging import getLogger
-from app.utils import context_vars
-
-
-request_id_context = context_vars.request_id_context
-logger = getLogger(__name__)
 
 validation_error_example = {
     "detail": [
         {
-            "type": "missing",
             "loc": ["body", "polygon"],
             "msg": "Field required",
-            "input": {},
+            "type": "value_error.missing",
         }
     ]
 }
-
 
 router = fastapi.APIRouter(
     prefix="/metrics",
     tags=["metrics"],
     responses={
         404: {"description": "Not found"},
+        422: {
+            "description": "Validation error",
+            "content": {
+                "application/json": {"example": validation_error_example}
+            },
+        },
         500: {
             "description": "Internal server error",
             "content": {
-                "application/json": {"example": validation_error_example}
+                "application/json": {
+                    "example": {
+                        "message": "An internal server error occurred."
+                    }
+                },
             },
         },
     },

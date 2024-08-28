@@ -1,7 +1,13 @@
 import typing
 import requests
+
+from app.middleware.exceptions import (
+    CollectionNotFoundError,
+    HTTPRequestError,
+    NoFeaturesError,
+    ItemsNotFoundError,
+)
 from app.utils import config
-from app.utils.errors import raise_http_exception
 
 settings = config.get_settings()
 
@@ -14,13 +20,13 @@ def get_collection_items_url(collection_id: str) -> str:
         response.raise_for_status()
     except requests.exceptions.HTTPError:
         if response.status_code == 404:
-            raise_http_exception(404, "collection_not_found", collection_url)
+            raise CollectionNotFoundError(collection_url)
         else:
-            raise_http_exception(500, "http_error", collection_url)
+            raise HTTPRequestError(collection_url)
 
     collection_data = response.json()
     if not collection_data:
-        raise_http_exception(404, "no_features", collection_url)
+        raise NoFeaturesError(collection_url)
 
     items_url = f"{collection_url}/items"
     try:
@@ -28,9 +34,9 @@ def get_collection_items_url(collection_id: str) -> str:
         response.raise_for_status()
     except requests.exceptions.HTTPError:
         if response.status_code == 404:
-            raise_http_exception(404, "items_not_found", items_url)
+            raise ItemsNotFoundError(items_url)
         else:
-            raise_http_exception(500, "http_error", items_url)
+            raise HTTPRequestError(items_url)
 
     return f"{collection_url}/items"
 
@@ -45,13 +51,13 @@ def get_items_asset_url(
         response.raise_for_status()
     except requests.exceptions.HTTPError:
         if response.status_code == 404:
-            raise_http_exception(404, "items_not_found", items_url)
+            raise ItemsNotFoundError(items_url)
         else:
-            raise_http_exception(500, "http_error", items_url)
+            raise HTTPRequestError(items_url)
 
     items_data = response.json()
     if not items_data.get("features"):
-        raise_http_exception(404, "no_features", items_url)
+        raise NoFeaturesError(items_url)
 
     def get_asset_url(item):
         assets = item.get("assets", {})

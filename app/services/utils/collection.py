@@ -77,3 +77,31 @@ def get_items_asset_url(
     )
 
     return {k: v for k, v in assets_urls.items() if v is not None}
+
+
+def get_asset_href_by_item_id(collection_id: str, item_id: str) -> str:
+    stac_url = (
+        f"{settings.stac_url}/collections/{collection_id}/items/{item_id}"
+    )
+
+    response = requests.get(stac_url)
+    if response.status_code == 404:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Item ID {item_id} not found in the collection {collection_id}.",
+        )
+    elif response.status_code != 200:
+        raise HTTPException(
+            status_code=response.status_code,
+            detail=f"Error retrieving item ID {item_id} from collection {collection_id}.",
+        )
+
+    item_data = response.json()
+    asset_href = item_data.get("assets", {}).get(item_id, {}).get("href")
+    if not asset_href:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Asset URL not found for item ID {item_id} in the collection {collection_id}.",
+        )
+
+    return asset_href

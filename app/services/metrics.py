@@ -1,7 +1,10 @@
 from typing import List
 
 import app.services.utils.raster as raster_utils
-from app.services.utils.collection import get_items_asset_url
+from app.services.utils.collection import (
+    get_items_asset_url,
+    get_asset_href_by_item_id,
+)
 from app.routes.schemas.polygon import PolygonGeometry
 from app.routes.schemas.MetricValues import MetricResponse
 from app.services.utils.metrics_config import (
@@ -49,11 +52,12 @@ def get_layer_by_defined_area(metric_id, area_type, area_id):
     return ""
 
 
-def get_layer_by_polygon(metric_id: str, polygon: PolygonGeometry):
+def get_layer_by_polygon(
+    metric_id: str, polygon: PolygonGeometry, item_id: str
+):
 
     # TODO: change this line when the optimization strategy is implemented
-    assets = get_items_asset_url(metric_id)
-    first_asset = list(assets.values())[0]
+    raster_href = get_asset_href_by_item_id(metric_id, item_id)
 
-    out_image = raster_utils.crop_raster(first_asset, polygon)
+    out_image = raster_utils.crop_raster(raster_href, polygon)
     return out_image

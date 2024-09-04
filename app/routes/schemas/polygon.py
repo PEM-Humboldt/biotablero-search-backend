@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field, field_validator
 from geojson_pydantic import Feature, geometries
-from app.middleware.exceptions import BBoxValidationError
+from fastapi.exceptions import ValidationException
 
 coordinates = [
     [-74.66791948382932, 3.9616641000901702],
@@ -27,48 +27,59 @@ geojson_polygon = {
     },
 }
 
+error_template = {
+    "type": "invalid_bbox",
+    "loc": ("body", "polygon", "geometry", "bbox"),
+    "msg": "",
+}
+
 
 class PolygonGeometry(geometries.Polygon):
     def __init__(self, **args):
         if "bbox" not in args:
-            raise BBoxValidationError(
-                [], "bbox attribute in polygon geometry is required."
+            error_template["msg"] = (
+                "bbox attribute in polygon geometry is required."
             )
+            raise ValidationException([error_template])
         super().__init__(**args)
 
     @field_validator("bbox", mode="before")
-    def validate_bbox(bbox: list):
-        if len(bbox) not in [4, 6]:
-            raise BBoxValidationError(
-                bbox, "Bounding box (bbox) must have 4 or 6 elements."
+    @classmethod
+    def validate_bbox(cls, value):
+        if len(value) not in [4, 6]:
+            error_template["msg"] = (
+                "Bounding box (bbox) must have 4 or 6 elements."
             )
+            raise ValidationException([error_template])
 
-        min_lon, min_lat, max_lon, max_lat = bbox[:4]
+        min_lon, min_lat, max_lon, max_lat = value[:4]
         if not (-180 <= min_lon <= 180) or not (-180 <= max_lon <= 180):
-            raise BBoxValidationError(
-                bbox, "Longitude values must be between -180 and 180."
+            error_template["msg"] = (
+                "Longitude values must be between -180 and 180."
             )
+            raise ValidationException([error_template])
         if not (-90 <= min_lat <= 90) or not (-90 <= max_lat <= 90):
-            raise BBoxValidationError(
-                bbox, "Latitude values must be between -90 and 90."
+            error_template["msg"] = (
+                "Latitude values must be between -90 and 90."
             )
+            raise ValidationException([error_template])
         if min_lon > max_lon:
-            raise BBoxValidationError(
-                bbox,
-                "Minimum longitude cannot be greater than maximum longitude.",
+            error_template["msg"] = (
+                "Minimum longitude cannot be greater than maximum longitude."
             )
+            raise ValidationException([error_template])
         if min_lat > max_lat:
-            raise BBoxValidationError(
-                bbox,
-                "Minimum latitude cannot be greater than maximum latitude.",
+            error_template["msg"] = (
+                "Minimum latitude cannot be greater than maximum latitude."
             )
-        if len(bbox) == 6:
-            min_alt, max_alt = bbox[4], bbox[5]
+            raise ValidationException([error_template])
+        if len(value) == 6:
+            min_alt, max_alt = value[4], value[5]
             if min_alt > max_alt:
-                raise BBoxValidationError(
-                    bbox,
-                    "Minimum altitude cannot be greater than maximum altitude.",
+                error_template["msg"] = (
+                    "Minimum altitude cannot be greater than maximum altitude."
                 )
+                raise ValidationException([error_template])
 
 
 class PolygonFeature(Feature):

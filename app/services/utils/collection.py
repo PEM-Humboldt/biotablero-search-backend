@@ -1,12 +1,7 @@
 import typing
 import requests
 
-from app.middleware.exceptions import (
-    CollectionNotFoundError,
-    HTTPRequestError,
-    NoFeaturesError,
-    ItemsNotFoundError,
-)
+from app.utils.errors import ServerError, NotFoundError
 from app.utils import config
 
 settings = config.get_settings()
@@ -18,25 +13,26 @@ def get_collection_items_url(collection_id: str) -> str:
     try:
         response = requests.get(collection_url)
         response.raise_for_status()
-    except requests.exceptions.HTTPError:
+    except Exception as e:
         if response.status_code == 404:
-            raise CollectionNotFoundError(collection_url)
+            raise NotFoundError(
+                usr_msg=f"{collection_id} data not found",
+                log_msg=f"Collection not found at URL: {collection_url}",
+                e=e,
+            )
         else:
-            raise HTTPRequestError(collection_url)
+            raise ServerError(
+                code=500,
+                usr_msg=f"There was an error retrieving {collection_id} data",
+                e=e,
+            )
 
     collection_data = response.json()
     if not collection_data:
-        raise NoFeaturesError(collection_url)
-
-    items_url = f"{collection_url}/items"
-    try:
-        response = requests.get(items_url)
-        response.raise_for_status()
-    except requests.exceptions.HTTPError:
-        if response.status_code == 404:
-            raise ItemsNotFoundError(items_url)
-        else:
-            raise HTTPRequestError(items_url)
+        raise NotFoundError(
+            usr_msg=f"{collection_id} data not found",
+            log_msg=f"Collection was found but it was empty, collection url: {collection_url}",
+        )
 
     return f"{collection_url}/items"
 
@@ -49,15 +45,26 @@ def get_items_asset_url(
     try:
         response = requests.get(items_url)
         response.raise_for_status()
-    except requests.exceptions.HTTPError:
+    except Exception as e:
         if response.status_code == 404:
-            raise ItemsNotFoundError(items_url)
+            raise NotFoundError(
+                usr_msg=f"{collection_id} data is incomplete",
+                log_msg=f"Collection items not found at URL: {items_url}",
+                e=e,
+            )
         else:
-            raise HTTPRequestError(items_url)
+            raise ServerError(
+                code=500,
+                usr_msg=f"There was an error retrieving {collection_id} data",
+                e=e,
+            )
 
     items_data = response.json()
     if not items_data.get("features"):
-        raise NoFeaturesError(items_url)
+        raise NotFoundError(
+            usr_msg=f"{collection_id} data is incomplete",
+            log_msg=f"Collection items url exist but it has no features, url: {items_url}",
+        )
 
     def get_asset_url(item):
         assets = item.get("assets", {})
@@ -80,28 +87,33 @@ def get_items_asset_url(
 
 
 def get_asset_href_by_item_id(collection_id: str, item_id: str) -> str:
-    stac_url = (
+    item_id_url = (
         f"{settings.stac_url}/collections/{collection_id}/items/{item_id}"
     )
 
-    response = requests.get(stac_url)
-    if response.status_code == 404:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Item ID {item_id} not found in the collection {collection_id}.",
-        )
-    elif response.status_code != 200:
-        raise HTTPException(
-            status_code=response.status_code,
-            detail=f"Error retrieving item ID {item_id} from collection {collection_id}.",
-        )
+    try:
+        response = requests.get(item_id_url)
+        response.raise_for_status()
+    except Exception as e:
+        if response.status_code == 404:
+            raise NotFoundError(
+                usr_msg=f"item {item_id} not found in {collection_id}",
+                log_msg=f"{item_id_url} not found",
+                e=e,
+            )
+        else:
+            raise ServerError(
+                code=500,
+                usr_msg=f"There was an error retrieving {collection_id} data",
+                e=e,
+            )
 
     item_data = response.json()
     asset_href = item_data.get("assets", {}).get(item_id, {}).get("href")
     if not asset_href:
-        raise HTTPException(
-            status_code=404,
-            detail=f"Asset URL not found for item ID {item_id} in the collection {collection_id}.",
+        raise NotFoundError(
+            usr_msg=f"item {item_id} asset not found",
+            log_msg=f"assset not found item: {item_id_url}",
         )
 
     return asset_href

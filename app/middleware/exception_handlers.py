@@ -1,61 +1,54 @@
 import traceback
 
 import fastapi
+import fastapi.exception_handlers
 
-from app.middleware.exceptions import (
-    BBoxValidationError,
-    CustomValidationError,
-)
 from app.utils import context_vars
 from logging import getLogger
-from app.utils.errors import error_messages
 
 logger = getLogger(__name__)
 request_id_context = context_vars.request_id_context
 
 
 async def validation_exception_handler(request, exc):
-    error_details = exc.errors()
-    if error_details:
-        first_error = error_details[0]
-        loc = first_error.get("loc", [])
-        input_value = first_error.get("msg", "unknown")
-
-        error_key = "literal_error"
-        error_detail_template = error_messages.get(422, {}).get(
-            error_key, "Validation error occurred: {input} at {loc}."
-        )
-
-        try:
-            error_detail = error_detail_template.format(
-                loc=" -> ".join(map(str, loc)), input=input_value
-            )
-        except KeyError as e:
-            error_detail = f"Validation error occurred: {input_value} at {' -> '.join(map(str, loc))}. Missing key: {e}"
-    else:
-        error_detail = "Validation error occurred, but details are missing."
-
-    status_code = 422
-
     logger.error(
-        f"Validation error: {error_detail} - Path: {request.url} - Method: {request.method}",
+        exc.errors(),
+        extra={"request_id": request_id_context.get()},
+    )
+    return (
+        await fastapi.exception_handlers.request_validation_exception_handler(
+            request, exc
+        )
+    )
+
+
+async def not_found_exception_handler(request, exc):
+    logger.error(
+        exc.log_msg,
         extra={"request_id": request_id_context.get()},
     )
 
     return fastapi.responses.JSONResponse(
-        status_code=status_code,
-        content={"message": error_detail},
+        status_code=404,
+        content={"detail": exc.usr_msg},
     )
 
 
-async def generic_exception_handler(request: fastapi.Request, exc: Exception):
+async def server_exception_handler(request, exc):
     tb_str = traceback.format_exception(exc.__class__, exc, exc.__traceback__)
 
     logger.error(
-        f"Unhandled Exception: {str(exc)} - Path: {request.url} - Method: {request.method} - Traceback:\n{''.join(tb_str)}",
+        f"\n{''.join(tb_str)}",
         extra={"request_id": request_id_context.get()},
     )
+
+    code = exc.code if hasattr(exc, "code") else 500
+    msg = (
+        exc.usr_msg
+        if hasattr(exc, "usr_msg")
+        else "There was an internal error"
+    )
     return fastapi.responses.JSONResponse(
-        status_code=500,
-        content={"message": "An internal server error occurred."},
+        status_code=code,
+        content={"detail": msg},
     )

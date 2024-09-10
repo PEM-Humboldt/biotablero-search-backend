@@ -1,11 +1,15 @@
 from logging import getLogger
 
-import fastapi
-from starlette.exceptions import HTTPException as StarletteHTTPException
-
+from fastapi import FastAPI, exceptions
+from app.middleware.exception_handlers import (
+    validation_exception_handler,
+    server_exception_handler,
+    not_found_exception_handler,
+)
+from app.utils.errors import ServerError, NotFoundError
+from app.middleware.log_middleware import log_requests
 from app.routes import metrics
 from app.utils import context_vars
-from app.middleware import exception_handlers, log_middleware
 from app.utils.config import get_settings
 
 settings = get_settings()
@@ -13,7 +17,7 @@ settings.configure_logging()
 logger = getLogger(__name__)
 request_id_context = context_vars.request_id_context
 
-app = fastapi.FastAPI(
+app = FastAPI(
     title="BioTableroSearch",
     description="Get metrics by predefined or custom (polygon) areas.",
     summary="Metrics for BioTablero Search module",
@@ -26,15 +30,19 @@ app = fastapi.FastAPI(
     docs_url=None if settings.env.lower() == "prod" else "/docs",
 )
 
-app.middleware("http")(log_middleware.log_requests)
+app.middleware("http")(log_requests)
+app.add_exception_handler(
+    exceptions.RequestValidationError,
+    validation_exception_handler,
+)
 
 app.add_exception_handler(
-    StarletteHTTPException, exception_handlers.http_exception_handler
+    exceptions.ValidationException,
+    validation_exception_handler,
 )
-app.add_exception_handler(
-    fastapi.exceptions.RequestValidationError,
-    exception_handlers.validation_exception_handler,
-)
+
+app.add_exception_handler(NotFoundError, not_found_exception_handler)
+app.add_exception_handler(ServerError, server_exception_handler)
+app.add_exception_handler(Exception, server_exception_handler)
 
 app.include_router(metrics.router)
-# TODO: disable swagger on production: https://fastapi.tiangolo.com/tutorial/metadata/#docs-urls

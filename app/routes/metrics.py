@@ -1,25 +1,18 @@
 from typing import Annotated, Literal, List
 import fastapi
-
 from app.routes.schemas.polygon import Polygon
 from app.routes.schemas.MetricValues import MetricResponse
 import app.services.metrics as metrics_service
-from logging import getLogger
-from app.utils import context_vars
-
-request_id_context = context_vars.request_id_context
 
 validation_error_example = {
     "detail": [
         {
-            "type": "missing",
             "loc": ["body", "polygon"],
             "msg": "Field required",
-            "input": {},
+            "type": "value_error.missing",
         }
     ]
 }
-
 
 router = fastapi.APIRouter(
     prefix="/metrics",
@@ -27,8 +20,19 @@ router = fastapi.APIRouter(
     responses={
         404: {"description": "Not found"},
         422: {
+            "description": "Validation error",
             "content": {
                 "application/json": {"example": validation_error_example}
+            },
+        },
+        500: {
+            "description": "Internal server error",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "message": "An internal server error occurred."
+                    }
+                },
             },
         },
     },
@@ -79,14 +83,9 @@ async def get_values_by_polygon(
     """
     Given a metric and a polygon, get the area values for each category in the metric inside the polygon.
     """
-    try:
-        polygon_geometry = polygon.polygon.geometry
-        data = metrics_service.get_areas_by_polygon(
-            metric_id, polygon_geometry
-        )
-        return data
-    except Exception as e:
-        raise fastapi.HTTPException(status_code=500, detail=str(e))
+    polygon_geometry = polygon.polygon.geometry
+    data = metrics_service.get_areas_by_polygon(metric_id, polygon_geometry)
+    return data
 
 
 @router.get("/{metric_id}/layer")
@@ -115,16 +114,8 @@ async def get_layer_by_polygon(
     """
     Given a metric and a predefined area of interest, get the layer of the metric cut by the indicated area
     """
-    logger = getLogger(__name__)
-    try:
-        polygon_geometry = polygon.polygon.geometry
-        raster_bytes = metrics_service.get_layer_by_polygon(
-            metric_id, polygon_geometry, item_id
-        )
-        return fastapi.Response(content=raster_bytes, media_type="image/png")
-    except Exception as e:
-        logger.error(
-            f"Execution error: {e}",
-            extra={"request_id": request_id_context.get()},
-        )
-        raise fastapi.HTTPException(status_code=500, detail=str(e))
+    polygon_geometry = polygon.polygon.geometry
+    raster_bytes = metrics_service.get_layer_by_polygon(
+        metric_id, polygon_geometry, item_id
+    )
+    return fastapi.Response(content=raster_bytes, media_type="image/png")

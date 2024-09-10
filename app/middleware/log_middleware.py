@@ -1,5 +1,4 @@
 import fastapi
-
 from app.utils import context_vars
 from uuid import uuid4
 from logging import getLogger

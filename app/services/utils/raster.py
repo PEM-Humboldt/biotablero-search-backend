@@ -1,8 +1,11 @@
+from rasterio.features import shapes
 from rio_tiler.io.rasterio import Reader
 from rasterio import features
 from geopandas import GeoDataFrame
 from shapely import geometry
 from typing import Any
+# Paralelización
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
 # TODO: become generic in order to be able to reuse
@@ -25,13 +28,15 @@ def get_raster_values(raster_path, polygon, categories) -> dict[str, Any]:
     crs = "EPSG:9377"
 
     with Reader(input=raster_path, options={}) as cog:
+
+
+        # Obtener los datos recortados al polígono reproyectado
         data = cog.feature(polygon, dst_crs=crs)
         transform = data.transform
         mask = data.mask != 0
 
-        data_shapes = features.shapes(
-            data.data[0], mask=mask, transform=transform
-        )
+        # Extraer las formas geométricas y valores de los píxeles
+        data_shapes = shapes(data.data[0], mask=mask, transform=transform)
 
         geometries = []
         values = []
@@ -39,12 +44,28 @@ def get_raster_values(raster_path, polygon, categories) -> dict[str, Any]:
             geometries.append(geometry.shape(geom))
             values.append(value)
 
-        dataFrame = GeoDataFrame({"value": values, "geometry": geometries})
+        # Crear un GeoDataFrame para manejar las áreas
+        data_frame = GeoDataFrame({"value": values, "geometry": geometries})
+        data_frame["area"] = data_frame.geometry.area
+        areas = data_frame.groupby("value")["area"].sum() / 10000  # Convertir a hectáreas
 
-        dataFrame["area"] = dataFrame.geometry.area
-
-        areas = dataFrame.groupby("value")["area"].sum() / 10000
-
-        output_data = {key: areas[categories[key]] for key in categories}
-
+        # Filtrar y devolver los datos finales
+        output_data = {key: areas[categories[key]] for key in categories if categories[key] in areas}
         return output_data
+
+
+
+
+def parallel_process_rasters(raster_paths, polygon, categories):
+    results = []
+    with ThreadPoolExecutor() as executor:
+        futures = {executor.submit(get_raster_values, path, polygon, categories): path for path in raster_paths}
+
+        for future in as_completed(futures):
+            raster_path = futures[future]
+            try:
+                result = future.result()
+                results.append(result)
+            except Exception as e:
+                print(f"Error procesando el archivo raster {raster_path}: {str(e)}")
+    return results

@@ -1,3 +1,4 @@
+from concurrent.futures import ThreadPoolExecutor
 from typing import List
 
 import app.services.utils.raster as raster_utils
@@ -28,21 +29,26 @@ def get_areas_by_defined_area(
 
 
 def get_areas_by_polygon(
-    metric_id: str, polygon: PolygonGeometry
+        metric_id: str, polygon: PolygonGeometry
 ) -> List[MetricResponse]:
-
     assets_url = get_items_asset_url(metric_id)
     result = []
-    for k, v in assets_url.items():
+
+    # Uso de paralelismo para obtener valores raster
+    def process_raster(k, v):
         values = raster_utils.get_raster_values(
             v, polygon, value_category_config(metric_id)
         )
         group = metric_group_key(metric_id)
         if group is None:
-            # TODO: Change Exception for specific class
-            raise Exception("there is not a defined category for this metric")
+            raise Exception("No hay categoría definida para esta métrica")
         values[group] = k
-        result.append(values)
+        return values
+
+    with ThreadPoolExecutor() as executor:
+        futures = [executor.submit(process_raster, k, v) for k, v in assets_url.items()]
+        for future in futures:
+            result.append(future.result())
 
     return result
 

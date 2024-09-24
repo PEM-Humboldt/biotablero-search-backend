@@ -43,10 +43,10 @@ def get_raster_values(
 
     stats = zonal_stats(
         gdf,
-        clipped_raster.values[0],  # Usar la primera banda del raster
+        clipped_raster.values[0],  # use raster first band
         affine=clipped_raster.rio.transform(),
-        categorical=True,  # Para obtener el área por categoría
-        nodata=np.nan,  # Definir los valores nulos
+        categorical=True,
+        nodata=np.nan,
     )
 
     areas_by_category = stats[0]

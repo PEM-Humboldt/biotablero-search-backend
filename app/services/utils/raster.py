@@ -1,3 +1,5 @@
+import base64
+
 from rio_tiler.io.rasterio import Reader
 from rasterio import features
 from geopandas import GeoDataFrame
@@ -5,19 +7,40 @@ from shapely import geometry
 from typing import Any
 
 
+from app.middleware.log_middleware import logger
+
+
 # TODO: become generic in order to be able to reuse
 def crop_raster(raster_path, polygon):
     with Reader(input=raster_path, options={}) as image:
         img = image.feature(polygon)
 
-    return img.render(
-        add_mask=True,
-        colormap={
-            0: (255, 0, 0, 255),
-            1: (128, 204, 102, 255),
-            2: (232, 214, 107, 255),
-        },
-    )
+    colormap = {
+        0: (255, 0, 0, 255),
+        1: (128, 204, 102, 255),
+        2: (232, 214, 107, 255),
+    }
+
+    base64_images = {}
+
+    for category, color in colormap.items():
+        try:
+            rendered_img = img.render(
+                add_mask=True, colormap={category: color}
+            )
+
+            img_base64 = base64.b64encode(rendered_img).decode("utf-8")
+
+            base64_images[str(category)] = img_base64
+
+            logger.info(f"Categoría {category} procesada con éxito.")
+        except Exception as e:
+            logger.error(
+                f"Error al renderizar la categoría {category}: {str(e)}"
+            )
+            base64_images[str(category)] = "error"
+
+    return base64_images
 
 
 # TODO: Test the data resulting from the areas

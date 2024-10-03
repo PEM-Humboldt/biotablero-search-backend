@@ -7,6 +7,7 @@ class Settings(BaseSettings):
 
     stac_url: str = "http://localhost:8080"
     env: str = "dev"
+    cors_origin: str = ""
 
     model_config = SettingsConfigDict(env_file=".env")
 

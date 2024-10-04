@@ -1,11 +1,13 @@
+from rasterstats import zonal_stats
 from rio_tiler.io.rasterio import Reader
-from rasterio import features
-from geopandas import GeoDataFrame
+import numpy as np
+import geopandas as gpd
+from typing import Any, Dict
+import rioxarray
 from shapely import geometry
-from typing import Any
 
 
-# TODO: become generic in order to be able to reuse
+# TODO: define how to get the color map (db, object, etc), it can't be hardcoded here
 def crop_raster(raster_path, polygon):
     with Reader(input=raster_path, options={}) as image:
         img = image.feature(polygon)
@@ -20,31 +22,45 @@ def crop_raster(raster_path, polygon):
     )
 
 
-# TODO: Test the data resulting from the areas
-def get_raster_values(raster_path, polygon, categories) -> dict[str, Any]:
-    crs = "EPSG:9377"
+# TODO: verify if categories should be kept as object or if it should be get from the db
+def get_raster_values(
+    raster_path: str, polygon: geometry.Polygon, categories: Dict[str, int]
+) -> Dict[str, Any]:
+    gdf = gpd.GeoDataFrame(
+        {"geometry": [polygon]}, crs="EPSG:4326"
+    )  # type: ignore -> https://github.com/geopandas/geopandas/issues/3115
+    target_crs = "EPSG:9377"
 
-    with Reader(input=raster_path, options={}) as cog:
-        data = cog.feature(polygon, dst_crs=crs)
-        transform = data.transform
-        mask = data.mask != 0
+    raster = rioxarray.open_rasterio(raster_path, masked=True)
 
-        data_shapes = features.shapes(
-            data.data[0], mask=mask, transform=transform
-        )
+    clipped_raster = raster.rio.clip(gdf.geometry, from_disk=True)
 
-        geometries = []
-        values = []
-        for geom, value in data_shapes:
-            geometries.append(geometry.shape(geom))
-            values.append(value)
+    if clipped_raster.rio.crs != target_crs:
+        clipped_raster = clipped_raster.rio.reproject(target_crs)
 
-        dataFrame = GeoDataFrame({"value": values, "geometry": geometries})
+    if gdf.crs != target_crs:
+        gdf = gdf.to_crs(target_crs)
 
-        dataFrame["area"] = dataFrame.geometry.area
+    stats = zonal_stats(
+        gdf,
+        clipped_raster.values[0],  # use raster first band
+        affine=clipped_raster.rio.transform(),
+        categorical=True,
+        nodata=np.nan,
+    )
 
-        areas = dataFrame.groupby("value")["area"].sum() / 10000
+    areas_by_category = stats[0]
 
-        output_data = {key: areas[categories[key]] for key in categories}
+    pixel_area_m2 = abs(clipped_raster.rio.transform()[0]) ** 2
+    pixel_area_ha = pixel_area_m2 / 10000
 
-        return output_data
+    output_data = {}
+    for category, pixel_count in areas_by_category.items():
+        area_ha = pixel_count * pixel_area_ha
+        if category in categories.values():
+            category_key = [
+                key for key, val in categories.items() if val == category
+            ][0]
+            output_data[category_key] = area_ha
+
+    return output_data

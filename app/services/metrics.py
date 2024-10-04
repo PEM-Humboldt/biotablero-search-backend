@@ -59,5 +59,5 @@ def get_layer_by_polygon(
     # TODO: change this line when the optimization strategy is implemented
     raster_href = get_asset_href_by_item_id(metric_id, item_id)
 
-    out_image = raster_utils.crop_raster(raster_href, polygon)
-    return out_image
+    base64_images = raster_utils.crop_raster(raster_href, polygon)
+    return base64_images

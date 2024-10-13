@@ -2,19 +2,22 @@ import typing
 import requests
 
 from app.utils.errors import ServerError, NotFoundError
-from app.utils import config
+from app.utils import config, url
 
 settings = config.get_settings()
 
 
 def get_collection_items_url(collection_id: str) -> str:
-    collection_url = f"{settings.stac_url}/collections/{collection_id}"
+    collection_url = url.build_url(
+        settings.stac_url, f"/collections/{collection_id}"
+    )
+    response = None
 
     try:
         response = requests.get(collection_url)
         response.raise_for_status()
     except Exception as e:
-        if response.status_code == 404:
+        if response is not None and response.status_code == 404:
             raise NotFoundError(
                 usr_msg=f"{collection_id} data not found",
                 log_msg=f"Collection not found at URL: {collection_url}",
@@ -41,12 +44,13 @@ def get_items_asset_url(
     collection_id: str,
 ) -> typing.Dict[str, typing.Any]:
     items_url = get_collection_items_url(collection_id)
+    response = None
 
     try:
         response = requests.get(items_url)
         response.raise_for_status()
     except Exception as e:
-        if response.status_code == 404:
+        if response is not None and response.status_code == 404:
             raise NotFoundError(
                 usr_msg=f"{collection_id} data is incomplete",
                 log_msg=f"Collection items not found at URL: {items_url}",
@@ -87,15 +91,16 @@ def get_items_asset_url(
 
 
 def get_asset_href_by_item_id(collection_id: str, item_id: str) -> str:
-    item_id_url = (
-        f"{settings.stac_url}/collections/{collection_id}/items/{item_id}"
+    item_id_url = url.build_url(
+        settings.stac_url, f"/collections/{collection_id}/items/{item_id}"
     )
+    response = None
 
     try:
         response = requests.get(item_id_url)
         response.raise_for_status()
     except Exception as e:
-        if response.status_code == 404:
+        if response is not None and response.status_code == 404:
             raise NotFoundError(
                 usr_msg=f"item {item_id} not found in {collection_id}",
                 log_msg=f"{item_id_url} not found",

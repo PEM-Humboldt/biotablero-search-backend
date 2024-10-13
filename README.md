@@ -25,6 +25,7 @@ Required Python version: 3.10+
    ACCESS_TOKEN_EXPIRE_MINUTES="" # Number of Expiration Minutes
    USER_USERNAME="" # authentication user
    USER_HASHED_PASSWORD="" # authentication password
+   CORS_ORIGIN="" # CORS origin values
    ```
 1. Run the the development server
 

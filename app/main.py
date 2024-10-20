@@ -12,6 +12,7 @@ from app.middleware.log_middleware import log_requests
 from app.routes import metrics
 from app.utils import context_vars
 from app.utils.config import get_settings
+from mangum import Mangum
 
 settings = get_settings()
 settings.configure_logging()
@@ -55,3 +56,5 @@ app.add_middleware(
     allow_credentials=True,
     allow_methods=["*"],
 )
+
+handler = Mangum(app, lifespan="auto")

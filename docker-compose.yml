@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  localstack:
+    image: localstack/localstack:latest
+    container_name: localstack
+    environment:
+      - SERVICES=lambda,apigateway,s3,cloudformation,rds,cloudwatch
+      - DEBUG=1
+      - LAMBDA_EXECUTOR=docker-reuse
+      - AWS_DEFAULT_REGION=us-east-1
+      - DATA_DIR=/tmp/localstack/data
+      - LOCALSTACK_API_KEY=${LOCALSTACK_API_KEY}
+    ports:
+      - "4566:4566"
+      - "5432:5432"  # El puerto 5432 de LocalStack (simula RDS en LocalStack)
+    volumes:
+      - "./.localstack:/var/lib/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+
+  postgres:
+    image: postgres:13
+    env_file: .env.development
+    ports:
+      - "5433:5432"
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data

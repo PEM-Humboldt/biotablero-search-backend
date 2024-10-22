@@ -1,0 +1,7 @@
+{
+  "app": "python cdk/app.py",
+  "context": {
+    "@aws-cdk/core:newStyleStackSynthesis": true,
+    "bootstrap": "false"
+  }
+}

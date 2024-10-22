@@ -32,6 +32,10 @@ app = FastAPI(
     docs_url=None if settings.env.lower() == "prod" else "/docs",
 )
 
+@app.post("/")
+async def root():
+    return {"message": "API is working"}
+
 app.middleware("http")(log_requests)
 app.add_exception_handler(
     exceptions.RequestValidationError,

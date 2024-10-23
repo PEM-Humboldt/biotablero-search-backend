@@ -31,6 +31,14 @@ app = FastAPI(
     docs_url=None if settings.env.lower() == "prod" else "/docs",
 )
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3001"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 app.middleware("http")(log_requests)
 app.add_exception_handler(
     exceptions.RequestValidationError,
@@ -47,11 +55,3 @@ app.add_exception_handler(ServerError, server_exception_handler)
 app.add_exception_handler(Exception, server_exception_handler)
 
 app.include_router(metrics.router)
-
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.cors_origin,
-    allow_credentials=True,
-    allow_methods=["*"],
-)

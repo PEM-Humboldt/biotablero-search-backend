@@ -1,0 +1,59 @@
+version: '3.8'
+
+services:
+  localstack:
+    container_name: localstack
+    image: localstack/localstack:latest
+    ports:
+      - "4566:4566"
+      - "4510-4559:4510-4559"
+    environment:
+      - DEBUG=1
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - SERVICES=s3,lambda,apigateway,rds
+      - DEFAULT_REGION=us-east-1
+      - AWS_DEFAULT_REGION=us-east-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - PERSISTENCE=1
+    volumes:
+      - "./localstack:/var/lib/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+
+  postgres:
+    image: postgis/postgis:15-3.3
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: localdb
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  app:
+    build: .
+    volumes:
+      - .:/app
+    environment:
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_DEFAULT_REGION=us-east-1
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=localdb
+    depends_on:
+      - localstack
+      - postgres
+
+  setup:
+    build: .
+    command: python localstack_setup.py
+    depends_on:
+      - localstack
+      - postgres
+
+volumes:
+  postgres_data:

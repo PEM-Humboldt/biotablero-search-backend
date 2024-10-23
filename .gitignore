@@ -160,5 +160,11 @@ cython_debug/
 #.idea/
 
 .vscode
+.idea
 
 !.gitkeep
+/.localstack/
+cdk.out/
+cdk.outputs.json
+pgdata/
+

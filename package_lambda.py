@@ -5,10 +5,10 @@ import subprocess
 from typing import Set
 
 
-def get_dependencies() -> Set[str]:
-    """Get all required dependencies from requirements.txt"""
-    with open('requirements.txt', 'r') as f:
-        return {line.strip() for line in f if line.strip() and not line.startswith('#')}
+# def get_dependencies() -> Set[str]:
+#     """Get all required dependencies from requirements.txt"""
+#     with open('requirements.txt', 'r') as f:
+#         return {line.strip() for line in f if line.strip() and not line.startswith('#')}
 
 
 
@@ -67,5 +67,5 @@ if __name__ == "__main__":
     # Layer heavy part 4 for other large dependencies
     create_lambda_layer('lambda_layer_heavy_part4', 'requirements-heavy-part4.txt')
 
-    # Create Lambda deployment package with application code
+    #Create Lambda deployment package with application code
     create_lambda_package()

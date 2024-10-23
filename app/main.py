@@ -1,6 +1,6 @@
 from logging import getLogger
 
-from fastapi import FastAPI, exceptions
+from fastapi import FastAPI, exceptions, status
 from fastapi.middleware.cors import CORSMiddleware
 from app.middleware.exception_handlers import (
     validation_exception_handler,
@@ -32,7 +32,7 @@ app = FastAPI(
     docs_url=None if settings.env.lower() == "prod" else "/docs",
 )
 
-@app.post("/")
+@app.get("/", status_code=status.HTTP_200_OK)
 async def root():
     return {"message": "API is working"}
 

@@ -178,10 +178,10 @@ class LocalStackDeployer:
     def deploy_all(self):
         print("Starting deployment...")
         self.create_lambda_function()
-        api_id = self.create_api()  # Crear API Gateway después de la función Lambda
+        api_id = self.create_api()
         print(f"API available at: http://localhost:4566/restapis/{api_id}/dev/_user_request_/")
         print("You can test the API with:")
-        print(f"curl -X POST http://localhost:4566/restapis/{api_id}/dev/_user_request_/")
+        print(f"curl -X GET http://localhost:4566/restapis/{api_id}/dev/_user_request_/")
 
 if __name__ == "__main__":
     deployer = LocalStackDeployer()

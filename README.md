@@ -172,7 +172,8 @@ Para conectarte a la base de datos PostgreSQL en LocalStack, puedes usar las sig
 * **Base de datos**: localdb
 * **Host**: localhost
 * **Puerto**: 5432
-* 
+
+
 Puedes conectarte a PostgreSQL con el siguiente comando:
 
 ```bash
@@ -188,11 +189,6 @@ Para detener los contenedores de Docker, utiliza:
 ```bash
 docker-compose down
 ```
-
-
-
-
-
 
 ## Authors
 

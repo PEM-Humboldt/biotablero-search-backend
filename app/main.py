@@ -1,6 +1,6 @@
 from logging import getLogger
 
-from fastapi import FastAPI, exceptions, status
+from fastapi import FastAPI, exceptions
 from fastapi.middleware.cors import CORSMiddleware
 from app.middleware.exception_handlers import (
     validation_exception_handler,
@@ -12,7 +12,6 @@ from app.middleware.log_middleware import log_requests
 from app.routes import metrics
 from app.utils import context_vars
 from app.utils.config import get_settings
-from mangum import Mangum
 
 settings = get_settings()
 settings.configure_logging()
@@ -32,9 +31,13 @@ app = FastAPI(
     docs_url=None if settings.env.lower() == "prod" else "/docs",
 )
 
-@app.get("/", status_code=status.HTTP_200_OK)
-async def root():
-    return {"message": "API is working"}
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3001"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 app.middleware("http")(log_requests)
 app.add_exception_handler(
@@ -52,13 +55,3 @@ app.add_exception_handler(ServerError, server_exception_handler)
 app.add_exception_handler(Exception, server_exception_handler)
 
 app.include_router(metrics.router)
-
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=settings.cors_origin,
-    allow_credentials=True,
-    allow_methods=["*"],
-)
-
-handler = Mangum(app, lifespan="auto")

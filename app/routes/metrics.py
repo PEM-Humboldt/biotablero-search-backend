@@ -114,7 +114,7 @@ async def get_layer_by_polygon(
         str,
         fastapi.Query(
             description="The ID of the item to retrieve",
-            example="example_item_id",
+            example="2016-2021",
         ),
     ],
     category: Annotated[

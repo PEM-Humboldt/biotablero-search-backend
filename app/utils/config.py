@@ -4,8 +4,13 @@ from logging import basicConfig, INFO
 
 
 class Settings(BaseSettings):
+    postgres_user: str
+    postgres_password: str
+    postgres_db: str
+    database_url_sync: str
+    database_url_async: str
 
-    stac_url: str = "http://localhost:8080"
+    stac_url: str = "http://172.191.168.255:8082"
     env: str = "dev"
     cors_origin: str = ""
 

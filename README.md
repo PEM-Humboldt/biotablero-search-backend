@@ -43,6 +43,11 @@ The documentation is automatically generated at `/docs` and `/redoc`. For produc
 
 [WIP]
 
+## Alembic README
+
+For detailed migration setup and commands, see the [Alembic Migration Guide](./documents/alembic_migrations.md).
+
+
 ## Authors
 
 Línea de Desarrollo - Gerencia de Información Científica - Dirección de conocimiento - Instituto de Investigación de

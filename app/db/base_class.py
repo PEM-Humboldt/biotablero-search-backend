@@ -11,12 +11,16 @@ async_engine = create_async_engine(
     pool_pre_ping=True,
 )
 
-AsyncSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=async_engine, class_=AsyncSession)
+AsyncSessionLocal = sessionmaker(
+    autocommit=False, autoflush=False, bind=async_engine, class_=AsyncSession
+)
 
 DATABASE_URL_SYNC = get_settings().database_url_sync
 sync_engine = create_engine(DATABASE_URL_SYNC)
 
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=sync_engine)
+SessionLocal = sessionmaker(
+    autocommit=False, autoflush=False, bind=sync_engine
+)
 
 Base = declarative_base()
 
@@ -24,6 +28,7 @@ Base = declarative_base()
 async def get_async_db() -> AsyncSession:
     async with AsyncSessionLocal() as session:
         yield session
+
 
 def get_sync_db():
     db = SessionLocal()

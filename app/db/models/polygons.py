@@ -6,10 +6,10 @@ from app.db.base_class import Base
 
 
 class Polygon(Base):
-    __tablename__ = 'polygons'
+    __tablename__ = "polygons"
 
     polygon_id = Column(Integer, primary_key=True, index=True)
     polygon_geometry = Column(JSONB, nullable=False)
     created_at = Column(TIMESTAMP, nullable=False)
 
-    metrics = relationship('MetricPolygon', back_populates='polygon')
+    metrics = relationship("MetricPolygon", back_populates="polygon")

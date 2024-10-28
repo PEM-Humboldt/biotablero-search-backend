@@ -38,8 +38,11 @@ app.add_exception_handler(
 )
 
 app.get("/")(lambda: {"status": "ok"})
+
+
 def read_root():
     return {"status": "ok"}
+
 
 app.add_exception_handler(
     exceptions.ValidationException,

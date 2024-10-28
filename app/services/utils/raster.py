@@ -1,4 +1,7 @@
 import base64
+import io
+
+from PIL import Image
 from rasterstats import zonal_stats
 from rio_tiler.io.rasterio import Reader
 import numpy as np
@@ -7,13 +10,13 @@ from typing import Any, Dict
 import rioxarray
 from shapely import geometry
 from app.middleware.log_middleware import logger
-
+from app.utils.errors import NotFoundError, ServerError
 
 
 # TODO: define how to get the color map (db, object, etc), it can't be hardcoded here
-def crop_raster(raster_path, polygon):
-    with Reader(input=raster_path, options={}) as image:
-        img = image.feature(polygon)
+def crop_raster(raster_path: str, polygon, category: int) -> Dict[str, str]:
+    Image.MAX_IMAGE_PIXELS = None
+    base64_images = {}
 
     colormap = {
         0: (255, 0, 0, 255),
@@ -21,24 +24,43 @@ def crop_raster(raster_path, polygon):
         2: (232, 214, 107, 255),
     }
 
-    base64_images = {}
+    try:
+        with Reader(input=raster_path, options={}) as image:
+            img = image.feature(polygon)
 
-    for category, color in colormap.items():
-        try:
+            color = colormap[category]
             rendered_img = img.render(
                 add_mask=True, colormap={category: color}
             )
 
-            img_base64 = base64.b64encode(rendered_img).decode("utf-8")
+            if not rendered_img:
+                raise NotFoundError(
+                    usr_msg="No data available for the selected category.",
+                    log_msg=f"No data generated for category {category}.",
+                )
+
+            pil_image = Image.open(io.BytesIO(rendered_img))
+            img_buffer = io.BytesIO()
+            pil_image.save(img_buffer, format="PNG")
+            img_buffer.seek(0)
+
+            img_base64 = base64.b64encode(img_buffer.getvalue()).decode(
+                "utf-8"
+            )
 
             base64_images[str(category)] = img_base64
 
-            logger.info(f"Categoría {category} procesada con éxito.")
-        except Exception as e:
-            logger.error(
-                f"Error al renderizar la categoría {category}: {str(e)}"
-            )
-            base64_images[str(category)] = "error"
+    except Exception as e:
+
+        logger.error(
+            f"Unexpected error rendering category {category}: {str(e)}"
+        )
+
+        raise ServerError(
+            code=500,
+            usr_msg=f"There was an error processing category {category}.",
+            e=e,
+        )
 
     return base64_images
 
@@ -47,9 +69,7 @@ def crop_raster(raster_path, polygon):
 def get_raster_values(
     raster_path: str, polygon: geometry.Polygon, categories: Dict[str, int]
 ) -> Dict[str, Any]:
-    gdf = gpd.GeoDataFrame(
-        {"geometry": [polygon]}, crs="EPSG:4326"
-    )  # type: ignore -> https://github.com/geopandas/geopandas/issues/3115
+    gdf = gpd.GeoDataFrame({"geometry": [polygon]}, crs="EPSG:4326")
     target_crs = "EPSG:9377"
 
     raster = rioxarray.open_rasterio(raster_path, masked=True)

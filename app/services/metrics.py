@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Dict
 
 import app.services.utils.raster as raster_utils
 from app.services.utils.collection import (
@@ -53,11 +53,11 @@ def get_layer_by_defined_area(metric_id, area_type, area_id):
 
 
 def get_layer_by_polygon(
-    metric_id: str, polygon: PolygonGeometry, item_id: str
-):
+    metric_id: str, polygon, item_id: str, category: int
+) -> Dict[str, str]:
 
     # TODO: change this line when the optimization strategy is implemented
     raster_href = get_asset_href_by_item_id(metric_id, item_id)
 
-    base64_images = raster_utils.crop_raster(raster_href, polygon)
+    base64_images = raster_utils.crop_raster(raster_href, polygon, category)
     return base64_images

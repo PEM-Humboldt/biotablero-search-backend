@@ -1,5 +1,6 @@
-from typing import Annotated, Literal, List, Dict, Optional
+from typing import Annotated, Literal, List, Dict
 import fastapi
+from fastapi import Query
 from pydantic import BaseModel
 
 from app.routes.schemas.polygon import Polygon
@@ -102,9 +103,7 @@ async def get_layer_by_defined_area(
 
 
 class LayerResponse(BaseModel):
-    images: Dict[
-        str, Optional[str]
-    ]  # Las claves son cadenas, los valores pueden ser cadenas o None
+    images: Dict[str, str]
 
 
 @router.post("/{metric_id}/layer")
@@ -118,12 +117,21 @@ async def get_layer_by_polygon(
             example="example_item_id",
         ),
     ],
+    category: Annotated[
+        int,
+        Query(
+            description="Category to filter (0: Loss, 1: Persistence, 2: Non-Forest)",
+            example=0,
+        ),
+    ],
 ):
     """
     Given a metric and a predefined area of interest, get the layer of the metric cut by the indicated area
     """
     polygon_geometry = polygon.polygon.geometry
+
     base64_images = metrics_service.get_layer_by_polygon(
-        metric_id, polygon_geometry, item_id
+        metric_id, polygon_geometry, item_id, category
     )
+
     return LayerResponse(images=base64_images)

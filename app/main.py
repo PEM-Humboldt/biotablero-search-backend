@@ -1,5 +1,4 @@
 from logging import getLogger
-
 from fastapi import FastAPI, exceptions
 from fastapi.middleware.cors import CORSMiddleware
 from app.middleware.exception_handlers import (
@@ -32,6 +31,7 @@ app = FastAPI(
 )
 
 app.middleware("http")(log_requests)
+
 app.add_exception_handler(
     exceptions.RequestValidationError,
     validation_exception_handler,
@@ -46,12 +46,13 @@ app.add_exception_handler(NotFoundError, not_found_exception_handler)
 app.add_exception_handler(ServerError, server_exception_handler)
 app.add_exception_handler(Exception, server_exception_handler)
 
-app.include_router(metrics.router)
-
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.cors_origin,
-    allow_credentials=True,
+    allow_origins=["*"],
     allow_methods=["*"],
+    allow_headers=["*"],
+    allow_credentials=True,
 )
+
+app.include_router(metrics.router)

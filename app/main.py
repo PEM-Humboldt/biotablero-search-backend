@@ -49,7 +49,7 @@ app.add_exception_handler(Exception, server_exception_handler)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=settings.cors_origin,
     allow_methods=["*"],
     allow_headers=["*"],
     allow_credentials=True,

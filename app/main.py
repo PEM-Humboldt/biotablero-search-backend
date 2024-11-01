@@ -41,7 +41,7 @@ app.get("/")(lambda: {"status": "ok"})
 
 
 def read_root():
-    return {"status": "ok"}
+    return {"status": "ok_"}
 
 
 app.add_exception_handler(

@@ -2,13 +2,14 @@
 
 This document provides instructions for setting up and managing database migrations in the `biotablero-search-backend` project using Alembic in a Docker environment. It includes the purpose of `init_postgis.sql` and essential Alembic commands.
 
-## Setup and Configuration
+
+## Step 1: Configure and run the Docker environment
 
 ### Environment Configuration
 
-Before running the Docker setup, create a `.env` file in the project root to configure your database credentials. Alembic and other components require these environment variables for proper functionality.
+* Before running the Docker setup, create a `.env` file in the project root to configure your database credentials. Alembic and other components require these environment variables for proper functionality. 
 
-Here is an example of the `.env` file:
+  Here is an example of the `.env` file:
 
 ```text
 POSTGRES_USER=your_postgres_user
@@ -24,7 +25,7 @@ DATABASE_URL_ASYNC=postgresql+asyncpg://your_postgres_user:your_postgres_passwor
 
 ---
 
-1. ****Step 1:** Docker Build and Start-up**
+* **Docker Build and Start-up**
 Build Docker Containers: Use the following command to build Docker containers without using cached versions:
 
 ```bash
@@ -44,7 +45,11 @@ This initializes the containers in the background. The configuration specified i
 
 The `init_postgis.sql` script is used for setting up the PostGIS environment in the PostgreSQL database. Here’s a breakdown of what this script does:
 
-* **Enable Procedural Language Support (plpgsql):**
+---
+
+### Notes about the init_postgis.sql script executed in the Dockerfile
+
+(don't follow these steps, they are already executed in the Dockerfile)
 
 ```sql
 CREATE EXTENSION IF NOT EXISTS plpgsql;
@@ -77,26 +82,41 @@ END $$;
 
 These commands configure the database to use GDAL drivers (libraries for geospatial data) and enable storage of raster files outside the database, optimizing for large datasets.
 
-## Step 3: Setting Up Alembic for Migrations
+--- 
+
+## Step 2: Setting Up Alembic for Migrations
 
 1. **Initialize Alembic:**
 
-* If no migrations exist, run:
+* In your directory you must have an alembic folder, <span style="color:red">if you don't have it </span>, you can create it with the following command:
 
 ```bash
 alembic init
 ```
-* This command sets up Alembic's basic directory structure in a migrations folder.
+* This command sets up Alembic's basic directory structure in a migrations' folder.
 
-2. **Generate Migration Revisions:**
 
+2. Currently, the actual project already has the alembic folder with some files, you can check it in the following path:
+
+```bash
+biotablero-search-backend/alembic
+```
+
+3. **Generate Migration Revisions:**
+
+Note: <span style="color:red">ONLY</span> if you need to create a new migration file, you can follow the next steps:
+
+--- 
 * To track changes in the database models, create migration files automatically with:
     
     ```bash
     alembic revision --autogenerate -m "migration message"
     ```
+---
   
 3. **Apply Migrations to the Database:**
+
+if you don't need to create a new migration file, or already you created one, you can follow the next steps:
 
 * Use the following command to apply the latest migrations to the database:
     
@@ -106,6 +126,16 @@ alembic init
   
 * This command will bring the database schema up to date with the latest migration version.
 
+
+4. **Verify Migrations:**
+
+* Confirm that the migrations have been applied correctly by checking the database schema. You can use a database management tool like pgAdmin or connect to the database directly to view the tables and relationships.
+
+The first migrations you should watch for the month of November 2024 are as follows:
+
+<img src="https://i.postimg.cc/Dwz19QGW/public.png" alt="model_database" />
+
+---
 
 ## Common Alembic Commands
 

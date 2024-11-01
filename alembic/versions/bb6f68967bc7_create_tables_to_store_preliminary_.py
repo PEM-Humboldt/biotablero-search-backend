@@ -10,7 +10,7 @@ from typing import Sequence, Union
 from alembic import op
 import sqlalchemy as sa
 from sqlalchemy import inspect
-import geoalchemy2.types
+import geoalchemy2
 from sqlalchemy.dialects import postgresql
 
 # revision identifiers, used by Alembic.

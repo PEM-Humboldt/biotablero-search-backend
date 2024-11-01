@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, TIMESTAMP
+from sqlalchemy import Column, Integer, TIMESTAMP, String
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import relationship
 

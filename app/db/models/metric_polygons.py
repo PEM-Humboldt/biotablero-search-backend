@@ -9,7 +9,6 @@ class MetricPolygon(Base):
     metric_polygon_id = Column(Integer, primary_key=True, index=True)
     polygon_id = Column(Integer, ForeignKey('polygons.polygon_id'), nullable=False)
     metric_name = Column(String(100), nullable=False)
-    test_field = Column(String(100), nullable=False)
     created_at = Column(TIMESTAMP, nullable=False)
     values = Column(JSONB)
 

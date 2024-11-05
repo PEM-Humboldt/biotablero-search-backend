@@ -19,7 +19,7 @@ def crop_raster(
     polygon,
     category: int,
     values: List[int],
-    colors: List[str]
+    colors: List[str],
 ) -> Dict[str, str]:
     Image.MAX_IMAGE_PIXELS = None
     base64_images = {}
@@ -38,9 +38,11 @@ def crop_raster(
 
             color_hex = colormap[category]
 
-            if color_hex.startswith('#'):
-                color_hex = color_hex.lstrip('#')
-                color = tuple(int(color_hex[i:i + 2], 16) for i in (0, 2, 4)) + (255,)
+            if color_hex.startswith("#"):
+                color_hex = color_hex.lstrip("#")
+                color = tuple(
+                    int(color_hex[i : i + 2], 16) for i in (0, 2, 4)
+                ) + (255,)
             else:
                 raise ValueError(f"Invalid color format: {color_hex}")
 
@@ -59,11 +61,15 @@ def crop_raster(
             pil_image.save(img_buffer, format="PNG")
             img_buffer.seek(0)
 
-            img_base64 = base64.b64encode(img_buffer.getvalue()).decode("utf-8")
+            img_base64 = base64.b64encode(img_buffer.getvalue()).decode(
+                "utf-8"
+            )
             base64_images[str(category)] = img_base64
 
     except Exception as e:
-        logger.error(f"Unexpected error rendering category {category}: {str(e)}")
+        logger.error(
+            f"Unexpected error rendering category {category}: {str(e)}"
+        )
         raise ServerError(
             code=500,
             usr_msg=f"There was an error processing category {category}.",
@@ -109,7 +115,9 @@ def get_raster_values(
         area_ha = pixel_count * pixel_area_ha
         if category in categories.values():
             category_key = [
-                class_name for class_name, val in categories.items() if val == category
+                class_name
+                for class_name, val in categories.items()
+                if val == category
             ][0]
             output_data[category_key] = area_ha
 

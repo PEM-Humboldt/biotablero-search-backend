@@ -6,29 +6,46 @@ from rasterstats import zonal_stats
 from rio_tiler.io.rasterio import Reader
 import numpy as np
 import geopandas as gpd
-from typing import Any, Dict
+from typing import Any, Dict, List
 import rioxarray
 from shapely import geometry
+
 from app.middleware.log_middleware import logger
 from app.utils.errors import NotFoundError, ServerError
 
 
-# TODO: define how to get the color map (db, object, etc), it can't be hardcoded here
-def crop_raster(raster_path: str, polygon, category: int) -> Dict[str, str]:
+def crop_raster(
+    raster_path: str,
+    polygon,
+    category: int,
+    values: List[int],
+    colors: List[str],
+) -> Dict[str, str]:
     Image.MAX_IMAGE_PIXELS = None
     base64_images = {}
 
-    colormap = {
-        0: (255, 0, 0, 255),
-        1: (128, 204, 102, 255),
-        2: (232, 214, 107, 255),
-    }
+    colormap = dict(zip(values, colors))
+
+    if category not in colormap:
+        raise NotFoundError(
+            usr_msg="Selected category is not available in values.",
+            log_msg=f"Category {category} not found in values.",
+        )
 
     try:
         with Reader(input=raster_path, options={}) as image:
             img = image.feature(polygon)
 
-            color = colormap[category]
+            color_hex = colormap[category]
+
+            if color_hex.startswith("#"):
+                color_hex = color_hex.lstrip("#")
+                color = tuple(
+                    int(color_hex[i : i + 2], 16) for i in (0, 2, 4)
+                ) + (255,)
+            else:
+                raise ValueError(f"Invalid color format: {color_hex}")
+
             rendered_img = img.render(
                 add_mask=True, colormap={category: color}
             )
@@ -47,15 +64,12 @@ def crop_raster(raster_path: str, polygon, category: int) -> Dict[str, str]:
             img_base64 = base64.b64encode(img_buffer.getvalue()).decode(
                 "utf-8"
             )
-
             base64_images[str(category)] = img_base64
 
     except Exception as e:
-
         logger.error(
             f"Unexpected error rendering category {category}: {str(e)}"
         )
-
         raise ServerError(
             code=500,
             usr_msg=f"There was an error processing category {category}.",
@@ -70,6 +84,7 @@ def get_raster_values(
     raster_path: str, polygon: geometry.Polygon, categories: Dict[str, int]
 ) -> Dict[str, Any]:
     gdf = gpd.GeoDataFrame({"geometry": [polygon]}, crs="EPSG:4326")
+
     target_crs = "EPSG:9377"
 
     raster = rioxarray.open_rasterio(raster_path, masked=True)
@@ -84,7 +99,7 @@ def get_raster_values(
 
     stats = zonal_stats(
         gdf,
-        clipped_raster.values[0],  # use raster first band
+        clipped_raster.values[0],
         affine=clipped_raster.rio.transform(),
         categorical=True,
         nodata=np.nan,
@@ -100,7 +115,9 @@ def get_raster_values(
         area_ha = pixel_count * pixel_area_ha
         if category in categories.values():
             category_key = [
-                key for key, val in categories.items() if val == category
+                class_name
+                for class_name, val in categories.items()
+                if val == category
             ][0]
             output_data[category_key] = area_ha
 

@@ -15,12 +15,13 @@ This document provides instructions for setting up and managing database migrati
 POSTGRES_USER=your_postgres_user
 POSTGRES_PASSWORD=your_postgres_password
 POSTGRES_DB=your_database_name
+POSTGRES_HOST=your_host
 
-DATABASE_URL_SYNC=postgresql://your_postgres_user:your_postgres_password@localhost/your_database_name
-DATABASE_URL_ASYNC=postgresql+asyncpg://your_postgres_user:your_postgres_password@localhost/your_database_name
+DATABASE_URL_SYNC=postgresql://$POSTGRES_USER:$POSTGRES_PASSWORD@$POSTGRES_HOST/$POSTGRES_DB
+DATABASE_URL_ASYNC=postgresql+asyncpg://$POSTGRES_USER:$POSTGRES_PASSWORD@$POSTGRES_HOST/$POSTGRES_DB
 ```
 
-* Replace `your_postgres_user`, `your_postgres_password`, and `your_database_name` with the credentials you choose.
+* Replace `your_postgres_user`, `your_postgres_password`, `your_database_name` and `your_host` with the credentials you choose.
 * These values will be used by Docker and Alembic to connect to the PostgreSQL database.
 
 ---
@@ -91,7 +92,7 @@ These commands configure the database to use GDAL drivers (libraries for geospat
 * In your directory you must have an alembic folder, <span style="color:red">if you don't have it </span>, you can create it with the following command:
 
 ```bash
-alembic init
+alembic init alembic
 ```
 * This command sets up Alembic's basic directory structure in a migrations' folder.
 

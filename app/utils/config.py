@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     postgres_user: str
     postgres_password: str
     postgres_db: str
+    postgres_host: str = "localhost"
     database_url_sync: str
     database_url_async: str
 

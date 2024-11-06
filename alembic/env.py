@@ -4,6 +4,7 @@ from logging.config import fileConfig
 
 from sqlalchemy import create_engine, pool
 from alembic import context
+from app.utils.config import get_settings
 from app.db.base import Base
 
 
@@ -16,10 +17,14 @@ target_metadata = Base.metadata
 
 load_dotenv()
 
-SYNC_DATABASE_URL = os.getenv("DATABASE_URL_SYNC")
+settings = get_settings()
 
-if SYNC_DATABASE_URL is None:
-    raise ValueError("DATABASE_URL_SYNC environment variable is not set")
+try:
+    SYNC_DATABASE_URL = f"postgresql://{settings.postgres_user}:{settings.postgres_password}@{settings.postgres_host}/{settings.postgres_db}"
+
+except AttributeError:
+    raise ValueError("DATABASE_URL_SYNC is not set in the environment")
+
 
 def include_object(object, name, type_, reflected, compare_to):
     if type_ == "table" and name == "spatial_ref_sys":
@@ -28,7 +33,7 @@ def include_object(object, name, type_, reflected, compare_to):
 
 
 def run_migrations_offline() -> None:
-    """Corre las migraciones en modo offline."""
+    """Run migrations in 'offline' mode."""
     context.configure(
         url=SYNC_DATABASE_URL,
         target_metadata=target_metadata,
@@ -42,17 +47,23 @@ def run_migrations_offline() -> None:
 
 
 def run_migrations_online() -> None:
-    connectable = create_engine(SYNC_DATABASE_URL, poolclass=pool.NullPool)
+    """Run migrations in 'online' mode."""
+    connectable = config.attributes.get("connection", None)
+    if connectable is None:
+        # If no connection is provided, generate one from the
+        # connection string
+        connectable = create_engine(SYNC_DATABASE_URL)
 
     with connectable.connect() as connection:
         context.configure(
             connection=connection,
             target_metadata=target_metadata,
-            include_object=include_object
+            include_object=include_object,
         )
 
         with context.begin_transaction():
             context.run_migrations()
+
 
 if context.is_offline_mode():
     run_migrations_offline()

@@ -78,11 +78,11 @@ async def get_values_by_defined_area(
     )
 
 
-@router.post("/{metric_id}/values", response_model=List[MetricResponse])
+@router.post("/{metric_id}/values", response_model=List[Dict[str, float]])
 async def get_values_by_polygon(
     metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
     polygon: Polygon,
-) -> List[MetricResponse]:
+) -> List[Dict[str, float]]:
     """
     Given a metric and a polygon, get the area values for each category in the metric inside the polygon.
     """

@@ -74,7 +74,6 @@ def crop_raster(
     return base64_images
 
 
-# TODO: verify if categories should be kept as object or if it should be get from the db
 def get_raster_values(
     raster_path: str, polygon: PolygonGeometry, categories: Dict[str, int]
 ) -> Dict[str, Any]:
@@ -84,9 +83,7 @@ def get_raster_values(
 
     raster = rioxarray.open_rasterio(raster_path, masked=True)
 
-    single_dataset = raster[0]
-
-    clipped_raster = single_dataset.rio.clip(gdf.geometry, from_disk=True)
+    clipped_raster = raster.rio.clip(gdf.geometry, from_disk=True)  # type: ignore
 
     if clipped_raster.rio.crs != target_crs:
         clipped_raster = clipped_raster.rio.reproject(target_crs)
@@ -122,7 +119,6 @@ def get_raster_values(
 
 
 def hex_to_rgba(hex_color: str) -> Tuple[int, int, int, int]:
-    """Convierte un color hexadecimal a una tupla RGBA."""
     if hex_color.startswith("#"):
         hex_color = hex_color.lstrip("#")
         if len(hex_color) == 6:

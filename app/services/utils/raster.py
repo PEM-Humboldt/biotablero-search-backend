@@ -83,7 +83,7 @@ def get_raster_values(
 
     raster = rioxarray.open_rasterio(raster_path, masked=True)
 
-    clipped_raster = raster.rio.clip(gdf.geometry, from_disk=True)  # type: ignore
+    clipped_raster = raster.rio.clip(gdf.geometry, from_disk=True)  # type: ignore -> rio doesn't support the type list[Dataset] https://corteva.github.io/rioxarray/html/rioxarray.html
 
     if clipped_raster.rio.crs != target_crs:
         clipped_raster = clipped_raster.rio.reproject(target_crs)

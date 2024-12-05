@@ -83,7 +83,7 @@ def get_raster_values(
 
     raster = rioxarray.open_rasterio(raster_path, masked=True)
 
-    clipped_raster = raster.rio.clip(gdf.geometry, from_disk=True)  # type: ignore -> rio doesn't support the type list[Dataset] https://corteva.github.io/rioxarray/html/rioxarray.html
+    clipped_raster = raster.rio.clip(gdf.geometry, from_disk=True)  # type: ignore -> for Pyright it's an error because open_rasterio can return a list[Dataset] but the list doesn't have the clip function -> https://github.com/corteva/rioxarray/blob/6334ca0584b9ccedaba6026c6dc13bea1d63fb9e/rioxarray/raster_dataset.py#L326
 
     if clipped_raster.rio.crs != target_crs:
         clipped_raster = clipped_raster.rio.reproject(target_crs)

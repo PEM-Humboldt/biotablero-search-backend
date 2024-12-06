@@ -1,4 +1,4 @@
-name: Check code format
+name: Check code format and types
 
 on:
   pull_request:
@@ -6,7 +6,7 @@ on:
       - develop
 
 jobs:
-  black-format:
+  check-format:
     runs-on: ubuntu-latest
     steps:
       - name: Check out source repository
@@ -15,8 +15,15 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version-file: "pyproject.toml"
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pyright
       - name: Black format check
         uses: psf/black@stable
         with:
           options: "--check --verbose"
           src: "./app"
+      - name: Pyright check
+        uses: jakebailey/pyright-action@v2

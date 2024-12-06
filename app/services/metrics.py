@@ -27,7 +27,7 @@ def get_areas_by_defined_area(
 
 def get_areas_by_polygon(
     metric_id: str, polygon: PolygonGeometry
-) -> List[Dict[str, float]]:
+) -> List[MetricResponse]:
 
     categories, _, _ = fetch_collection_metadata(metric_id)
 

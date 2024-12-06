@@ -6,10 +6,11 @@ from rasterstats import zonal_stats
 from rio_tiler.io.rasterio import Reader
 import numpy as np
 import geopandas as gpd
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Tuple
 import rioxarray
 from shapely import geometry
 
+from app.routes.schemas.polygon import PolygonGeometry
 from app.middleware.log_middleware import logger
 from app.utils.errors import NotFoundError, ServerError
 
@@ -24,7 +25,9 @@ def crop_raster(
     Image.MAX_IMAGE_PIXELS = None
     base64_images = {}
 
-    colormap = dict(zip(values, colors))
+    colormap: Dict[int, Tuple[int, int, int, int]] = {
+        value: hex_to_rgba(color) for value, color in zip(values, colors)
+    }
 
     if category not in colormap:
         raise NotFoundError(
@@ -36,15 +39,7 @@ def crop_raster(
         with Reader(input=raster_path, options={}) as image:
             img = image.feature(polygon)
 
-            color_hex = colormap[category]
-
-            if color_hex.startswith("#"):
-                color_hex = color_hex.lstrip("#")
-                color = tuple(
-                    int(color_hex[i : i + 2], 16) for i in (0, 2, 4)
-                ) + (255,)
-            else:
-                raise ValueError(f"Invalid color format: {color_hex}")
+            color = colormap[category]
 
             rendered_img = img.render(
                 add_mask=True, colormap={category: color}
@@ -79,9 +74,8 @@ def crop_raster(
     return base64_images
 
 
-# TODO: verify if categories should be kept as object or if it should be get from the db
 def get_raster_values(
-    raster_path: str, polygon: geometry.Polygon, categories: Dict[str, int]
+    raster_path: str, polygon: PolygonGeometry, categories: Dict[str, int]
 ) -> Dict[str, Any]:
     gdf = gpd.GeoDataFrame({"geometry": [polygon]}, crs="EPSG:4326")
 
@@ -89,7 +83,7 @@ def get_raster_values(
 
     raster = rioxarray.open_rasterio(raster_path, masked=True)
 
-    clipped_raster = raster.rio.clip(gdf.geometry, from_disk=True)
+    clipped_raster = raster.rio.clip(gdf.geometry, from_disk=True)  # type: ignore -> for Pyright it's an error because open_rasterio can return a list[Dataset] but the list doesn't have the clip function -> https://github.com/corteva/rioxarray/blob/6334ca0584b9ccedaba6026c6dc13bea1d63fb9e/rioxarray/raster_dataset.py#L326
 
     if clipped_raster.rio.crs != target_crs:
         clipped_raster = clipped_raster.rio.reproject(target_crs)
@@ -122,3 +116,14 @@ def get_raster_values(
             output_data[category_key] = area_ha
 
     return output_data
+
+
+def hex_to_rgba(hex_color: str) -> Tuple[int, int, int, int]:
+    if hex_color.startswith("#"):
+        hex_color = hex_color.lstrip("#")
+        if len(hex_color) == 6:
+            r, g, b = (int(hex_color[i : i + 2], 16) for i in (0, 2, 4))
+            return r, g, b, 0
+        else:
+            raise ValueError(f"Invalid hex color format: {hex_color}")
+    raise ValueError(f"Hex color must start with '#': {hex_color}")

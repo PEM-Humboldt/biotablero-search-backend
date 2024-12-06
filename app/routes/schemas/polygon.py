@@ -44,15 +44,21 @@ class PolygonGeometry(geometries.Polygon):
         super().__init__(**args)
 
     @field_validator("bbox", mode="before")
-    @classmethod
-    def validate_bbox(cls, value):
-        if len(value) not in [4, 6]:
+    def validate_bbox(cls, bbox):
+
+        if bbox is None:
+            error_template["msg"] = (
+                "Bounding box (bbox) is required and cannot be None."
+            )
+            raise ValidationException([error_template])
+
+        if bbox is not None and len(bbox) not in [4, 6]:
             error_template["msg"] = (
                 "Bounding box (bbox) must have 4 or 6 elements."
             )
             raise ValidationException([error_template])
 
-        min_lon, min_lat, max_lon, max_lat = value[:4]
+        min_lon, min_lat, max_lon, max_lat = bbox[:4]
         if not (-180 <= min_lon <= 180) or not (-180 <= max_lon <= 180):
             error_template["msg"] = (
                 "Longitude values must be between -180 and 180."
@@ -73,8 +79,8 @@ class PolygonGeometry(geometries.Polygon):
                 "Minimum latitude cannot be greater than maximum latitude."
             )
             raise ValidationException([error_template])
-        if len(value) == 6:
-            min_alt, max_alt = value[4], value[5]
+        if len(bbox) == 6:
+            min_alt, max_alt = bbox[4], bbox[5]
             if min_alt > max_alt:
                 error_template["msg"] = (
                     "Minimum altitude cannot be greater than maximum altitude."

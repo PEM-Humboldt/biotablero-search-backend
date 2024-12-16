@@ -5,3 +5,8 @@ include = '\.pyi?$'
 
 [tool.poetry.dependencies]
 python = "3.10"
+
+[tool.aerich]
+tortoise_orm = "app.utils.config.TORTOISE_ORM"
+location = "./migrations"
+src_folder = "./."

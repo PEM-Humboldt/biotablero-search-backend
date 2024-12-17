@@ -12,7 +12,7 @@ from app.middleware.exception_handlers import (
     server_exception_handler,
     not_found_exception_handler,
 )
-from app.routes.migrations import migrate
+from app.routes import migrations
 from app.utils.errors import ServerError, NotFoundError
 from app.middleware.log_middleware import log_requests
 from app.routes import metrics
@@ -123,4 +123,4 @@ app.add_middleware(
 )
 
 app.include_router(metrics.router)
-app.include_router(migrate.router)
+app.include_router(migrations.router)

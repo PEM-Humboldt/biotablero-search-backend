@@ -14,13 +14,13 @@ class Settings(BaseSettings):
     db_user: str = ""
     db_password: str = ""
     db_host: str = ""
-    db_port: int
+    db_port: int = 5432
     db_name: str = ""
 
     tortoise_models: List[str] = [
         "app.models.models",
         "aerich.models",
-    ]  # Ajusta según la ruta de tus modelos
+    ]
 
     @property
     def db_url(self) -> str:

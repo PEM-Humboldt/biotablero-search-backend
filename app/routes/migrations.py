@@ -23,6 +23,7 @@ router = APIRouter(
     },
 )
 
+
 @router.get("/migrate")
 async def migrate():
     """

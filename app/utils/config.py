@@ -17,7 +17,10 @@ class Settings(BaseSettings):
     db_port: int
     db_name: str = ""
 
-    tortoise_models: List[str] = ["app.models.models","aerich.models"]  # Ajusta según la ruta de tus modelos
+    tortoise_models: List[str] = [
+        "app.models.models",
+        "aerich.models",
+    ]  # Ajusta según la ruta de tus modelos
 
     @property
     def db_url(self) -> str:
@@ -38,6 +41,7 @@ class Settings(BaseSettings):
 def get_settings():
     return Settings()
 
+
 TORTOISE_ORM = {
     "connections": {
         "default": get_settings().db_url,
@@ -49,6 +53,7 @@ TORTOISE_ORM = {
         },
     },
 }
+
 
 async def init_tortoise():
     await Tortoise.init(config=TORTOISE_ORM)

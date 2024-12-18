@@ -85,7 +85,7 @@ black .
 After running, you will see:
 
 ```
-All done! ✨ 🍰 ✨
+All done!
 N files reformatted, M files left unchanged.
 ```
 

@@ -23,9 +23,7 @@ class MetricPolygonsItems(Model):
     metric_polygon = fields.ForeignKeyField(
         "models.MetricPolygons", related_name="items"
     )
-    raster_data = fields.BinaryField(
-        null=True
-    )
+    raster_data = fields.BinaryField(null=True)
     created_at = fields.DatetimeField(auto_now_add=True)
 
 

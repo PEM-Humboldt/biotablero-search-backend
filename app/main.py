@@ -59,4 +59,3 @@ app.add_middleware(
 )
 
 app.include_router(metrics.router)
-

@@ -95,5 +95,7 @@ class PolygonFeature(Feature):
 class Polygon(BaseModel):
     polygon: PolygonFeature = Field(
         description="GeoJSON polygon to determine the query area",
-        examples=[geojson_polygon],
     )
+
+    class Config:
+        json_schema_extra = {"example": {"polygon": geojson_polygon}}

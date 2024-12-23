@@ -18,6 +18,7 @@ class MetricPolygons(Model):
     created_at = fields.DatetimeField(auto_now_add=True)
     description = fields.TextField(null=True)
 
+
 class MetricPolygonsItems(Model):
     id = fields.IntField(pk=True)
     metric_polygon = fields.ForeignKeyField(

@@ -25,7 +25,7 @@ Required Python version: 3.10+
    DB_PASSWORD=password # Database password 
    DB_NAME=mydatabase # Database name 
    DB_HOST=localhost # Database host
-   DB_PORT=5432 # Database port (default for PostgreSQL)
+   DB_PORT=5433 # Database port (default for PostgreSQL)
    ```
 1. Run Docker Compose to start database containers:
    ```

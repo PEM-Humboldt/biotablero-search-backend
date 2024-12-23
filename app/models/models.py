@@ -16,7 +16,7 @@ class MetricPolygons(Model):
     metric_name = fields.CharField(max_length=100)
     values = fields.JSONField(null=True)
     created_at = fields.DatetimeField(auto_now_add=True)
-
+    description = fields.TextField(null=True)
 
 class MetricPolygonsItems(Model):
     id = fields.IntField(pk=True)

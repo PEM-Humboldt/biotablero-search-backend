@@ -13,8 +13,8 @@ class Settings(BaseSettings):
     cors_origin: str = ""
     db_user: str = ""
     db_password: str = ""
-    db_host: str = ""
-    db_port: int = 5432
+    db_host: str = "localhost"
+    db_port: int = 5433
     db_name: str = ""
 
     tortoise_models: List[str] = [

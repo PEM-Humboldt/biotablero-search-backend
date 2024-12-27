@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   db:
-    image: postgres:15.3
+    image: postgis/postgis:15-3.3
     container_name: bt-search-db
     environment:
       POSTGRES_USER: ${DB_USER}
@@ -14,6 +14,7 @@ services:
       - bt-search-network
     volumes:
       - db_data:/var/lib/postgresql/data
+
 
 volumes:
   db_data:

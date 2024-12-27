@@ -31,6 +31,11 @@ Required Python version: 3.10+
    ```
    docker-compose up -d
    ```
+1. Run database migrations:
+   ```
+   aerich upgrade
+   ```
+    
 1. Run the the development server
 
    `uvicorn app.main:app --reload`

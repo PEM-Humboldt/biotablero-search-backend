@@ -20,13 +20,22 @@ Required Python version: 3.10+
    ```
    STAC_URL="" # STAC server URL
    ENV="" # Execution Environment
-   SECRET_KEY="" # Secret Key for Token Validation
-   ALGORITHM="" # Encryption Algorithm
-   ACCESS_TOKEN_EXPIRE_MINUTES="" # Number of Expiration Minutes
-   USER_USERNAME="" # authentication user
-   USER_HASHED_PASSWORD="" # authentication password
    CORS_ORIGIN="" # CORS origin values
+   DB_USER=user # Database username 
+   DB_PASSWORD=password # Database password 
+   DB_NAME=mydatabase # Database name 
+   DB_HOST=localhost # Database host
+   DB_PORT=5433 # Database port (default for PostgreSQL)
    ```
+1. Run Docker Compose to start database containers:
+   ```
+   docker-compose up -d
+   ```
+1. Run database migrations:
+   ```
+   aerich upgrade
+   ```
+    
 1. Run the the development server
 
    `uvicorn app.main:app --reload`
@@ -34,6 +43,57 @@ Required Python version: 3.10+
 ## Documentation
 
 The documentation is automatically generated at `/docs` and `/redoc`. For production `/docs` is disabled
+
+## Database Migrations
+
+This project uses `aerich` for database migrations. Below are the necessary commands, explanations, and how to use the dedicated endpoint for migrations.
+
+### Migration Commands
+
+- **Initialize `aerich`** :
+   ```
+   aerich init -t app.utils.config.TORTOISE_ORM
+   ```
+   This sets up aerich with the project’s ORM configuration.
+- **Create the initial migrations**:
+   ```
+   aerich init-db
+   ```
+   This command generates the database schema for the first time, regardless of whether the schema already exists. If the database schema does not exist, it will be created. If it already exists, this command will ensure the necessary structure is in place.
+
+
+- **Generate new migration files after making changes to models**:
+
+   ```
+   aerich migrate
+   ```
+   
+   Use this command whenever you update or modify the models, so the changes can be applied to the database schema.
+   Create migration files in the default migration folder, which is typically located at migrations/models/.
+
+
+- **Apply all migration files to update the database schema**:
+
+   ```
+   aerich upgrade
+   ```
+   This command applies all pending migrations to the database.
+
+
+- **Check migration history**:
+
+   ```
+   aerich history
+   ```
+   Displays a list of all migrations that have been generated.
+
+
+- **Rollback a migration**:
+
+   ```
+   aerich downgrade
+   ```
+   Reverts the last migration applied to the database.
 
 ## Code checks
 

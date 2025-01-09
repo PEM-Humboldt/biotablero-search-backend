@@ -1,6 +1,9 @@
+from typing import List
+
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from functools import lru_cache
 from logging import basicConfig, INFO
+from tortoise import Tortoise
 
 
 class Settings(BaseSettings):
@@ -8,6 +11,20 @@ class Settings(BaseSettings):
     stac_url: str = "http://localhost:8080"
     env: str = "dev"
     cors_origin: str = ""
+    db_user: str = ""
+    db_password: str = ""
+    db_host: str = "localhost"
+    db_port: int = 5433
+    db_name: str = ""
+
+    tortoise_models: List[str] = [
+        "app.models.models",
+        "aerich.models",
+    ]
+
+    @property
+    def db_url(self) -> str:
+        return f"postgres://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/{self.db_name}"
 
     model_config = SettingsConfigDict(env_file=".env")
 
@@ -23,3 +40,21 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings():
     return Settings()
+
+
+TORTOISE_ORM = {
+    "connections": {
+        "default": get_settings().db_url,
+    },
+    "apps": {
+        "models": {
+            "models": get_settings().tortoise_models,
+            "default_connection": "default",
+        },
+    },
+}
+
+
+async def init_tortoise():
+    await Tortoise.init(config=TORTOISE_ORM)
+    await Tortoise.generate_schemas()

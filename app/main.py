@@ -1,21 +1,24 @@
 from logging import getLogger
+
 from fastapi import FastAPI, exceptions
 from fastapi.middleware.cors import CORSMiddleware
+
 from app.middleware.exception_handlers import (
     validation_exception_handler,
     server_exception_handler,
     not_found_exception_handler,
 )
+
 from app.utils.errors import ServerError, NotFoundError
 from app.middleware.log_middleware import log_requests
 from app.routes import metrics
-from app.utils import context_vars
 from app.utils.config import get_settings
+
 
 settings = get_settings()
 settings.configure_logging()
 logger = getLogger(__name__)
-request_id_context = context_vars.request_id_context
+
 
 app = FastAPI(
     title="BioTableroSearch",

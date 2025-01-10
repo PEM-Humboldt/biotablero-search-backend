@@ -62,6 +62,9 @@ async def defined_areas_params(
 ):
     return {"area_type": area_type, "area_id": area_id}
 
+class LayerResponse(BaseModel):
+    layer: str
+
 
 @router.get("/{metric_id}/values", response_model=List[MetricResponse])
 async def get_values_by_defined_area(
@@ -100,10 +103,6 @@ async def get_layer_by_defined_area(
     Given a metric and a predefined area of interest, get the layer of the metric cut by the indicated area
     """
     return {"layer": "response to be defined"}
-
-
-class LayerResponse(BaseModel):
-    layer: str
 
 
 @router.post("/{metric_id}/layer")

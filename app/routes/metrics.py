@@ -1,10 +1,9 @@
 from typing import Annotated, Literal, List, Dict
 import fastapi
 from fastapi import Query
-from pydantic import BaseModel
 
 from app.routes.schemas.polygon import Polygon
-from app.routes.schemas.MetricValues import MetricResponse
+from app.routes.schemas.MetricValues import MetricResponse, LayerResponse
 import app.services.metrics as metrics_service
 
 validation_error_example = {
@@ -62,9 +61,6 @@ async def defined_areas_params(
 ):
     return {"area_type": area_type, "area_id": area_id}
 
-class LayerResponse(BaseModel):
-    layer: str
-
 
 @router.get("/{metric_id}/values", response_model=List[MetricResponse])
 async def get_values_by_defined_area(
@@ -98,11 +94,11 @@ async def get_values_by_polygon(
 async def get_layer_by_defined_area(
     metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
     defined_area: Annotated[dict, fastapi.Depends(defined_areas_params)],
-):  # TODO: Define return type
+)-> LayerResponse:  # TODO: Define return type
     """
     Given a metric and a predefined area of interest, get the layer of the metric cut by the indicated area
     """
-    return {"layer": "response to be defined"}
+    return LayerResponse(layer="response to be defined")
 
 
 @router.post("/{metric_id}/layer")
@@ -123,7 +119,7 @@ async def get_layer_by_polygon(
             example=0,
         ),
     ],
-):
+) -> LayerResponse:
     """
     Given a metric and a predefined area of interest, get the layer of the metric cut by the indicated area
     """

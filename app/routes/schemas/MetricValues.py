@@ -41,3 +41,13 @@ class LossPersistenceResponse(BaseModel):
 
 # dict is temporal because of the type checking, remove after adding another type
 MetricResponse = Union[LossPersistenceResponse, dict]
+
+class LayerResponse(BaseModel):
+    layer: str
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "layer": "iVBORw0KGgoAAAANSUhEUgAAAKIAAAC4CAYAAABgvzfmAAABPElEQVR4nO3d2w6CMAwA0Gn8/1+er4pMLtko0HNeNIEso61Vh2ApAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABAtBo9gYt7Rk8A6EQ3BAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAyM3/2gEAAAAAANyFMz+EU4TjPKMnAAAAAPdlSQMAAABgpEePQaZLOF0GJZXdNdNaP1SE7LH7Z2AKjp5ePQZRlNxWLU4fAgAAAAAAAAAAAAAAAABcmMtFAaLowBckYRxt8SZMipIjNAtRAXIKPlMRqjaeQxhdcZ6YnET2RGQ//hFmv6wINKFq8Xa8RGx+1cnj2v1X7Zg14NMXY9Y4jPAvll/3Ya+tDUmJR1+1bIxj5o74SQyCZU1A1uM+rS0JkTwAnRAAAAAAAAAAAAAAAAA4szd/kzPnbncgtwAAAABJRU5ErkJggg=="
+            }
+        }

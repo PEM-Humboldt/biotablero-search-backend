@@ -54,12 +54,12 @@ def get_layer_by_defined_area(metric_id, area_type, area_id):
 
 def get_layer_by_polygon(
     metric_id: str, polygon, item_id: str, category: int
-) -> Dict[str, str]:
+) -> str:
     categories, values, colors = fetch_collection_metadata(metric_id)
 
     raster_href = get_asset_href_by_item_id(metric_id, item_id)
 
-    base64_images = raster_utils.crop_raster(
+    cropped_raster = raster_utils.crop_raster(
         raster_href, polygon, category, values, colors
     )
-    return base64_images
+    return cropped_raster

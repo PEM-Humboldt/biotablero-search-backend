@@ -103,7 +103,7 @@ async def get_layer_by_defined_area(
 
 
 class LayerResponse(BaseModel):
-    images: Dict[str, str]
+    layer: str
 
 
 @router.post("/{metric_id}/layer")
@@ -130,8 +130,8 @@ async def get_layer_by_polygon(
     """
     polygon_geometry = polygon.polygon.geometry
 
-    base64_images = metrics_service.get_layer_by_polygon(
+    layer = metrics_service.get_layer_by_polygon(
         metric_id, polygon_geometry, item_id, category
     )
 
-    return LayerResponse(images=base64_images)
+    return LayerResponse(layer=layer)

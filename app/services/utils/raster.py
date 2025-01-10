@@ -21,9 +21,8 @@ def crop_raster(
     category: int,
     values: List[int],
     colors: List[str],
-) -> Dict[str, str]:
+) -> str:
     Image.MAX_IMAGE_PIXELS = None
-    base64_images = {}
 
     colormap: Dict[int, Tuple[int, int, int, int]] = {
         value: hex_to_rgba(color) for value, color in zip(values, colors)
@@ -59,7 +58,6 @@ def crop_raster(
             img_base64 = base64.b64encode(img_buffer.getvalue()).decode(
                 "utf-8"
             )
-            base64_images[str(category)] = img_base64
 
     except Exception as e:
         logger.error(
@@ -71,7 +69,7 @@ def crop_raster(
             e=e,
         )
 
-    return base64_images
+    return img_base64
 
 
 def get_raster_values(

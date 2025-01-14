@@ -8,20 +8,20 @@ async def upgrade(db: BaseDBAsyncClient) -> str:
     "polygon_geometry" JSONB NOT NULL,
     "created_at" TIMESTAMPTZ NOT NULL  DEFAULT CURRENT_TIMESTAMP
 );
-CREATE TABLE IF NOT EXISTS "metric_polygons" (
+CREATE TABLE IF NOT EXISTS "metricpolygons" (
     "metric_polygon_id" SERIAL NOT NULL PRIMARY KEY,
     "metric_name" VARCHAR(100) NOT NULL,
     "values" JSONB,
     "created_at" TIMESTAMPTZ NOT NULL  DEFAULT CURRENT_TIMESTAMP,
     "polygon_id" INT NOT NULL REFERENCES "polygons" ("polygon_id") ON DELETE CASCADE
 );
-CREATE TABLE IF NOT EXISTS "metric_polygons_items" (
+CREATE TABLE IF NOT EXISTS "metricpolygonsitems" (
     "item_id" SERIAL NOT NULL PRIMARY KEY,
     "raster_data" BYTEA,
     "created_at" TIMESTAMPTZ NOT NULL  DEFAULT CURRENT_TIMESTAMP,
-    "metric_polygon_id" INT NOT NULL REFERENCES "metric_polygons" ("metric_polygon_id") ON DELETE CASCADE
+    "metric_polygon_id" INT NOT NULL REFERENCES "metricpolygons" ("metric_polygon_id") ON DELETE CASCADE
 );
-CREATE TABLE IF NOT EXISTS "precalculated_areas" (
+CREATE TABLE IF NOT EXISTS "precalculatedareas" (
     "id" SERIAL NOT NULL PRIMARY KEY,
     "area_id" VARCHAR(100) NOT NULL,
     "area_type" VARCHAR(50) NOT NULL,

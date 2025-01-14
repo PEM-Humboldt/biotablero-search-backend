@@ -7,14 +7,7 @@ from tortoise.models import Model
 class Polygons(Model):
     id = fields.IntField(pk=True)
     polygon_geometry = fields.JSONField()
-    polygon_hash = fields.CharField(max_length=64, unique=True, null=True)
     created_at = fields.DatetimeField(auto_now_add=True)
-
-    class Meta:
-        table = "polygons"
-        indexes = [
-            ("polygon_hash",),
-        ]
 
 
 class MetricPolygons(Model):
@@ -26,9 +19,6 @@ class MetricPolygons(Model):
     values = fields.JSONField(null=True)
     created_at = fields.DatetimeField(auto_now_add=True)
 
-    class Meta:
-        table = "metric_polygons"
-
 
 class MetricPolygonsItems(Model):
     id = fields.IntField(pk=True)
@@ -37,9 +27,6 @@ class MetricPolygonsItems(Model):
     )
     raster_data = fields.BinaryField(null=True)
     created_at = fields.DatetimeField(auto_now_add=True)
-
-    class Meta:
-        table = "metric_polygons_items"
 
 
 class PrecalculatedAreas(Model):
@@ -50,6 +37,3 @@ class PrecalculatedAreas(Model):
     area_id = fields.CharField(max_length=100)
     area_type = fields.CharField(max_length=50)
     created_at = fields.DatetimeField(auto_now_add=True)
-
-    class Meta:
-        table = "precalculated_areas"

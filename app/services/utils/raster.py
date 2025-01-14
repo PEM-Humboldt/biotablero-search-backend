@@ -8,7 +8,6 @@ import numpy as np
 import geopandas as gpd
 from typing import Any, Dict, List, Tuple
 import rioxarray
-from shapely import geometry
 
 from app.routes.schemas.polygon import PolygonGeometry
 from app.middleware.log_middleware import logger
@@ -121,7 +120,7 @@ def hex_to_rgba(hex_color: str) -> Tuple[int, int, int, int]:
         hex_color = hex_color.lstrip("#")
         if len(hex_color) == 6:
             r, g, b = (int(hex_color[i : i + 2], 16) for i in (0, 2, 4))
-            return r, g, b, 0
+            return r, g, b, 255
         else:
             raise ValueError(f"Invalid hex color format: {hex_color}")
     raise ValueError(f"Hex color must start with '#': {hex_color}")

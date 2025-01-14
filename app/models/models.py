@@ -3,6 +3,7 @@
 from tortoise import fields
 from tortoise.models import Model
 
+
 class Polygons(Model):
     id = fields.IntField(pk=True)
     polygon_geometry = fields.JSONField()

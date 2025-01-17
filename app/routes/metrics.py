@@ -94,7 +94,7 @@ async def get_values_by_polygon(
 async def get_layer_by_defined_area(
     metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
     defined_area: Annotated[dict, fastapi.Depends(defined_areas_params)],
-)-> LayerResponse:  # TODO: Define return type
+) -> LayerResponse:  # TODO: Define return type
     """
     Given a metric and a predefined area of interest, get the layer of the metric cut by the indicated area
     """

@@ -42,6 +42,7 @@ class LossPersistenceResponse(BaseModel):
 # dict is temporal because of the type checking, remove after adding another type
 MetricResponse = Union[LossPersistenceResponse, dict]
 
+
 class LayerResponse(BaseModel):
     layer: str
 

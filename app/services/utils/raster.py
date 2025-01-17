@@ -8,7 +8,6 @@ import numpy as np
 import geopandas as gpd
 from typing import Any, Dict, List, Tuple
 import rioxarray
-from shapely import geometry
 
 from app.routes.schemas.polygon import PolygonGeometry
 from app.middleware.log_middleware import logger
@@ -21,9 +20,8 @@ def crop_raster(
     category: int,
     values: List[int],
     colors: List[str],
-) -> Dict[str, str]:
+) -> str:
     Image.MAX_IMAGE_PIXELS = None
-    base64_images = {}
 
     colormap: Dict[int, Tuple[int, int, int, int]] = {
         value: hex_to_rgba(color) for value, color in zip(values, colors)
@@ -59,7 +57,6 @@ def crop_raster(
             img_base64 = base64.b64encode(img_buffer.getvalue()).decode(
                 "utf-8"
             )
-            base64_images[str(category)] = img_base64
 
     except Exception as e:
         logger.error(
@@ -71,7 +68,7 @@ def crop_raster(
             e=e,
         )
 
-    return base64_images
+    return img_base64
 
 
 def get_raster_values(
@@ -123,7 +120,7 @@ def hex_to_rgba(hex_color: str) -> Tuple[int, int, int, int]:
         hex_color = hex_color.lstrip("#")
         if len(hex_color) == 6:
             r, g, b = (int(hex_color[i : i + 2], 16) for i in (0, 2, 4))
-            return r, g, b, 0
+            return r, g, b, 255
         else:
             raise ValueError(f"Invalid hex color format: {hex_color}")
     raise ValueError(f"Hex color must start with '#': {hex_color}")

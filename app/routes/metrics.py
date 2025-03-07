@@ -45,7 +45,7 @@ async def metric_id_param(
     metric_id: Annotated[
         Literal["LossPersistence", "Coverage"],
         fastapi.Path(description="metric you whish to query"),
-    ]
+    ],
 ) -> str:
     return metric_id
 

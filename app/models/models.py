@@ -15,7 +15,10 @@ class Polygon(Model):
     hash = fields.CharField(max_length=255, unique=True, null=True)
     geometry = fields.JSONField()
     area_type = fields.ForeignKeyField(
-        "models.AreaType", related_name="polygons", null=True, on_delete=fields.SET_NULL
+        "models.AreaType",
+        related_name="polygons",
+        null=True,
+        on_delete=fields.SET_NULL,
     )
     name = fields.CharField(max_length=255)
     area = fields.FloatField()

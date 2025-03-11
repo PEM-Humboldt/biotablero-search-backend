@@ -2,8 +2,11 @@ from typing import List
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from functools import lru_cache
-from logging import basicConfig, INFO
+import logging
+from logging import INFO, StreamHandler
 from tortoise import Tortoise
+from app.models.seed_area_types import seed_area_types
+import sys
 
 
 class Settings(BaseSettings):
@@ -29,18 +32,31 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env")
 
     def configure_logging(self):
-        basicConfig(
-            level=INFO,
-            filename="logs/app.log",
-            format="%(asctime)s.%(msecs)03d %(levelname)s - %(request_id)s - %(name)s - %(module)s - %(message)s",
+        logger = logging.getLogger()
+        logger.setLevel(INFO)
+
+        # Formato de log
+        formatter = logging.Formatter(
+            "%(asctime)s.%(msecs)03d %(levelname)s - %(name)s - %(module)s - %(message)s",
             datefmt="%Y-%m-%d %H:%M:%S",
         )
+
+        file_handler = logging.FileHandler("logs/app.log")
+        file_handler.setFormatter(formatter)
+        logger.addHandler(file_handler)
+
+        stream_handler = StreamHandler(sys.stdout)
+        stream_handler.setFormatter(formatter)
+        logger.addHandler(stream_handler)
 
 
 @lru_cache
 def get_settings():
     return Settings()
 
+
+settings = get_settings()
+settings.configure_logging()
 
 TORTOISE_ORM = {
     "connections": {
@@ -57,4 +73,5 @@ TORTOISE_ORM = {
 
 async def init_tortoise():
     await Tortoise.init(config=TORTOISE_ORM)
-    await Tortoise.generate_schemas()
+    await Tortoise.generate_schemas(safe=True)
+    await seed_area_types()

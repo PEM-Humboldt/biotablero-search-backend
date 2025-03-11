@@ -4,8 +4,6 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 from functools import lru_cache
 import logging
 from logging import INFO, StreamHandler
-from tortoise import Tortoise
-from app.models.seed_area_types import seed_area_types
 import sys
 
 
@@ -34,10 +32,8 @@ class Settings(BaseSettings):
     def configure_logging(self):
         logger = logging.getLogger()
         logger.setLevel(INFO)
-
-        # Formato de log
         formatter = logging.Formatter(
-            "%(asctime)s.%(msecs)03d %(levelname)s - %(name)s - %(module)s - %(message)s",
+            "%(asctime)s.%(msecs)03d %(levelname)s - %(request_id)s - %(name)s - %(module)s - %(message)s",
             datefmt="%Y-%m-%d %H:%M:%S",
         )
 
@@ -55,23 +51,14 @@ def get_settings():
     return Settings()
 
 
-settings = get_settings()
-settings.configure_logging()
-
 TORTOISE_ORM = {
     "connections": {
         "default": get_settings().db_url,
     },
     "apps": {
-        "models": {
+        "bt-search-bk": {
             "models": get_settings().tortoise_models,
             "default_connection": "default",
         },
     },
 }
-
-
-async def init_tortoise():
-    await Tortoise.init(config=TORTOISE_ORM)
-    await Tortoise.generate_schemas(safe=True)
-    await seed_area_types()

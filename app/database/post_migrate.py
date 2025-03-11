@@ -1,6 +1,6 @@
 import sys
 
-from app.utils.config import init_tortoise
+from app.database.populate_db import populate_db
 import logging
 
 logger = logging.getLogger(sys.modules[__name__].__package__ or __name__)
@@ -8,7 +8,7 @@ logger = logging.getLogger(sys.modules[__name__].__package__ or __name__)
 
 async def post_migrate():
     logger.info("Ejecutando post-migrate...")
-    await init_tortoise()
+    await populate_db()
     logger.info("Se ejecutaron los inserts correctamente")
 
 

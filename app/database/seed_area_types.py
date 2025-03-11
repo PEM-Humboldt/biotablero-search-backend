@@ -2,7 +2,7 @@ from app.models.models import AreaType
 
 
 async def seed_area_types():
-    if not await AreaType.all().count():
+    if await AreaType.all().count() == 0:
         await AreaType.get_or_create(
             id="states", defaults={"label": "Departamentos"}
         )

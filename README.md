@@ -54,9 +54,7 @@ This project uses `aerich` for database migrations. Below are the necessary comm
    ```
    aerich init -t app.utils.config.TORTOISE_ORM
    ```
-    echo post_migrate = "app.utils.hooks.post_migrate" >> pyproject.toml
 
-    
    This sets up aerich with the project’s ORM configuration.
 - **Create the initial migrations**:
    ```
@@ -107,7 +105,7 @@ Aerich only generates schema changes. For data insertion, a script was created t
 When starting the migration for the first time, you must run the following command to populate the database:  
 
 ```
-python -m app.utils.post_migrate
+python -m app.database.post_migrate
 ```
 #### **What Does This Command Do?**  
 This command runs the `post_migrate` script, which:  

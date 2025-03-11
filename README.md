@@ -104,7 +104,7 @@ This project uses `aerich` for database migrations. Below are the necessary comm
 Aerich only generates schema changes. For data insertion, a script was created to initialize the database using Tortoise and execute the inserts through the corresponding function.  
 
 #### **First-Time Setup**  
-When starting the services for the first time, you must run the following command to populate the database:  
+When starting the migration for the first time, you must run the following command to populate the database:  
 
 ```
 python -m app.utils.post_migrate

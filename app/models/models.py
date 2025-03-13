@@ -2,52 +2,58 @@ from tortoise import fields
 from tortoise.models import Model
 
 
-class Polygons(Model):
-    id = fields.IntField(pk=True)
-    polygon_geometry = fields.JSONField()
-    polygon_hash = fields.CharField(max_length=64, unique=True, null=True)
-    created_at = fields.DatetimeField(auto_now_add=True)
+class AreaType(Model):
+    id = fields.CharField(pk=True, max_length=50)
+    label = fields.CharField(max_length=255)
 
     class Meta(Model.Meta):
-        table = "polygons"
-        indexes = [
-            ("polygon_hash",),
-        ]
+        table = "area_type"
 
 
-class MetricPolygons(Model):
+class Polygon(Model):
     id = fields.IntField(pk=True)
+    hash = fields.CharField(max_length=255, unique=True, null=True)
+    geometry = fields.JSONField()
+    area_type = fields.ForeignKeyField(
+        "bt_search_bk.AreaType",
+        related_name="polygons",
+        null=True,
+        on_delete=fields.SET_NULL,
+    )
+    name = fields.CharField(max_length=255)
+    area = fields.FloatField()
+
+    class Meta(Model.Meta):
+        table = "polygon"
+        indexes = [("hash",)]
+
+
+class PolygonMetric(Model):
+    id = fields.IntField(pk=True)
+    metric = fields.CharField(max_length=100)
+    values = fields.JSONField()
     polygon = fields.ForeignKeyField(
-        "models.Polygons", related_name="metric_polygons"
+        "bt_search_bk.Polygon",
+        related_name="metrics",
+        on_delete=fields.CASCADE,
     )
-    metric_name = fields.CharField(max_length=100)
-    values = fields.JSONField(null=True)
-    created_at = fields.DatetimeField(auto_now_add=True)
 
     class Meta(Model.Meta):
-        table = "metric_polygons"
+        table = "polygon_metric"
 
 
-class MetricPolygonsItems(Model):
+class PolygonMetricItem(Model):
     id = fields.IntField(pk=True)
-    metric_polygon = fields.ForeignKeyField(
-        "models.MetricPolygons", related_name="items"
-    )
-    raster_data = fields.BinaryField(null=True)
-    created_at = fields.DatetimeField(auto_now_add=True)
-
-    class Meta(Model.Meta):
-        table = "metric_polygons_items"
-
-
-class PrecalculatedAreas(Model):
-    id = fields.IntField(pk=True)
+    metric = fields.CharField(max_length=100)
     polygon = fields.ForeignKeyField(
-        "models.Polygons", related_name="precalculated_areas"
+        "bt_search_bk.Polygon",
+        related_name="metric_items",
+        on_delete=fields.CASCADE,
     )
-    area_id = fields.CharField(max_length=100)
-    area_type = fields.CharField(max_length=50)
-    created_at = fields.DatetimeField(auto_now_add=True)
+    layer_url = fields.CharField(max_length=255)
+    category = fields.IntField()
+    item_id = fields.CharField(max_length=100)
 
     class Meta(Model.Meta):
-        table = "precalculated_areas"
+        table = "polygon_metric_item"
+        unique_together = ("metric", "category", "item_id")

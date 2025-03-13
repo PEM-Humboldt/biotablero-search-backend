@@ -35,8 +35,12 @@ Required Python version: 3.10+
    ```
    aerich upgrade
    ```
+1. Populate the database with initial data:
     
-1. Run the the development server
+    Follow the steps in the [Migration of Inserts](#migration-of-inserts) section to insert required data.
+   
+ 
+7. Run the the development server
 
    `uvicorn app.main:app --reload`
 
@@ -54,6 +58,7 @@ This project uses `aerich` for database migrations. Below are the necessary comm
    ```
    aerich init -t app.utils.config.TORTOISE_ORM
    ```
+
    This sets up aerich with the project’s ORM configuration.
 - **Create the initial migrations**:
    ```
@@ -94,6 +99,27 @@ This project uses `aerich` for database migrations. Below are the necessary comm
    aerich downgrade
    ```
    Reverts the last migration applied to the database.
+
+
+### **Migration of Inserts**  
+
+Aerich only generates schema changes. For data insertion, a script was created to initialize the database using Tortoise and execute the inserts through the corresponding function.  
+
+#### **First-Time Setup**  
+When starting the migration for the first time, you must run the following command to populate the database:  
+
+```
+python -m database.post_migrate
+
+```
+#### **What Does This Command Do?**  
+This command runs the `post_migrate` script, which:  
+
+- Initializes the database connection using Tortoise.  
+- Ensures that the necessary tables exist.  
+- Executes the data insertion function while verifying that records do not already exist. If they do, they are not modified.  
+
+By following this process, you ensure that the initial dataset is correctly inserted without duplicating entries.
 
 ## Code checks
 

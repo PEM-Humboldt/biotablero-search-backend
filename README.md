@@ -105,7 +105,8 @@ Aerich only generates schema changes. For data insertion, a script was created t
 When starting the migration for the first time, you must run the following command to populate the database:  
 
 ```
-python -m app.database.post_migrate
+python -m database.post_migrate
+
 ```
 #### **What Does This Command Do?**  
 This command runs the `post_migrate` script, which:  

@@ -1,5 +1,5 @@
 from tortoise import Tortoise
-from app.database.seed_area_types import seed_area_types
+from database.seed_area_types import seed_area_types
 from app.utils.config import TORTOISE_ORM
 
 

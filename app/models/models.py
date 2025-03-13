@@ -15,7 +15,7 @@ class Polygon(Model):
     hash = fields.CharField(max_length=255, unique=True, null=True)
     geometry = fields.JSONField()
     area_type = fields.ForeignKeyField(
-        "models.AreaType",
+        "bt_search_bk.AreaType",
         related_name="polygons",
         null=True,
         on_delete=fields.SET_NULL,
@@ -33,7 +33,9 @@ class PolygonMetric(Model):
     metric = fields.CharField(max_length=100)
     values = fields.JSONField()
     polygon = fields.ForeignKeyField(
-        "models.Polygon", related_name="metrics", on_delete=fields.CASCADE
+        "bt_search_bk.Polygon",
+        related_name="metrics",
+        on_delete=fields.CASCADE,
     )
 
     class Meta(Model.Meta):
@@ -44,7 +46,9 @@ class PolygonMetricItem(Model):
     id = fields.IntField(pk=True)
     metric = fields.CharField(max_length=100)
     polygon = fields.ForeignKeyField(
-        "models.Polygon", related_name="metric_items", on_delete=fields.CASCADE
+        "bt_search_bk.Polygon",
+        related_name="metric_items",
+        on_delete=fields.CASCADE,
     )
     layer_url = fields.CharField(max_length=255)
     category = fields.IntField()

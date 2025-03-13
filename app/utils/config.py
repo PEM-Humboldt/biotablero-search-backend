@@ -56,7 +56,7 @@ TORTOISE_ORM = {
         "default": get_settings().db_url,
     },
     "apps": {
-        "bt-search-bk": {
+        "bt_search_bk": {
             "models": get_settings().tortoise_models,
             "default_connection": "default",
         },

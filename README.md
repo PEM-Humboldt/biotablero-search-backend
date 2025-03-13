@@ -35,8 +35,12 @@ Required Python version: 3.10+
    ```
    aerich upgrade
    ```
+1. Populate the database with initial data:
     
-1. Run the the development server
+    Follow the steps in the [Migration of Inserts](#migration-of-inserts) section to insert required data.
+   
+ 
+7. Run the the development server
 
    `uvicorn app.main:app --reload`
 

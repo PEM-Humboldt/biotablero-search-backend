@@ -3,18 +3,11 @@ from app.models.models import AreaType
 
 async def seed_area_types():
     if await AreaType.all().count() == 0:
-        await AreaType.get_or_create(
-            id="states", defaults={"label": "Departamentos"}
-        )
-        await AreaType.get_or_create(
-            id="ea", defaults={"label": "Jurisdicciones Ambientales"}
-        )
-        await AreaType.get_or_create(
-            id="basinSubzones", defaults={"label": "Subzonas Hidrográficas"}
-        )
-        await AreaType.get_or_create(
-            id="paramos", defaults={"label": "Páramos"}
-        )
-        await AreaType.get_or_create(
-            id="input", defaults={"label": "Polígono"}
-        )
+        area_types = [
+            AreaType(id="states", label="Departamentos"),
+            AreaType(id="ea", label="Jurisdicciones Ambientales"),
+            AreaType(id="basinSubzones", label="Subzonas Hidrográficas"),
+            AreaType(id="paramos", label="Páramos"),
+            AreaType(id="input", label="Polígono"),
+        ]
+        await AreaType.bulk_create(area_types)

@@ -7,8 +7,8 @@ from tortoise import Tortoise
 async def get_all() -> List[AreaTypeDTO]:
     await Tortoise.init(config=TORTOISE_ORM)
     
-    area_type_db_list = await AreaType.all().values("id", "label")
-    area_types = [AreaTypeDTO(**area) for area in area_type_db_list]
+    area_type_db_dict = await AreaType.all().values("id", "label")
+    area_types = [AreaTypeDTO(**area) for area in area_type_db_dict]
 
     await Tortoise.close_connections()
 

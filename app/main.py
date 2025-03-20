@@ -11,7 +11,7 @@ from app.middleware.exception_handlers import (
 
 from app.utils.errors import ServerError, NotFoundError
 from app.middleware.log_middleware import log_requests
-from app.routes import metrics, area_types
+from app.routes import metrics, areas
 from app.utils.config import get_settings
 
 
@@ -59,4 +59,4 @@ app.add_middleware(
 )
 
 app.include_router(metrics.router)
-app.include_router(area_types.router)
+app.include_router(areas.router)

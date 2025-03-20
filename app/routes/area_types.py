@@ -26,4 +26,4 @@ async def get_all_values() -> List[AreaType]:
     """
     Returns all area types.
     """
-    return area_types_service.get_all()
+    return await area_types_service.get_all()

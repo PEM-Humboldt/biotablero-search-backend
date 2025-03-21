@@ -1,7 +1,7 @@
 import fastapi
 import app.services.area_types as area_types_service
 
-from app.routes.schemas.AreaType import AreaType
+from app.routes.schemas.AreaTypeResponse import AreaTypeResponse
 from typing import List
 
 router = fastapi.APIRouter(
@@ -22,8 +22,8 @@ router = fastapi.APIRouter(
 )
 
 
-@router.get("/types", response_model=List[AreaType])
-async def get_all_values() -> List[AreaType]:
+@router.get("/types", response_model=List[AreaTypeResponse])
+async def get_all_values() -> List[AreaTypeResponse]:
     """
     Returns all area types.
     """

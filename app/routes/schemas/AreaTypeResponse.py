@@ -1,8 +1,7 @@
-from pydantic import BaseModel, Field
-from typing import Union
+from pydantic import BaseModel
 
 
-class AreaType(BaseModel):
+class AreaTypeResponse(BaseModel):
     id: str
     label: str
 

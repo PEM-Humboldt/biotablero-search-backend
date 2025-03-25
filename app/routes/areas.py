@@ -23,7 +23,7 @@ router = fastapi.APIRouter(
 
 
 @router.get("/types", response_model=List[AreaTypeResponse])
-async def get_all_values() -> List[AreaTypeResponse]:
+async def get_all_types() -> List[AreaTypeResponse]:
     """
     Returns all area types.
     """

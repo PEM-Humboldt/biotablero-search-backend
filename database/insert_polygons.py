@@ -43,10 +43,8 @@ async def insert_polygons_from_geojson(file_path):
 
         area = feature["properties"].get("shape_Area", 0)
         name = feature["properties"].get("dpto_cnmbr", "Desconocido")
-        dpto_id = int(feature["properties"].get("dpto_ccdgo", 0))
 
         polygon = Polygon(
-            id=dpto_id,
             hash=generate_hash(str(geometry)),
             geometry=geometry,
             area_type=area_type_obj,

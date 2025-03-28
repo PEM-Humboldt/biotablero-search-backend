@@ -33,6 +33,7 @@ async def insert_polygons_from_geojson(file_path):
     with open(file_path, "r", encoding="utf-8") as file:
         data = json.load(file)
 
+    # Add states polygons
     area_type_obj = await get_area_type("states")
 
     polygons = []
@@ -52,7 +53,11 @@ async def insert_polygons_from_geojson(file_path):
             area=area,
         )
         polygons.append(polygon)
+    
+    await insert_polygons(polygons)
 
+
+async def insert_polygons(polygons):
     if polygons:
         await Polygon.bulk_create(polygons)
         logger.info(

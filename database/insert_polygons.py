@@ -37,16 +37,20 @@ async def insert_states_from_geojson(area_type, file_path):
 
     area_type_obj = await get_area_type(area_type)
 
-    polygon_name = "name"
+    polygon_name="name"
+    area_name="area"
     # states
     if area_type == "states":
         polygon_name = "dpto_cnmbr"
-    # sa ()
-    elif area_type == "sa":
+        area_name = "shape_Area"
+    # ea
+    elif area_type == "ea":
         polygon_name = "nombre"
+        area_name = "st_area_sh"
     # basinSubzones
     elif area_type == "basinSubzones":
         polygon_name = "nom_szh"
+        area_name = "SHAPE_Area"
 
     polygons = []
     for feature in data["features"]:
@@ -54,7 +58,7 @@ async def insert_states_from_geojson(area_type, file_path):
         if not geometry:
             continue
         
-        area = feature["properties"].get("shape_Area", 0)
+        area = feature["properties"].get(area_name, 0)
         name = feature["properties"].get(polygon_name, DEFAULT_UNKNOWN_VALUE)
 
         polygon = Polygon(

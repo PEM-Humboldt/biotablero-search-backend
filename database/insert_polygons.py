@@ -19,6 +19,19 @@ DEFAULT_UNKNOWN_VALUE = "Desconocido"
 
 
 async def get_area_type(area_name: str):
+    """
+    Retrieves an AreaType object from the database.
+
+    Args:
+        area_name (str): The ID of the AreaType to retrieve.
+
+    Returns:
+        AreaType: The AreaType object if found, otherwise creates a new one.
+
+    Raises:
+        DoesNotExist: If the AreaType does not exist and cannot be created.
+    """
+
     try:
         return await AreaType.get(id=area_name)
     except DoesNotExist:
@@ -26,12 +39,30 @@ async def get_area_type(area_name: str):
 
 
 def generate_hash(geometry):
+    """
+    Generates a SHA256 hash of a geometry object.
+
+    Args:
+        geometry (dict): The geometry object to hash.
+
+    Returns:
+        str: The hexadecimal representation of the SHA256 hash.
+    """
+
     return hashlib.sha256(
         json.dumps(geometry, sort_keys=True).encode()
     ).hexdigest()
 
 
 async def insert_states_from_geojson(area_type, file_path):
+    """
+    Inserts polygon data from a GeoJSON file into the database.
+
+    Args:
+        area_type (str): The type of area being imported (e.g., "states", "ea", "basinSubzones").
+        file_path (str): The path to the GeoJSON file.
+    """
+
     with open(file_path, "r", encoding="utf-8") as file:
         data = json.load(file)
 
@@ -39,15 +70,14 @@ async def insert_states_from_geojson(area_type, file_path):
 
     polygon_name = "name"
     area_name = "area"
-    # states
+
+    # Define property names based on area type
     if area_type == "states":
         polygon_name = "dpto_cnmbr"
         area_name = "shape_Area"
-    # ea
     elif area_type == "ea":
         polygon_name = "nombre"
         area_name = "st_area_sh"
-    # basinSubzones
     elif area_type == "basinSubzones":
         polygon_name = "nom_szh"
         area_name = "SHAPE_Area"
@@ -84,6 +114,11 @@ async def insert_states_from_geojson(area_type, file_path):
 
 
 async def run():
+    """
+    Initializes the Tortoise ORM, generates database schemas, and inserts data
+    from GeoJSON files.
+    """
+
     await Tortoise.init(config=TORTOISE_ORM)
     await Tortoise.generate_schemas(safe=True)
     await insert_states_from_geojson("states", "data/departamentos.geojson")

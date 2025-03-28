@@ -57,6 +57,7 @@ class RequestIdFilter(logging.Filter):
     Custom logging filter to ensure each log record contains a 'request_id'.
     If 'request_id' is not present, it sets it to "N/A".
     """
+
     def filter(self, record):
         if not hasattr(record, "request_id"):
             record.request_id = "N/A"

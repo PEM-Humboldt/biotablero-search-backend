@@ -37,8 +37,8 @@ async def insert_states_from_geojson(area_type, file_path):
 
     area_type_obj = await get_area_type(area_type)
 
-    polygon_name="name"
-    area_name="area"
+    polygon_name = "name"
+    area_name = "area"
     # states
     if area_type == "states":
         polygon_name = "dpto_cnmbr"
@@ -57,7 +57,7 @@ async def insert_states_from_geojson(area_type, file_path):
         geometry = feature.get("geometry", None)
         if not geometry:
             continue
-        
+
         area = feature["properties"].get(area_name, 0)
         name = feature["properties"].get(polygon_name, DEFAULT_UNKNOWN_VALUE)
 
@@ -69,7 +69,7 @@ async def insert_states_from_geojson(area_type, file_path):
             area=area,
         )
         polygons.append(polygon)
-    
+
     if polygons:
         await Polygon.bulk_create(polygons)
         logger.info(
@@ -80,15 +80,19 @@ async def insert_states_from_geojson(area_type, file_path):
         logger.info(
             "⚠ No se insertaron polígonos. Verifica el archivo GeoJSON.",
             extra={"request_id": "N/A"},
-        )    
+        )
 
 
 async def run():
     await Tortoise.init(config=TORTOISE_ORM)
     await Tortoise.generate_schemas(safe=True)
     await insert_states_from_geojson("states", "data/departamentos.geojson")
-    await insert_states_from_geojson("ea", "data/jurisdicciones-ambientales.geojson")
-    await insert_states_from_geojson("basinSubzones", "data/subzonas-hidrograficas.geojson")
+    await insert_states_from_geojson(
+        "ea", "data/jurisdicciones-ambientales.geojson"
+    )
+    await insert_states_from_geojson(
+        "basinSubzones", "data/subzonas-hidrograficas.geojson"
+    )
     await Tortoise.close_connections()
 
 

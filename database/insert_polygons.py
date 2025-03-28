@@ -66,10 +66,6 @@ async def insert_states_from_geojson(area_type, file_path):
         )
         polygons.append(polygon)
     
-    await insert_polygons(polygons)
-
-
-async def insert_polygons(polygons):
     if polygons:
         await Polygon.bulk_create(polygons)
         logger.info(
@@ -80,7 +76,7 @@ async def insert_polygons(polygons):
         logger.info(
             "⚠ No se insertaron polígonos. Verifica el archivo GeoJSON.",
             extra={"request_id": "N/A"},
-        )
+        )    
 
 
 async def run():

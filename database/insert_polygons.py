@@ -4,10 +4,7 @@ from app.utils.config import get_settings
 import logging
 from tortoise.exceptions import DoesNotExist
 
-from app.utils.config import TORTOISE_ORM
-from tortoise import Tortoise
 from app.models.models import Polygon, AreaType
-import asyncio
 
 
 settings = get_settings()
@@ -54,7 +51,7 @@ def generate_hash(geometry):
     ).hexdigest()
 
 
-async def insert_states_from_geojson(area_type, file_path):
+async def insert_polygons_from_geojson(area_type, file_path):
     """
     Inserts polygon data from a GeoJSON file into the database.
 
@@ -113,23 +110,15 @@ async def insert_states_from_geojson(area_type, file_path):
         )
 
 
-async def run():
+async def seed_polygons():
     """
-    Initializes the Tortoise ORM, generates database schemas, and inserts data
-    from GeoJSON files.
+    Inserts data from GeoJSON files.
     """
 
-    await Tortoise.init(config=TORTOISE_ORM)
-    await Tortoise.generate_schemas(safe=True)
-    await insert_states_from_geojson("states", "data/departamentos.geojson")
-    await insert_states_from_geojson(
+    await insert_polygons_from_geojson("states", "data/departamentos.geojson")
+    await insert_polygons_from_geojson(
         "ea", "data/jurisdicciones-ambientales.geojson"
     )
-    await insert_states_from_geojson(
+    await insert_polygons_from_geojson(
         "basinSubzones", "data/subzonas-hidrograficas.geojson"
     )
-    await Tortoise.close_connections()
-
-
-if __name__ == "__main__":
-    asyncio.run(run())

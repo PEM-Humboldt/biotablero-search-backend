@@ -121,6 +121,21 @@ This command runs the `post_migrate` script, which:
 
 By following this process, you ensure that the initial dataset is correctly inserted without duplicating entries.
 
+#### Add polygon data
+
+You must have these files in `./data/` path:
+
+- `departamentos.geojson`
+- `jurisdicciones-ambientales.geojson`
+- `subzonas-hidrograficas.geojson`
+
+Run the following command to populate the `polygon` table data:  
+
+```
+python -m database.insert_polygons
+
+```
+
 ## Code checks
 
 This guide explains how to use `black` for code formatting and `pyright` for type checking.

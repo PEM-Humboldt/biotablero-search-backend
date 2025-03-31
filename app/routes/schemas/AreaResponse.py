@@ -16,8 +16,8 @@ class AreaDetailsResponse(BaseModel):
     id: int
     name: str
     area: float
+    area_type: AreaTypeResponse
     geometry: object
-    # area_type: AreaTypeResponse
 
     class Config:
         json_schema_extra = {

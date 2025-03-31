@@ -1,6 +1,7 @@
 from typing import List
 from app.routes.schemas.AreaResponse import AreaResponse, AreaDetailsResponse
 from app.models.models import Polygon, AreaType
+from app.routes.schemas.AreaTypeResponse import AreaTypeResponse
 from app.utils.config import TORTOISE_ORM
 from tortoise import Tortoise
 
@@ -26,11 +27,19 @@ async def get_area_details(id: int) -> AreaDetailsResponse:
     await Tortoise.init(config=TORTOISE_ORM)
 
     area = None
-    area_db = await Polygon.get_or_none(id=id).values(
-        "id", "name", "area", "geometry"
-    )
+    area_db = await Polygon.filter(id=id).prefetch_related("area_type").first()
+
     if area_db != None:
-        area = AreaDetailsResponse(**area_db)
+        area = AreaDetailsResponse(
+            id=area_db.id,
+            name=area_db.name,
+            area=area_db.area,
+            geometry=area_db.geometry,
+            area_type=AreaTypeResponse(
+                id=area_db.area_type.id if area_db.area_type else None,
+                label=area_db.area_type.label if area_db.area_type else None,
+            ),
+        )
 
     await Tortoise.close_connections()
 

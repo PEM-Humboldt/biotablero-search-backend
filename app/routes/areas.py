@@ -1,4 +1,4 @@
-from  fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException
 import app.services.area_types as area_types_service
 import app.services.areas as area_service
 
@@ -49,6 +49,6 @@ async def get_area_details(id: int):
     response = await area_service.get_area_details(id)
 
     if response == None:
-        raise HTTPException(status_code=404, detail='Not found')
+        raise HTTPException(status_code=404, detail="Not found")
 
     return response

@@ -1,12 +1,12 @@
-import fastapi
+from  fastapi import APIRouter
 import app.services.area_types as area_types_service
 import app.services.areas as area_service
 
 from app.routes.schemas.AreaTypeResponse import AreaTypeResponse
 from app.routes.schemas.AreaResponse import AreaResponse, AreaDetailsResponse
-from typing import Annotated, List
+from typing import List
 
-router = fastapi.APIRouter(
+router = APIRouter(
     prefix="/areas",
     tags=["areas"],
     responses={
@@ -22,14 +22,6 @@ router = fastapi.APIRouter(
         },
     },
 )
-
-
-async def area_id_param(
-    area_id: Annotated[
-        int, fastapi.Query(description="Area identifier", example="1")
-    ],
-):
-    return area_id
 
 
 @router.get("/types", response_model=List[AreaTypeResponse])
@@ -49,7 +41,7 @@ async def get_areas_by_type(type: str):
 
 
 @router.get("/{id}", response_model=AreaDetailsResponse)
-async def get_area_details(id: Annotated[int, fastapi.Depends(area_id_param)]):
+async def get_area_details(id: int):
     """
     Returns area details filtered by identifier.
     """

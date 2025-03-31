@@ -16,7 +16,7 @@ class AreaDetailsResponse(BaseModel):
     id: int
     name: str
     area: float
-    # geometry: object
+    geometry: object
     # area_type: AreaTypeResponse
 
     class Config:

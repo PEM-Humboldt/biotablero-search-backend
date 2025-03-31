@@ -27,7 +27,7 @@ async def get_area_details(id: int) -> AreaDetailsResponse:
 
     area = None
     area_db = await Polygon.get_or_none(id=id).values(
-        "id", "name", "area"
+        "id", "name", "area", "geometry"
     )
     if area_db != None:
         area = AreaDetailsResponse(**area_db)

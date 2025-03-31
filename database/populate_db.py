@@ -10,6 +10,5 @@ async def populate_db():
 
     await seed_area_types()
     await seed_polygons()
-    
-    await Tortoise.close_connections()
 
+    await Tortoise.close_connections()

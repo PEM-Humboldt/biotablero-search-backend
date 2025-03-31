@@ -6,6 +6,4 @@ class AreaResponse(BaseModel):
     name: str
 
     class Config:
-        json_schema_extra = {
-            "example": {"id": 1, "name": "Area example"}
-        }
+        json_schema_extra = {"example": {"id": 1, "name": "Area example"}}

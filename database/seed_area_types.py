@@ -7,7 +7,7 @@ async def seed_area_types():
             AreaType(id="states", label="Departamentos"),
             AreaType(id="ea", label="Jurisdicciones Ambientales"),
             AreaType(id="basinSubzones", label="Subzonas Hidrográficas"),
-            AreaType(id="paramos", label="Páramos"),
-            AreaType(id="input", label="Polígono"),
+            AreaType(id="se", label="Ecosistemas Estratégicos"),
+            AreaType(id="custom", label="Consulta Personalizada"),
         ]
         await AreaType.bulk_create(area_types)

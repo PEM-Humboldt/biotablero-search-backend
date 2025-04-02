@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 from app.routes.schemas.AreaTypeResponse import AreaTypeResponse
-from app.routes.schemas.polygon import geojson_polygon
+from app.routes.schemas.PolygonRequest import geojson_polygon
 
 
 class AreaResponse(BaseModel):

@@ -23,7 +23,7 @@ async def get_areas_by_type(area_type_id: str) -> List[AreaResponse]:
     return areas
 
 
-async def get_area_details(id: int) -> AreaDetailsResponse:
+async def get_area_details(id: int) -> AreaDetailsResponse | None:
     await Tortoise.init(config=TORTOISE_ORM)
 
     area = None
@@ -36,8 +36,8 @@ async def get_area_details(id: int) -> AreaDetailsResponse:
             area=area_db.area,
             geometry=area_db.geometry,
             area_type=AreaTypeResponse(
-                id=area_db.area_type.id if area_db.area_type else None,
-                label=area_db.area_type.label if area_db.area_type else None,
+                id=area_db.area_type.id if area_db.area_type else "",
+                label=area_db.area_type.label if area_db.area_type else "",
             ),
         )
 

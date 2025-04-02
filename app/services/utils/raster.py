@@ -9,7 +9,7 @@ import geopandas as gpd
 from typing import Any, Dict, List, Tuple
 import rioxarray
 
-from app.routes.schemas.polygon import PolygonGeometry
+from app.routes.schemas.PolygonRequest import PolygonGeometry
 from app.middleware.log_middleware import logger
 from app.utils.errors import NotFoundError, ServerError
 

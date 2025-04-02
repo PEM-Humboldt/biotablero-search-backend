@@ -92,7 +92,7 @@ class PolygonFeature(Feature):
     geometry: PolygonGeometry
 
 
-class Polygon(BaseModel):
+class PolygonRequest(BaseModel):
     polygon: PolygonFeature = Field(
         description="GeoJSON polygon to determine the query area",
     )

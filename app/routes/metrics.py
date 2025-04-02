@@ -2,8 +2,8 @@ from typing import Annotated, Literal, List, Dict
 import fastapi
 from fastapi import Query
 
-from app.routes.schemas.polygon import Polygon
-from app.routes.schemas.MetricValues import MetricResponse, LayerResponse
+from app.routes.schemas.PolygonRequest import PolygonRequest
+from app.routes.schemas.MetricResponse import MetricResponse, LayerResponse
 import app.services.metrics as metrics_service
 
 validation_error_example = {
@@ -80,7 +80,7 @@ async def get_values_by_defined_area(
 @router.post("/{metric_id}/values", response_model=List[MetricResponse])
 async def get_values_by_polygon(
     metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
-    polygon: Polygon,
+    polygon: PolygonRequest,
 ) -> List[MetricResponse]:
     """
     Given a metric and a polygon, get the area values for each category in the metric inside the polygon.
@@ -104,7 +104,7 @@ async def get_layer_by_defined_area(
 @router.post("/{metric_id}/layer")
 async def get_layer_by_polygon(
     metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
-    polygon: Polygon,
+    polygon: PolygonRequest,
     item_id: Annotated[
         str,
         fastapi.Query(

@@ -68,7 +68,6 @@ async def insert_polygons_from_geojson(area_type, file_path):
     polygon_name = "name"
     area_name = "area"
 
-    # Define property names based on area type
     if area_type == "states":
         polygon_name = "dpto_cnmbr"
         area_name = "shape_Area"

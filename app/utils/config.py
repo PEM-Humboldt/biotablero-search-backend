@@ -37,7 +37,6 @@ class Settings(BaseSettings):
             datefmt="%Y-%m-%d %H:%M:%S",
         )
 
-        # Create and apply the request ID filter
         request_filter = RequestIdFilter()
         logger.addFilter(request_filter)
 

@@ -37,13 +37,30 @@ class Settings(BaseSettings):
             datefmt="%Y-%m-%d %H:%M:%S",
         )
 
+        request_filter = RequestIdFilter()
+        logger.addFilter(request_filter)
+
         file_handler = logging.FileHandler("logs/app.log")
         file_handler.setFormatter(formatter)
+        file_handler.addFilter(request_filter)
         logger.addHandler(file_handler)
 
         stream_handler = StreamHandler(sys.stdout)
         stream_handler.setFormatter(formatter)
+        stream_handler.addFilter(request_filter)
         logger.addHandler(stream_handler)
+
+
+class RequestIdFilter(logging.Filter):
+    """
+    Custom logging filter to ensure each log record contains a 'request_id'.
+    If 'request_id' is not present, it sets it to "N/A".
+    """
+
+    def filter(self, record):
+        if not hasattr(record, "request_id"):
+            record.request_id = "N/A"
+        return True
 
 
 @lru_cache

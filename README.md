@@ -106,12 +106,18 @@ This project uses `aerich` for database migrations. Below are the necessary comm
 Aerich only generates schema changes. For data insertion, a script was created to initialize the database using Tortoise and execute the inserts through the corresponding function.  
 
 #### **First-Time Setup**  
+You must have these files in `./data/` path:
+
+- `departamentos.geojson`
+- `jurisdicciones-ambientales.geojson`
+- `subzonas-hidrograficas.geojson`
+
 When starting the migration for the first time, you must run the following command to populate the database:  
 
-```
+```sh
 python -m database.post_migrate
-
 ```
+
 #### **What Does This Command Do?**  
 This command runs the `post_migrate` script, which:  
 

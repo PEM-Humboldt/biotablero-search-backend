@@ -1,9 +1,14 @@
 from typing import Annotated, Literal, List, Dict
 import fastapi
 from fastapi import Query
+from pydantic import TypeAdapter
 
 from app.routes.schemas.PolygonRequest import PolygonRequest
-from app.routes.schemas.MetricResponse import MetricResponse, LayerResponse, PolygonResponse
+from app.routes.schemas.MetricResponse import (
+    MetricResponse,
+    LayerResponse,
+    PolygonResponse,
+)
 import app.services.metrics as metrics_service
 from app.services.utils import polygon_validate
 
@@ -87,9 +92,16 @@ async def get_values_by_polygon(
     Given a metric and a polygon, get the area values for each category in the metric inside the polygon.
     """
     polygon_geometry = polygon.polygon.geometry
-    area_data = metrics_service.get_areas_by_polygon(metric_id, polygon_geometry)
-    area_total = polygon_validate.extract_total_area_from_last_period(area_data)
-    polygon_id = await polygon_validate.get_or_create_polygon(polygon_geometry, metric_id, area_total)
+    area_raw = metrics_service.get_areas_by_polygon(
+        metric_id, polygon_geometry
+    )
+    area_dicts = polygon_validate.serialize_area_data(area_raw)
+    area_total = polygon_validate.extract_total_area_from_last_period(
+        area_dicts
+    )
+    polygon_id = await polygon_validate.get_or_create_polygon(
+        polygon_geometry, metric_id, area_total
+    )
 
     return [PolygonResponse(id=polygon_id)]
 

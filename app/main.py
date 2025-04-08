@@ -16,7 +16,6 @@ from app.utils.config import get_settings, TORTOISE_ORM
 from tortoise.contrib.fastapi import register_tortoise
 
 
-
 settings = get_settings()
 settings.configure_logging()
 logger = getLogger(__name__)

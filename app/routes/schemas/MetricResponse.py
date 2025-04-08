@@ -58,8 +58,4 @@ class PolygonResponse(BaseModel):
     id: int
 
     class Config:
-        json_schema_extra = {
-            "example": {
-                "id": 123456
-            }
-        }
+        json_schema_extra = {"example": {"id": 123456}}

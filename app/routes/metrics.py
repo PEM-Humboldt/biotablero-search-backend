@@ -99,7 +99,7 @@ async def get_values_by_polygon(
         area_dicts
     )
     polygon_id = await polygon_validate.get_or_create_polygon(
-        polygon_geometry, metric_id, area_total
+        polygon_geometry, metric_id, area_total, area_dicts
     )
 
     return [PolygonResponse(id=polygon_id)]

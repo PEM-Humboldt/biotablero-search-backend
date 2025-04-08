@@ -37,7 +37,10 @@ def generate_hash(polygon: PolygonGeometry, name: str) -> str:
     data = json.dumps(polygon.model_dump(), sort_keys=True) + name
     return hashlib.sha256(data.encode()).hexdigest()
 
+
 """TO DO:Validate a Way to Calculate the Total Area from the Request Polygon"""
+
+
 def extract_total_area_from_last_period(area_data: list[dict]) -> float:
     sorted_data = sorted(
         area_data, key=lambda x: x["periodo"].split("-")[1], reverse=True

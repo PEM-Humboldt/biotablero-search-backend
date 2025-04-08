@@ -86,7 +86,7 @@ async def get_or_create_polygon(
 
             await PolygonMetric.create(
                 metric=name,
-                values=values,  # directamente el JSON completo
+                values=values,
                 polygon=polygon_obj,
             )
 

@@ -1,7 +1,6 @@
-from typing import Annotated, Literal, List, Dict
+from typing import Annotated, Literal, List
 import fastapi
 from fastapi import Query
-from pydantic import TypeAdapter
 
 from app.routes.schemas.PolygonRequest import PolygonRequest
 from app.routes.schemas.MetricResponse import (

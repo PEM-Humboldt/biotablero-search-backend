@@ -12,7 +12,8 @@ from app.middleware.exception_handlers import (
 from app.utils.errors import ServerError, NotFoundError
 from app.middleware.log_middleware import log_requests
 from app.routes import metrics, areas
-from app.utils.config import get_settings
+from app.utils.config import get_settings, TORTOISE_ORM
+from tortoise.contrib.fastapi import register_tortoise
 
 
 settings = get_settings()
@@ -60,3 +61,10 @@ app.add_middleware(
 
 app.include_router(metrics.router)
 app.include_router(areas.router)
+
+register_tortoise(
+    app,
+    config=TORTOISE_ORM,
+    generate_schemas=True,
+    add_exception_handlers=True,
+)

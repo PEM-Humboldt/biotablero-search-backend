@@ -183,3 +183,7 @@ cython_debug/
 .vscode
 
 !.gitkeep
+.idea/misc.xml
+.idea/vcs.xml
+.idea/biotablero-search-backend.iml
+.idea/inspectionProfiles/profiles_settings.xml

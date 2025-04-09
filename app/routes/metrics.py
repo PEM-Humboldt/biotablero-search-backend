@@ -6,8 +6,7 @@ from app.models.models import PolygonMetric, Polygon
 from app.routes.schemas.PolygonRequest import PolygonRequest
 from app.routes.schemas.MetricResponse import (
     MetricResponse,
-    LayerResponse,
-    PolygonResponse,
+    LayerResponse
 )
 import app.services.metrics as metrics_service
 from app.services.utils import polygon_validate

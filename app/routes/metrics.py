@@ -4,10 +4,7 @@ from fastapi import Query
 
 from app.models.models import PolygonMetric, Polygon
 from app.routes.schemas.PolygonRequest import PolygonRequest
-from app.routes.schemas.MetricResponse import (
-    MetricResponse,
-    LayerResponse
-)
+from app.routes.schemas.MetricResponse import MetricResponse, LayerResponse
 import app.services.metrics as metrics_service
 from app.services.utils import polygon_validate
 from app.services.utils.polygon_validate import generate_hash

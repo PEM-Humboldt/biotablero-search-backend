@@ -3,7 +3,7 @@ import hashlib
 from typing import List, Dict, Any
 
 from tortoise.transactions import in_transaction
-from app.models.models import Polygon, AreaType
+from app.models.models import Polygon, AreaType, PolygonMetric
 from logging import getLogger
 
 from app.routes.schemas.MetricResponse import (
@@ -55,7 +55,10 @@ def extract_total_area_from_last_period(area_data: list[dict]) -> float:
 
 
 async def get_or_create_polygon(
-    polygon: PolygonGeometry, name: str, area: float
+    polygon: PolygonGeometry,
+    name: str,
+    area: float,
+    values: List[Dict[str, Any]],
 ) -> int:
     """Search for a polygon by its hash and create it if it doesn't exist. The ID returns."""
     hash_value = generate_hash(polygon, name)
@@ -78,6 +81,17 @@ async def get_or_create_polygon(
             )
             logger.info(
                 "Polygon inserted into the database.",
+                extra={"request_id": request_id_context.get()},
+            )
+
+            await PolygonMetric.create(
+                metric=name,
+                values=values,
+                polygon=polygon_obj,
+            )
+
+            logger.info(
+                "Polygon metrics inserted.",
                 extra={"request_id": request_id_context.get()},
             )
 

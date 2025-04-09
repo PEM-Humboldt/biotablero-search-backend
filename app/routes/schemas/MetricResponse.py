@@ -52,10 +52,3 @@ class LayerResponse(BaseModel):
                 "layer": "iVBORw0KGgoAAAANSUhEUgAAAKIAAAC4CAYAAABgvzfmAAABPElEQVR4nO3d2w6CMAwA0Gn8..."
             }
         }
-
-
-class PolygonResponse(BaseModel):
-    id: int
-
-    class Config:
-        json_schema_extra = {"example": {"id": 123456}}

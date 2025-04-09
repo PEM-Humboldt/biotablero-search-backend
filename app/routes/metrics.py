@@ -2,14 +2,12 @@ from typing import Annotated, Literal, List
 import fastapi
 from fastapi import Query
 
+from app.models.models import PolygonMetric, Polygon
 from app.routes.schemas.PolygonRequest import PolygonRequest
-from app.routes.schemas.MetricResponse import (
-    MetricResponse,
-    LayerResponse,
-    PolygonResponse,
-)
+from app.routes.schemas.MetricResponse import MetricResponse, LayerResponse
 import app.services.metrics as metrics_service
 from app.services.utils import polygon_validate
+from app.services.utils.polygon_validate import generate_hash
 
 validation_error_example = {
     "detail": [
@@ -82,15 +80,27 @@ async def get_values_by_defined_area(
     )
 
 
-@router.post("/{metric_id}/values", response_model=List[PolygonResponse])
+@router.post("/{metric_id}/values", response_model=List[MetricResponse])
 async def get_values_by_polygon(
     metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
     polygon: PolygonRequest,
-) -> List[PolygonResponse]:
+) -> List[MetricResponse]:
     """
     Given a metric and a polygon, get the area values for each category in the metric inside the polygon.
     """
     polygon_geometry = polygon.polygon.geometry
+
+    hash_value = generate_hash(polygon_geometry, metric_id)
+
+    polygon_obj = await Polygon.get_or_none(hash=hash_value)
+
+    if polygon_obj:
+        metric = await PolygonMetric.get_or_none(
+            polygon=polygon_obj, metric=metric_id
+        )
+        if metric:
+            return metric.values
+
     area_raw = metrics_service.get_areas_by_polygon(
         metric_id, polygon_geometry
     )
@@ -98,11 +108,12 @@ async def get_values_by_polygon(
     area_total = polygon_validate.extract_total_area_from_last_period(
         area_dicts
     )
-    polygon_id = await polygon_validate.get_or_create_polygon(
+
+    await polygon_validate.get_or_create_polygon(
         polygon_geometry, metric_id, area_total, area_dicts
     )
 
-    return [PolygonResponse(id=polygon_id)]
+    return area_raw
 
 
 @router.get("/{metric_id}/layer")

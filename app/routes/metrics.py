@@ -105,9 +105,7 @@ async def get_values_by_polygon(
         metric_id, polygon_geometry
     )
     area_dicts = polygon_validate.serialize_area_data(area_raw)
-    area_total = polygon_validate.extract_total_area_from_last_period(
-        area_dicts
-    )
+    area_total = polygon_validate.get_polygon_area_ha(polygon_geometry)
 
     await polygon_validate.get_or_create_polygon(
         polygon_geometry, metric_id, area_total, area_dicts

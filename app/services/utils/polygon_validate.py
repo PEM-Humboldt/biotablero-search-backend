@@ -1,6 +1,6 @@
 import json
 import hashlib
-from typing import List, Dict, Any, cast
+from typing import List, Dict, Any
 
 from pyproj import Transformer
 from shapely.ops import transform
@@ -15,7 +15,6 @@ from app.routes.schemas.MetricResponse import (
 from app.routes.schemas.PolygonRequest import PolygonGeometry
 from app.utils import context_vars
 from shapely.geometry import shape
-import geopandas as gpd
 
 logger = getLogger(__name__)
 request_id_context = context_vars.request_id_context

@@ -2,6 +2,8 @@ import json
 import hashlib
 from typing import List, Dict, Any
 
+from pyproj import Transformer
+from shapely.ops import transform
 from tortoise.transactions import in_transaction
 from app.models.models import Polygon, AreaType, PolygonMetric
 from logging import getLogger
@@ -12,6 +14,7 @@ from app.routes.schemas.MetricResponse import (
 )
 from app.routes.schemas.PolygonRequest import PolygonGeometry
 from app.utils import context_vars
+from shapely.geometry import shape
 
 logger = getLogger(__name__)
 request_id_context = context_vars.request_id_context
@@ -38,20 +41,22 @@ def generate_hash(polygon: PolygonGeometry, name: str) -> str:
     return hashlib.sha256(data.encode()).hexdigest()
 
 
-"""TO DO:Validate a Way to Calculate the Total Area from the Request Polygon"""
+def get_polygon_area_ha(polygon: PolygonGeometry) -> float:
+    if polygon is None:
+        raise ValueError("Polygon cannot be None")
 
+    shapely_geom = shape(polygon.model_dump())
 
-def extract_total_area_from_last_period(area_data: list[dict]) -> float:
-    sorted_data = sorted(
-        area_data, key=lambda x: x["periodo"].split("-")[1], reverse=True
+    if shapely_geom.is_empty:
+        raise ValueError("Geometry is empty.")
+
+    transformer = Transformer.from_crs(
+        "EPSG:4326", "EPSG:9377", always_xy=True
     )
-    last_period = sorted_data[0]
+    projected_geom = transform(transformer.transform, shapely_geom)
 
-    return (
-        last_period.get("perdida", 0)
-        + last_period.get("persistencia", 0)
-        + last_period.get("no_bosque", 0)
-    )
+    area_ha = projected_geom.area / 10000
+    return area_ha
 
 
 async def get_or_create_polygon(

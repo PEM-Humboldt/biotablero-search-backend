@@ -1,53 +1,15 @@
-from typing import Optional
-
-from tortoise.transactions import in_transaction
-from app.models.models import Polygon, AreaType, PolygonMetric
-from logging import getLogger
+from app.persistence.polygon_persistence import get_polygon, create_polygon
+from app.routes.schemas.PolygonRequest import PolygonRequest
+from app.routes.schemas.AreaResponse import PolygonIdResponse
 
 
-from app.routes.schemas.PolygonRequest import PolygonGeometry
-from app.utils import context_vars
-from app.utils.polygon_utils import generate_hash, get_polygon_area_ha
+async def get_or_create_polygon_id(
+    polygon: PolygonRequest,
+) -> PolygonIdResponse:
+    polygon_geometry = polygon.polygon.geometry
+    existing_id = await get_polygon(polygon_geometry)
+    if existing_id is not None:
+        return PolygonIdResponse(polygon_id=existing_id)
 
-logger = getLogger(__name__)
-request_id_context = context_vars.request_id_context
-
-
-async def polygon_exists(polygon: PolygonGeometry) -> Optional[int]:
-    """
-    Check if a polygon exists in the DB by hash. Return its ID if it exists.
-    """
-    hash_value = generate_hash(polygon)
-    polygon_obj = await Polygon.get_or_none(hash=hash_value)
-    if polygon_obj:
-        logger.info(
-            "Polygon already exists in the database.",
-            extra={"request_id": request_id_context.get()},
-        )
-        return polygon_obj.id
-    return None
-
-
-async def create_polygon(polygon: PolygonGeometry, name: str) -> int:
-    """
-    Create a new polygon in the DB with the given name (usually metric_id).
-    """
-    hash_value = generate_hash(polygon)
-    area_ha = get_polygon_area_ha(polygon)
-
-    async with in_transaction():
-        area_type = await AreaType.get(id="custom")
-        polygon_obj = await Polygon.create(
-            hash=hash_value,
-            geometry=polygon.model_dump(),
-            name=name,
-            area=area_ha,
-            area_type=area_type,
-        )
-
-        logger.info(
-            "Polygon inserted into the database.",
-            extra={"request_id": request_id_context.get()},
-        )
-
-    return polygon_obj.id
+    created_id = await create_polygon(polygon_geometry)
+    return PolygonIdResponse(polygon_id=created_id)

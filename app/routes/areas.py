@@ -1,7 +1,6 @@
-from fastapi import APIRouter, HTTPException, Depends
+from fastapi import APIRouter, HTTPException
 import app.services.area_types as area_types_service
 import app.services.areas as area_service
-from app.routes.metrics import metric_id_param
 
 from app.routes.schemas.AreaTypeResponse import AreaTypeResponse
 from app.routes.schemas.AreaResponse import (
@@ -62,21 +61,12 @@ async def get_area_details(id: int):
     return response
 
 
-@router.post("/polygon/{metric_id}", response_model=PolygonIdResponse)
+@router.post("/polygon", response_model=PolygonIdResponse)
 async def create_or_get_polygon(
-    metric_id: Annotated[str, Depends(metric_id_param)],
     polygon: PolygonRequest,
 ) -> PolygonIdResponse:
     """
     Receives a polygon and a metric ID. If polygon exists (by hash), return its ID.
     If not, create it and return the new ID.
     """
-    polygon_geometry = polygon.polygon.geometry
-    existing_id = await polygon_service.polygon_exists(polygon_geometry)
-    if existing_id is not None:
-        return PolygonIdResponse(polygon_id=existing_id)
-
-    created_id = await polygon_service.create_polygon(
-        polygon_geometry, metric_id
-    )
-    return PolygonIdResponse(polygon_id=created_id)
+    return await polygon_service.get_or_create_polygon_id(polygon)

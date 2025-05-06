@@ -30,7 +30,7 @@ async def get_polygon(polygon: PolygonGeometry) -> Optional[int]:
 
 async def create_polygon(polygon: PolygonGeometry) -> int:
     """
-    Create a new polygon in the DB with the given name (usually metric_id).
+    Create a new polygon in the DB .
     """
     hash_value = generate_hash(polygon)
     area_ha = get_polygon_area_ha(polygon)

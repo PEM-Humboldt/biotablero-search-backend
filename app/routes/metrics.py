@@ -2,12 +2,11 @@ from typing import Annotated, Literal, List
 import fastapi
 from fastapi import Query
 
-from app.models.models import PolygonMetric, Polygon
 from app.routes.schemas.PolygonRequest import PolygonRequest
 from app.routes.schemas.MetricResponse import MetricResponse, LayerResponse
 import app.services.metrics as metrics_service
-from app.services.utils import polygon_validate
-from app.services.utils.polygon_validate import generate_hash
+from app.services.polygon_metric_service import get_or_create_polygon_metric
+
 
 validation_error_example = {
     "detail": [
@@ -65,53 +64,19 @@ async def defined_areas_params(
     return {"area_type": area_type, "area_id": area_id}
 
 
-@router.get("/{metric_id}/values", response_model=List[MetricResponse])
-async def get_values_by_defined_area(
-    metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
-    defined_area: Annotated[dict, fastapi.Depends(defined_areas_params)],
-) -> List[MetricResponse]:
-    """
-    Given a metric and a predefined area of interest, get the area values for each category in the metric inside the indicated area
-    """
-    area_type = defined_area["area_type"]
-    area_id = defined_area["area_id"]
-    return metrics_service.get_areas_by_defined_area(
-        metric_id, area_type, area_id
-    )
-
-
-@router.post("/{metric_id}/values", response_model=List[MetricResponse])
+@router.get("/{metric_id}/values/{id}", response_model=List[MetricResponse])
 async def get_values_by_polygon(
     metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
-    polygon: PolygonRequest,
+    id: int,
 ) -> List[MetricResponse]:
     """
-    Given a metric and a polygon, get the area values for each category in the metric inside the polygon.
+    Retrieves metric values for a given polygon.
+
+    If the values for the specified metric and polygon already exist in the database,
+    they are returned. This endpoint assumes that the values already exist and
+    will not create new entries if missing.
     """
-    polygon_geometry = polygon.polygon.geometry
-
-    hash_value = generate_hash(polygon_geometry, metric_id)
-
-    polygon_obj = await Polygon.get_or_none(hash=hash_value)
-
-    if polygon_obj:
-        metric = await PolygonMetric.get_or_none(
-            polygon=polygon_obj, metric=metric_id
-        )
-        if metric:
-            return metric.values
-
-    area_raw = metrics_service.get_areas_by_polygon(
-        metric_id, polygon_geometry
-    )
-    area_dicts = polygon_validate.serialize_area_data(area_raw)
-    area_total = polygon_validate.get_polygon_area_ha(polygon_geometry)
-
-    await polygon_validate.get_or_create_polygon(
-        polygon_geometry, metric_id, area_total, area_dicts
-    )
-
-    return area_raw
+    return await get_or_create_polygon_metric(id, metric_id)
 
 
 @router.get("/{metric_id}/layer")

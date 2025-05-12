@@ -1,11 +1,10 @@
-from typing import List, Dict
+from typing import List
 
 import app.services.utils.raster as raster_utils
 from app.services.utils.collection import (
     get_items_asset_url,
     get_asset_href_by_item_id,
 )
-from app.routes.schemas.PolygonRequest import PolygonGeometry
 from app.routes.schemas.MetricResponse import MetricResponse
 from app.services.utils.metadata import fetch_collection_metadata
 from app.services.utils.metrics_config import metric_group_key
@@ -26,7 +25,7 @@ def get_areas_by_defined_area(
 
 
 def get_areas_by_polygon(
-    metric_id: str, polygon: PolygonGeometry
+    metric_id: str, polygon: dict
 ) -> List[MetricResponse]:
 
     categories, _, _ = fetch_collection_metadata(metric_id)

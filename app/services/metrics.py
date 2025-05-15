@@ -1,6 +1,7 @@
 from typing import List
 
 import app.services.utils.raster as raster_utils
+from app.routes.schemas.PolygonRequest import PolygonGeometry
 from app.services.utils.collection import (
     get_items_asset_url,
     get_asset_href_by_item_id,
@@ -25,12 +26,13 @@ def get_areas_by_defined_area(
 
 
 def get_areas_by_polygon(
-    metric_id: str, polygon: dict
+    metric_id: str, polygon: PolygonGeometry
 ) -> List[MetricResponse]:
 
     categories, _, _ = fetch_collection_metadata(metric_id)
 
     assets_url = get_items_asset_url(metric_id)
+
     result = []
 
     for k, v in assets_url.items():

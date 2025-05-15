@@ -1,8 +1,11 @@
+from pydantic import ValidationError
+
 from app.models.models import Polygon, PolygonMetric
 from app.persistence.polygon_metric_persistence import create_polygon_metric
 
 from fastapi import HTTPException
 
+from app.routes.schemas.PolygonRequest import PolygonGeometry
 from app.services.metrics import get_areas_by_polygon
 
 
@@ -10,7 +13,7 @@ async def get_or_create_polygon_metric(
     polygon_id: int, metric_id: str
 ) -> list:
     """
-    Checks if metric values already exist for the given polygon.
+    Checks if metric values already exist for the given id.
     If they exist, return them.
     Otherwise, calculate them, persist them, and return the result.
     """
@@ -24,7 +27,9 @@ async def get_or_create_polygon_metric(
     if metric:
         return metric.values
 
-    values = get_areas_by_polygon(metric_id, polygon_obj.geometry)
+    polygon = PolygonGeometry(**polygon_obj.geometry)
+
+    values = get_areas_by_polygon(metric_id, polygon)
 
     await create_polygon_metric(polygon_obj, metric_id, values)
     return values

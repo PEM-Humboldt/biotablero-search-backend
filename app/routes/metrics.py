@@ -5,7 +5,7 @@ from fastapi import Query
 from app.routes.schemas.PolygonRequest import PolygonRequest
 from app.routes.schemas.MetricResponse import MetricResponse, LayerResponse
 import app.services.metrics as metrics_service
-from app.services.polygon_metric_service import get_or_create_polygon_metric
+from app.services.metric_service import get_or_create_polygon_metric
 
 
 validation_error_example = {
@@ -69,13 +69,7 @@ async def get_values_by_polygon(
     metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
     id: int,
 ) -> List[MetricResponse]:
-    """
-    Retrieves metric values for a given polygon.
-
-    If the values for the specified metric and polygon already exist in the database,
-    they are returned. This endpoint assumes that the values already exist and
-    will not create new entries if missing.
-    """
+    """Returns metric values for a polygon identified by its ID."""
     return await get_or_create_polygon_metric(id, metric_id)
 
 

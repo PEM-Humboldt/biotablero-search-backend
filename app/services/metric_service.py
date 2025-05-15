@@ -1,5 +1,3 @@
-from pydantic import ValidationError
-
 from app.models.models import Polygon, PolygonMetric
 from app.persistence.polygon_metric_persistence import create_polygon_metric
 

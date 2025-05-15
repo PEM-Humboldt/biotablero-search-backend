@@ -1,6 +1,4 @@
-from typing import Optional, List
-
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, Field, model_validator
 from geojson_pydantic import Feature, geometries
 from fastapi.exceptions import ValidationException
 
@@ -37,7 +35,6 @@ error_template = {
 
 
 class PolygonGeometry(geometries.Polygon):
-    # bbox: Optional[List[float]] = None
 
     @model_validator(mode="before")
     def validate_bbox_custom(cls, values):

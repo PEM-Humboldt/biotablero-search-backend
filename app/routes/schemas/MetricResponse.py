@@ -48,7 +48,5 @@ class LayerResponse(BaseModel):
 
     class Config:
         json_schema_extra = {
-            "example": {
-                "layer": "iVBORw0KGgoAAAANSUhEUgAAAKIAAAC4CAYAAABgvzfmAAABPElEQVR4nO3d2w6CMAwA0Gn8..."
-            }
+            "example": {"layer_url": "http://localhost:4556/eads345.../layer"}
         }

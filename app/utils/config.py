@@ -17,6 +17,23 @@ class Settings(BaseSettings):
     db_host: str = "localhost"
     db_port: int = 5433
     db_name: str = ""
+    aws_access_key_id: str = "dummy"
+    aws_secret_access_key: str = "dummy"
+    aws_region: str = "us-east-1"
+    s3_bucket_name: str = "dummy-bucket"
+    s3_endpoint_url: str = "http://localhost:9000"
+    storage_driver: str = "s3"
+    connect_timeout: int = 5
+    read_timeout: int = 10
+    retry_max_attempts: int = 1
+    retry_mode: str = "standard"
+
+    @property
+    def retry_config(self) -> dict:
+        return {
+            "max_attempts": self.retry_max_attempts,
+            "mode": self.retry_mode,
+        }
 
     tortoise_models: List[str] = [
         "app.models.models",

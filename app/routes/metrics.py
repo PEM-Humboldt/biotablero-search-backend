@@ -2,9 +2,8 @@ from typing import Annotated, Literal, List
 import fastapi
 from fastapi import Query
 
-from app.routes.schemas.PolygonRequest import PolygonRequest
 from app.routes.schemas.MetricResponse import MetricResponse, LayerResponse
-import app.services.metrics as metrics_service
+from app.services.layer_service import get_layer_image
 from app.services.metric_service import get_or_create_polygon_metric
 
 
@@ -73,43 +72,19 @@ async def get_values_by_polygon(
     return await get_or_create_polygon_metric(id, metric_id)
 
 
-@router.get("/{metric_id}/layer")
-async def get_layer_by_defined_area(
-    metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
-    defined_area: Annotated[dict, fastapi.Depends(defined_areas_params)],
-) -> LayerResponse:  # TODO: Define return type
-    """
-    Given a metric and a predefined area of interest, get the layer of the metric cut by the indicated area
-    """
-    return LayerResponse(layer="response to be defined")
-
-
-@router.post("/{metric_id}/layer")
+@router.get("/{metric_id}/layer", response_model=LayerResponse)
 async def get_layer_by_polygon(
-    metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
-    polygon: PolygonRequest,
+    metric_id: str,
+    polygon_id: Annotated[int, Query(description="Polygon ID to use")],
     item_id: Annotated[
-        str,
-        fastapi.Query(
-            description="The ID of the item to retrieve",
-            example="2016-2021",
-        ),
+        str, Query(description="The ID of the item", example="2016-2021")
     ],
     category: Annotated[
         int,
         Query(
-            description="Category to filter (0: Loss, 1: Persistence, 2: Non-Forest)",
+            description="Category (0: Loss, 1: Persistence, 2: Non-Forest)",
             example=0,
         ),
     ],
-) -> LayerResponse:
-    """
-    Given a metric and a predefined area of interest, get the layer of the metric cut by the indicated area
-    """
-    polygon_geometry = polygon.polygon.geometry
-
-    layer = metrics_service.get_layer_by_polygon(
-        metric_id, polygon_geometry, item_id, category
-    )
-
-    return LayerResponse(layer=layer)
+):
+    return await get_layer_image(metric_id, polygon_id, item_id, category)

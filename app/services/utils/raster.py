@@ -75,8 +75,8 @@ def crop_raster(
 def get_raster_values(
     raster_path: str, polygon: PolygonGeometry, categories: Dict[str, int]
 ) -> Dict[str, Any]:
-    geometry = shape(polygon)
-    gdf = gpd.GeoDataFrame({"geometry": [geometry]}, crs="EPSG:4326")
+
+    gdf = gpd.GeoDataFrame({"geometry": [polygon]}, crs="EPSG:4326")
 
     target_crs = "EPSG:9377"
 

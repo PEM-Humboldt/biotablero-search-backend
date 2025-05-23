@@ -19,10 +19,9 @@ class Settings(BaseSettings):
     db_name: str = ""
     aws_access_key_id: str = ""
     aws_secret_access_key: str = ""
-    aws_region: str = "bt-search"
+    aws_region: str = "us-east-1"
     s3_bucket_name: str = "bt-search"
     s3_endpoint_url: str = "http://localhost:9000"
-    storage_driver: str = "s3"
     connect_timeout: int = 5
     read_timeout: int = 10
     retry_max_attempts: int = 1

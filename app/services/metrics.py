@@ -34,12 +34,7 @@ def get_areas_by_polygon(
     return result
 
 
-def get_layer_by_defined_area(metric_id, area_type, area_id):
-    # TODO: Implement service
-    return ""
-
-
-def get_layer_by_polygon(
+async def get_layer_by_polygon(
     metric_id: str, polygon, item_id: str, category: int
 ) -> str:
     categories, values, colors = fetch_collection_metadata(metric_id)

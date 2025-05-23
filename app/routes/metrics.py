@@ -3,6 +3,7 @@ import fastapi
 from fastapi import Query
 
 from app.routes.schemas.MetricResponse import MetricResponse, LayerResponse
+from app.services import layer_service
 from app.services.metric_service import get_or_create_polygon_metric
 
 
@@ -73,7 +74,7 @@ async def get_values_by_polygon(
 
 @router.get("/{metric_id}/layer", response_model=LayerResponse)
 async def get_layer_by_polygon(
-    metric_id: str,
+    metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
     polygon_id: Annotated[int, Query(description="Polygon ID to use")],
     item_id: Annotated[
         str, Query(description="The ID of the item", example="2016-2021")
@@ -81,13 +82,18 @@ async def get_layer_by_polygon(
     category: Annotated[
         int,
         Query(
-            description="Category of the data: 0 = Loss (deforested areas), 1 = Persistence (stable forest), 2 = Non-Forest (non-forest areas).",
+            description=(
+                "Numeric code representing a classification category used to differentiate types of land cover or change. "
+                "For example: 0 = Loss (deforested areas), 1 = Persistence (stable forest), 2 = Non-Forest (non-forest areas)."
+            ),
             example=0,
         ),
     ],
 ):
     """
-    Returns a rendered image layer for a given metric, polygon ID, item ID, and category,
+    Returns the url of rendered image layer for a given metric, polygon ID, item ID, and category,
     typically used to visualize spatial data such as forest loss, persistence, or non-forest areas.
     """
-    return await get_layer_by_polygon(metric_id, polygon_id, item_id, category)
+    return await layer_service.get_layer_by_polygon(
+        metric_id, polygon_id, item_id, category
+    )

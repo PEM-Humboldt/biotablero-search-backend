@@ -3,7 +3,6 @@ import fastapi
 from fastapi import Query
 
 from app.routes.schemas.MetricResponse import MetricResponse, LayerResponse
-from app.services.layer_service import get_layer_image
 from app.services.metric_service import get_or_create_polygon_metric
 
 
@@ -82,9 +81,13 @@ async def get_layer_by_polygon(
     category: Annotated[
         int,
         Query(
-            description="Category (0: Loss, 1: Persistence, 2: Non-Forest)",
+            description="Category of the data: 0 = Loss (deforested areas), 1 = Persistence (stable forest), 2 = Non-Forest (non-forest areas).",
             example=0,
         ),
     ],
 ):
-    return await get_layer_image(metric_id, polygon_id, item_id, category)
+    """
+        Returns a rendered image layer for a given metric, polygon ID, item ID, and category,
+        typically used to visualize spatial data such as forest loss, persistence, or non-forest areas.
+        """
+    return await get_layer_by_polygon(metric_id, polygon_id, item_id, category)

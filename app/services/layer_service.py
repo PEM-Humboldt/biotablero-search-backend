@@ -12,7 +12,7 @@ from app.services.utils.raster import crop_raster
 from app.utils.s3_utils import upload_to_s3
 
 
-async def get_layer_image(
+async def get_layer_by_polygon(
     metric_id: str, polygon_id: int, item_id: str, category: int
 ) -> LayerResponse:
 

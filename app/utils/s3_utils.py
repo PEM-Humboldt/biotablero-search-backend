@@ -35,7 +35,7 @@ def get_s3_client():
 async def upload_to_s3(
     image_data: str, filename: str, content_type: str = "image/png"
 ) -> str:
-    s3_client = get_s3_client()  # ⚠️ se inicializa aquí, no al cargar el módulo
+    s3_client = get_s3_client()
 
     try:
         try:

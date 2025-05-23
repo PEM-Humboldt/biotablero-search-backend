@@ -87,7 +87,7 @@ async def get_layer_by_polygon(
     ],
 ):
     """
-        Returns a rendered image layer for a given metric, polygon ID, item ID, and category,
-        typically used to visualize spatial data such as forest loss, persistence, or non-forest areas.
-        """
+    Returns a rendered image layer for a given metric, polygon ID, item ID, and category,
+    typically used to visualize spatial data such as forest loss, persistence, or non-forest areas.
+    """
     return await get_layer_by_polygon(metric_id, polygon_id, item_id, category)

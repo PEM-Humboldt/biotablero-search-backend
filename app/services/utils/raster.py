@@ -8,6 +8,7 @@ import numpy as np
 import geopandas as gpd
 from typing import Any, Dict, List, Tuple
 import rioxarray
+from shapely.geometry import shape
 
 from app.routes.schemas.PolygonRequest import PolygonGeometry
 from app.middleware.log_middleware import logger
@@ -74,6 +75,7 @@ def crop_raster(
 def get_raster_values(
     raster_path: str, polygon: PolygonGeometry, categories: Dict[str, int]
 ) -> Dict[str, Any]:
+
     gdf = gpd.GeoDataFrame({"geometry": [polygon]}, crs="EPSG:4326")
 
     target_crs = "EPSG:9377"

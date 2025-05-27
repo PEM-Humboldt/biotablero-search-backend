@@ -12,6 +12,7 @@ async def get_or_create_polygon(
     If it does not exist, creates a new polygon record and returns the new ID.
     """
     polygon_geometry = polygon.polygon.geometry
+
     existing_id = await get_polygon(polygon_geometry)
     if existing_id is not None:
         return PolygonIdResponse(polygon_id=existing_id)

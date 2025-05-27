@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, model_validator
 from geojson_pydantic import Feature, geometries
 from fastapi.exceptions import ValidationException
 
@@ -35,18 +35,13 @@ error_template = {
 
 
 class PolygonGeometry(geometries.Polygon):
-    def __init__(self, **args):
-        if "bbox" not in args:
-            error_template["msg"] = (
-                "bbox attribute in polygon geometry is required."
-            )
-            raise ValidationException([error_template])
-        super().__init__(**args)
 
-    @field_validator("bbox", mode="before")
-    def validate_bbox(cls, bbox):
-
-        if bbox is None:
+    @model_validator(mode="before")
+    def validate_bbox_custom(cls, values):
+        if not isinstance(values, dict):
+            return values
+        bbox = values.get("bbox")
+        if not bbox:
             error_template["msg"] = (
                 "Bounding box (bbox) is required and cannot be None."
             )
@@ -86,6 +81,8 @@ class PolygonGeometry(geometries.Polygon):
                     "Minimum altitude cannot be greater than maximum altitude."
                 )
                 raise ValidationException([error_template])
+
+        return values
 
 
 class PolygonFeature(Feature):

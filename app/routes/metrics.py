@@ -4,8 +4,6 @@ from fastapi import Query
 
 from app.routes.schemas.MetricResponse import MetricResponse, LayerResponse
 import app.services.metrics as metrics_service
-from app.services.metric_service import get_or_create_polygon_metric
-
 
 validation_error_example = {
     "detail": [
@@ -51,25 +49,13 @@ async def metric_id_param(
     return metric_id
 
 
-async def defined_areas_params(
-    area_type: Annotated[
-        str,
-        fastapi.Query(description="type of the predefined area", example="ea"),
-    ],
-    area_id: Annotated[
-        str, fastapi.Query(description="id of the area", example="CAR")
-    ],
-):
-    return {"area_type": area_type, "area_id": area_id}
-
-
 @router.get("/{metric_id}/values/{id}", response_model=List[MetricResponse])
 async def get_values_by_polygon(
     metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
     id: int,
 ) -> List[MetricResponse]:
     """Returns metric values for a polygon identified by its ID."""
-    return await get_or_create_polygon_metric(id, metric_id)
+    return await metrics_service.get_or_create_polygon_metric(id, metric_id)
 
 
 @router.get("/{metric_id}/layer", response_model=LayerResponse)
@@ -94,6 +80,6 @@ async def get_layer_by_polygon(
     Returns the url of rendered image layer for a given metric, polygon ID, item ID, and category,
     typically used to visualize spatial data such as forest loss, persistence, or non-forest areas.
     """
-    return await metrics_service.get_layer_by_polygon(
+    return await metrics_service.get_or_create_layer_by_polygon(
         metric_id, polygon_id, item_id, category
     )

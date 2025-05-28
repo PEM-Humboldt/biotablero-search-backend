@@ -3,7 +3,7 @@ import fastapi
 from fastapi import Query
 
 from app.routes.schemas.MetricResponse import MetricResponse, LayerResponse
-from app.services import layer_service
+import app.services.metrics as metrics_service
 from app.services.metric_service import get_or_create_polygon_metric
 
 
@@ -94,6 +94,6 @@ async def get_layer_by_polygon(
     Returns the url of rendered image layer for a given metric, polygon ID, item ID, and category,
     typically used to visualize spatial data such as forest loss, persistence, or non-forest areas.
     """
-    return await layer_service.get_layer_by_polygon(
+    return await metrics_service.get_layer_by_polygon(
         metric_id, polygon_id, item_id, category
     )

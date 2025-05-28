@@ -62,7 +62,7 @@ def add_bbox(geometry):
     Returns:
         dict: The geometry with bbox values.
     """
-    if geometry["type"] == "Polygon":
+    if geometry["type"] == "Polygon" or geometry["type"] == "MultiPolygon":
         geometry["bbox"] = list(shape(geometry).bounds)
 
 

@@ -44,7 +44,6 @@ def get_areas_by_polygon(
     return result
 
 
-
 async def get_or_create_polygon_metric(
     polygon_id: int, metric_id: str
 ) -> list:

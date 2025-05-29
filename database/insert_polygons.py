@@ -5,6 +5,7 @@ import logging
 from tortoise.exceptions import DoesNotExist
 
 from app.models.models import Polygon, AreaType
+from shapely.geometry import shape
 
 
 settings = get_settings()
@@ -51,6 +52,20 @@ def generate_hash(geometry):
     ).hexdigest()
 
 
+def add_bbox(geometry):
+    """
+    Adds bbox value in all polygons
+
+    Args:
+        geometry (dict): The geometry object.
+
+    Returns:
+        dict: The geometry with bbox values.
+    """
+    if geometry["type"] == "Polygon" or geometry["type"] == "MultiPolygon":
+        geometry["bbox"] = list(shape(geometry).bounds)
+
+
 async def insert_polygons_from_geojson(area_type, file_path):
     """
     Inserts polygon data from a GeoJSON file into the database.
@@ -83,6 +98,8 @@ async def insert_polygons_from_geojson(area_type, file_path):
         geometry = feature.get("geometry", None)
         if not geometry:
             continue
+
+        add_bbox(geometry)
 
         area = feature["properties"].get(area_name, 0)
         name = feature["properties"].get(polygon_name, DEFAULT_UNKNOWN_VALUE)

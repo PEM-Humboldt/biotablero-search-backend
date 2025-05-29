@@ -14,3 +14,5 @@ Pillow>=11.0.0
 tortoise-orm>=0.21.0,<0.22.2
 asyncpg>=0.28.0,<0.30.0
 aerich>=0.7.2,<0.8.0
+boto3>=1.28,<1.34
+botocore>=1.31,<1.34

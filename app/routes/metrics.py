@@ -2,11 +2,8 @@ from typing import Annotated, Literal, List
 import fastapi
 from fastapi import Query
 
-from app.routes.schemas.PolygonRequest import PolygonRequest
 from app.routes.schemas.MetricResponse import MetricResponse, LayerResponse
 import app.services.metrics as metrics_service
-from app.services.metric_service import get_or_create_polygon_metric
-
 
 validation_error_example = {
     "detail": [
@@ -52,64 +49,37 @@ async def metric_id_param(
     return metric_id
 
 
-async def defined_areas_params(
-    area_type: Annotated[
-        str,
-        fastapi.Query(description="type of the predefined area", example="ea"),
-    ],
-    area_id: Annotated[
-        str, fastapi.Query(description="id of the area", example="CAR")
-    ],
-):
-    return {"area_type": area_type, "area_id": area_id}
-
-
 @router.get("/{metric_id}/values/{id}", response_model=List[MetricResponse])
 async def get_values_by_polygon(
     metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
     id: int,
 ) -> List[MetricResponse]:
     """Returns metric values for a polygon identified by its ID."""
-    return await get_or_create_polygon_metric(id, metric_id)
+    return await metrics_service.get_or_create_polygon_metric(id, metric_id)
 
 
-@router.get("/{metric_id}/layer")
-async def get_layer_by_defined_area(
-    metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
-    defined_area: Annotated[dict, fastapi.Depends(defined_areas_params)],
-) -> LayerResponse:  # TODO: Define return type
-    """
-    Given a metric and a predefined area of interest, get the layer of the metric cut by the indicated area
-    """
-    return LayerResponse(layer="response to be defined")
-
-
-@router.post("/{metric_id}/layer")
+@router.get("/{metric_id}/layer", response_model=LayerResponse)
 async def get_layer_by_polygon(
     metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
-    polygon: PolygonRequest,
+    polygon_id: Annotated[int, Query(description="Polygon ID to use")],
     item_id: Annotated[
-        str,
-        fastapi.Query(
-            description="The ID of the item to retrieve",
-            example="2016-2021",
-        ),
+        str, Query(description="The ID of the item", example="2016-2021")
     ],
     category: Annotated[
         int,
         Query(
-            description="Category to filter (0: Loss, 1: Persistence, 2: Non-Forest)",
+            description=(
+                "Numeric code representing a classification category used to differentiate types of land cover or change. "
+                "For example: 0 = Loss (deforested areas), 1 = Persistence (stable forest), 2 = Non-Forest (non-forest areas)."
+            ),
             example=0,
         ),
     ],
-) -> LayerResponse:
+):
     """
-    Given a metric and a predefined area of interest, get the layer of the metric cut by the indicated area
+    Returns the url of rendered image layer for a given metric, polygon ID, item ID, and category,
+    typically used to visualize spatial data such as forest loss, persistence, or non-forest areas.
     """
-    polygon_geometry = polygon.polygon.geometry
-
-    layer = metrics_service.get_layer_by_polygon(
-        metric_id, polygon_geometry, item_id, category
+    return await metrics_service.get_or_create_layer_by_polygon(
+        metric_id, polygon_id, item_id, category
     )
-
-    return LayerResponse(layer=layer)

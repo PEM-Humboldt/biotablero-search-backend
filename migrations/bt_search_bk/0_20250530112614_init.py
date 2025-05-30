@@ -29,7 +29,7 @@ CREATE TABLE IF NOT EXISTS "polygon_metric_item" (
     "category" INT NOT NULL,
     "item_id" VARCHAR(100) NOT NULL,
     "polygon_id" INT NOT NULL REFERENCES "polygon" ("id") ON DELETE CASCADE,
-    CONSTRAINT "uid_polygon_met_metric_c667f3" UNIQUE ("metric", "category", "item_id")
+    CONSTRAINT "uid_polygon_met_polygon_1ad718" UNIQUE ("polygon_id", "metric", "category", "item_id")
 );
 CREATE TABLE IF NOT EXISTS "aerich" (
     "id" SERIAL NOT NULL PRIMARY KEY,

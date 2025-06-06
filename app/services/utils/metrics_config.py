@@ -9,5 +9,5 @@ def metric_group_key(metric_id: str) -> Optional[str]:
         return "periodo"
     if metric_id == "Coverage":
         return "id"
-    
+
     return None

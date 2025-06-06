@@ -72,7 +72,7 @@ async def get_or_create_polygon_metric(
 
 async def get_or_create_layer_by_polygon(
     metric_id: str, polygon_id: int, item_id: str, category: int
-) -> LayerResponse:    
+) -> LayerResponse:
     """
     Checks if the layer already exists for the specified parameters.
     If it exists, it is returned. Otherwise, it is calculated, retained, and the result is returned.

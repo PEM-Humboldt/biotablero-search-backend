@@ -72,7 +72,11 @@ async def get_or_create_polygon_metric(
 
 async def get_or_create_layer_by_polygon(
     metric_id: str, polygon_id: int, item_id: str, category: int
-) -> LayerResponse:
+) -> LayerResponse:    
+    """
+    Checks if the layer already exists for the specified parameters.
+    If it exists, it is returned. Otherwise, it is calculated, retained, and the result is returned.
+    """
 
     polygon_obj = await Polygon.get_or_none(id=polygon_id)
     if not polygon_obj:
@@ -84,7 +88,7 @@ async def get_or_create_layer_by_polygon(
     if existing_item:
         return LayerResponse(layer=existing_item.layer_url)
 
-    categories, values, colors = fetch_collection_metadata(metric_id)
+    _, values, colors = fetch_collection_metadata(metric_id)
 
     raster_href = get_asset_href_by_item_id(metric_id, item_id)
 

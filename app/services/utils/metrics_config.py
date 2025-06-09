@@ -1,6 +1,10 @@
 from typing import Optional
 
-from app.routes.schemas.MetricResponse import CoverageResponse, LossPersistenceResponse, MetricResponse
+from app.routes.schemas.MetricResponse import (
+    CoverageResponse,
+    LossPersistenceResponse,
+    MetricResponse,
+)
 
 
 def metric_group_key(metric_id: str) -> Optional[str]:

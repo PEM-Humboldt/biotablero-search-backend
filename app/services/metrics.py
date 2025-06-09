@@ -9,7 +9,10 @@ from app.services.utils.collection import (
 )
 from app.routes.schemas.MetricResponse import MetricResponse
 from app.services.utils.metadata import fetch_collection_metadata
-from app.services.utils.metrics_config import metric_group_key, metric_response_type
+from app.services.utils.metrics_config import (
+    metric_group_key,
+    metric_response_type,
+)
 from fastapi import HTTPException
 from app.models.models import Polygon, PolygonMetric
 from app.utils.s3_utils import upload_to_s3

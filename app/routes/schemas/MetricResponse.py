@@ -1,11 +1,7 @@
 from pydantic import BaseModel
 
 
-class LossPersistenceResponse(BaseModel):
-    perdida: float
-    persistencia: float
-    no_bosque: float
-    periodo: str
+class MetricResponseBase(BaseModel):
 
     class Config:
         json_schema_extra = {
@@ -18,7 +14,21 @@ class LossPersistenceResponse(BaseModel):
         }
 
 
-MetricResponse = LossPersistenceResponse
+class LossPersistenceResponse(MetricResponseBase):
+    periodo: str = ""
+    perdida: float = 0
+    persistencia: float = 0
+    no_bosque: float = 0
+
+
+class CoverageResponse(MetricResponseBase):
+    id: str = ""
+    natural: float = 0
+    secundaria: float = 0
+    transformada: float = 0
+
+
+MetricResponse = MetricResponseBase
 
 
 class LayerResponse(BaseModel):

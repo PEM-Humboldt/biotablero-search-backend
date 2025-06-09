@@ -1,8 +1,8 @@
-from typing import Annotated, Literal, List
+from typing import Annotated, Literal, List, Union
 import fastapi
 from fastapi import Query
 
-from app.routes.schemas.MetricResponse import MetricResponse, LayerResponse
+from app.routes.schemas.MetricResponse import CoverageResponse, LossPersistenceResponse, MetricResponse, LayerResponse
 import app.services.metrics as metrics_service
 
 validation_error_example = {
@@ -49,7 +49,7 @@ async def metric_id_param(
     return metric_id
 
 
-@router.get("/{metric_id}/values/{id}", response_model=List[MetricResponse])
+@router.get("/{metric_id}/values/{id}", response_model=List[Union[LossPersistenceResponse, CoverageResponse]])
 async def get_values_by_polygon(
     metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
     id: int,

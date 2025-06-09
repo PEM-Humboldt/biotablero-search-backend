@@ -9,7 +9,7 @@ from app.services.utils.collection import (
 )
 from app.routes.schemas.MetricResponse import MetricResponse
 from app.services.utils.metadata import fetch_collection_metadata
-from app.services.utils.metrics_config import metric_group_key
+from app.services.utils.metrics_config import metric_group_key, metric_response_type
 from fastapi import HTTPException
 from app.models.models import Polygon, PolygonMetric
 from app.utils.s3_utils import upload_to_s3
@@ -34,10 +34,11 @@ def get_areas_by_polygon(
     for k, v in assets_url.items():
         raster_values = raster_utils.get_raster_values(v, polygon, categories)
 
+        response = metric_response_type(metric_id)
         response = {metric_group_key(metric_id): k}
 
         for class_name in categories.keys():
-            response[class_name] = raster_values.get(class_name, 0)
+            response[class_name.lower()] = raster_values.get(class_name, 0)
 
         result.append(response)
 

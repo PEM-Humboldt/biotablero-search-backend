@@ -22,6 +22,7 @@ class Polygon(Model):
     )
     name = fields.CharField(max_length=255)
     area = fields.FloatField()
+    official_code = fields.CharField(max_length=100, null=True)
 
     class Meta(Model.Meta):
         table = "polygon"

@@ -46,7 +46,7 @@ def get_areas_by_polygon(
 
 async def get_or_create_polygon_metric(
     polygon_id: int, metric_id: str
-) -> list:
+) -> List[MetricResponse]:
     """
     Checks if metric values already exist for the given id.
     If they exist, return them.

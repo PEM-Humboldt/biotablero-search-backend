@@ -2,10 +2,18 @@ from pydantic import BaseModel
 
 
 class MetricResponseBase(BaseModel):
+    """
+    Base class for metric response models.
+    """
+
     pass
 
 
 class LossPersistenceResponse(MetricResponseBase):
+    """
+    Response model for forest loss and persistence metrics in a given period.
+    """
+
     periodo: str = ""
     perdida: float = 0
     persistencia: float = 0
@@ -23,6 +31,10 @@ class LossPersistenceResponse(MetricResponseBase):
 
 
 class CoverageResponse(MetricResponseBase):
+    """
+    Response model for land cover metrics in a given year.
+    """
+
     ano: str = ""
     natural: float = 0
     secundaria: float = 0

@@ -2,16 +2,7 @@ from pydantic import BaseModel
 
 
 class MetricResponseBase(BaseModel):
-
-    class Config:
-        json_schema_extra = {
-            "example": {
-                "perdida": 1971.3859302816563,
-                "persistencia": 161349.158786824,
-                "no_bosque": 192519.67643274338,
-                "periodo": "2016-2021",
-            }
-        }
+    pass
 
 
 class LossPersistenceResponse(MetricResponseBase):
@@ -20,12 +11,32 @@ class LossPersistenceResponse(MetricResponseBase):
     persistencia: float = 0
     no_bosque: float = 0
 
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "periodo": "2016-2021",
+                "perdida": 1971.3859302816563,
+                "persistencia": 161349.158786824,
+                "no_bosque": 192519.67643274338,
+            }
+        }
+
 
 class CoverageResponse(MetricResponseBase):
     ano: str = ""
     natural: float = 0
     secundaria: float = 0
     transformada: float = 0
+
+    class Config:
+        json_schema_extra = {
+            "example": {
+                "ano": "2021",
+                "natural": 1971.3859302816563,
+                "secundaria": 161349.158786824,
+                "transformada": 192519.67643274338,
+            }
+        }
 
 
 MetricResponse = MetricResponseBase

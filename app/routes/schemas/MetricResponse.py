@@ -22,7 +22,7 @@ class LossPersistenceResponse(MetricResponseBase):
 
 
 class CoverageResponse(MetricResponseBase):
-    id: str = ""
+    ano: str = ""
     natural: float = 0
     secundaria: float = 0
     transformada: float = 0

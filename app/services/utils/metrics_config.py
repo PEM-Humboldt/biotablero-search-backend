@@ -14,7 +14,7 @@ def metric_group_key(metric_id: str) -> Optional[str]:
     if metric_id == "LossPersistence":
         return "periodo"
     if metric_id == "Coverage":
-        return "id"
+        return "ano"
 
     return None
 

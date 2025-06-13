@@ -1,3 +1,4 @@
+from typing import Union
 from pydantic import BaseModel
 
 
@@ -51,7 +52,7 @@ class CoverageResponse(MetricResponseBase):
         }
 
 
-MetricResponse = MetricResponseBase
+MetricResponse = Union[LossPersistenceResponse, CoverageResponse]
 
 
 class LayerResponse(BaseModel):

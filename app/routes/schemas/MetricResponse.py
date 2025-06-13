@@ -1,6 +1,7 @@
 from typing import Union
 from pydantic import BaseModel
 
+
 class LossPersistenceResponse(BaseModel):
     """
     Response model for forest loss and persistence metrics in a given period.

@@ -5,7 +5,7 @@ from fastapi import Query
 from app.routes.schemas.MetricResponse import (
     MetricResponse,
     LayerResponse,
-    MetricResponseBase,
+    MetricResponse,
 )
 import app.services.metrics as metrics_service
 
@@ -55,12 +55,12 @@ async def metric_id_param(
 
 @router.get(
     "/{metric_id}/values/{id}",
-    response_model=MetricResponse,
+    response_model=List[MetricResponse],
 )
 async def get_values_by_polygon(
     metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
     id: int,
-) -> List[MetricResponseBase]:
+) -> List[MetricResponse]:
     """Returns metric values for a polygon identified by its ID."""
     return await metrics_service.get_or_create_polygon_metric(id, metric_id)
 

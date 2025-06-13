@@ -1,16 +1,7 @@
-from typing import List, Union
+from typing import Union
 from pydantic import BaseModel
 
-
-class MetricResponseBase(BaseModel):
-    """
-    Base class for metric response models.
-    """
-
-    pass
-
-
-class LossPersistenceResponse(MetricResponseBase):
+class LossPersistenceResponse(BaseModel):
     """
     Response model for forest loss and persistence metrics in a given period.
     """
@@ -51,7 +42,7 @@ class LossPersistenceResponse(MetricResponseBase):
         }
 
 
-class CoverageResponse(MetricResponseBase):
+class CoverageResponse(BaseModel):
     """
     Response model for land cover metrics in a given year.
     """
@@ -74,7 +65,7 @@ class CoverageResponse(MetricResponseBase):
         }
 
 
-MetricResponse = List[Union[LossPersistenceResponse, CoverageResponse]]
+MetricResponse = Union[LossPersistenceResponse, CoverageResponse]
 
 
 class LayerResponse(BaseModel):

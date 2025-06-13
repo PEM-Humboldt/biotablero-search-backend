@@ -11,7 +11,6 @@ from app.routes.schemas.MetricResponse import MetricResponse
 from app.services.utils.metadata import fetch_collection_metadata
 from app.services.utils.metrics_config import (
     metric_group_key,
-    metric_response_type,
 )
 from fastapi import HTTPException
 from app.models.models import Polygon, PolygonMetric
@@ -36,8 +35,6 @@ def get_areas_by_polygon(
 
     for k, v in assets_url.items():
         raster_values = raster_utils.get_raster_values(v, polygon, categories)
-
-        response = metric_response_type(metric_id)
         response = {metric_group_key(metric_id): k}
 
         for class_name in categories.keys():

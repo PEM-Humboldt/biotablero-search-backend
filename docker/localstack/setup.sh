@@ -1,4 +1,8 @@
 #!/bin/bash
+
+# This script checks if a local S3 bucket exists using LocalStack.
+# If it doesn't exist, the script creates it and applies a CORS configuration.
+
 set -e
 
 BUCKET="biotablero-download-files"

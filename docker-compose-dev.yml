@@ -1,0 +1,42 @@
+services:
+
+  db:
+    image: postgis/postgis:17-3.5
+    container_name: bt-search-db
+    restart: "no"
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - "5433:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - bt-search-network
+
+  localstack:
+    image: localstack/localstack:4.5.0
+    container_name: bt-localstack
+    restart: "no"
+    ports:
+      - 4566:4566
+    environment:
+      - PERSISTENCE=1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+    volumes:
+      - localstack:/var/lib/localstack
+      - ./docker/localstack/setup.sh:/etc/localstack/init/ready.d/script.sh:ro
+      - ./docker/aws/configs/cors.json:/etc/localstack/cors.json:ro
+    networks:
+      - bt-search-network
+
+
+volumes:
+  db_data:
+  localstack:
+
+networks:
+  bt-search-network:
+    driver: bridge

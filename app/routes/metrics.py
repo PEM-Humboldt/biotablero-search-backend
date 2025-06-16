@@ -3,6 +3,7 @@ import fastapi
 from fastapi import Query
 
 from app.routes.schemas.MetricResponse import (
+    MetricResponseList,
     MetricResponse,
     LayerResponse,
     MetricResponse,
@@ -55,7 +56,7 @@ async def metric_id_param(
 
 @router.get(
     "/{metric_id}/values/{id}",
-    response_model=List[MetricResponse],
+    response_model=MetricResponseList,
 )
 async def get_values_by_polygon(
     metric_id: Annotated[str, fastapi.Depends(metric_id_param)],

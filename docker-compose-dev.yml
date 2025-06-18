@@ -23,8 +23,9 @@ services:
       - 4566:4566
     environment:
       - PERSISTENCE=1
-      - AWS_ACCESS_KEY_ID=test
-      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - S3_BUCKET_NAME=${S3_BUCKET_NAME}
     volumes:
       - localstack:/var/lib/localstack
       - ./docker/localstack/setup.sh:/etc/localstack/init/ready.d/script.sh:ro

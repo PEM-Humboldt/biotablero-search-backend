@@ -5,7 +5,7 @@
 
 set -e
 
-BUCKET="biotablero-download-files"
+BUCKET=$S3_BUCKET_NAME
 
 if ! awslocal s3api head-bucket --bucket "$BUCKET" 2>/dev/null; then
   echo "Bucket $BUCKET not found. Creating it..."

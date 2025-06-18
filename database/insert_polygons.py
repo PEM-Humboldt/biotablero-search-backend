@@ -150,6 +150,4 @@ async def seed_polygons():
     await insert_polygons_from_geojson(
         "basinSubzones", "data/subzonas-hidrograficas.geojson"
     )
-    await insert_polygons_from_geojson(
-        "paramos", "data/paramos.geojson"
-    )
+    await insert_polygons_from_geojson("paramos", "data/paramos.geojson")

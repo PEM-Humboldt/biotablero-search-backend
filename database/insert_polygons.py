@@ -99,6 +99,7 @@ async def insert_polygons_from_geojson(area_type, file_path):
     elif area_type == "paramos":
         polygon_name = "NM_UA"
         area_name = "Area_Ha"
+        code_field = "COD_CMPLJ"
 
     polygons = []
     for feature in data["features"]:

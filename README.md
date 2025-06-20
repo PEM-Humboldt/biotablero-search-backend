@@ -27,10 +27,12 @@ Required Python version: 3.10+
    DB_HOST=localhost # Database host
    DB_PORT=5433 # Database port (default for PostgreSQL)
    ```
-1. Run Docker Compose to start database containers:
+1. Run Docker Compose to start project containers:
+
+   ```sh
+   docker compose -f docker-compose-dev.yml up
    ```
-   docker-compose up -d
-   ```
+
 1. Run database migrations:
    ```
    aerich upgrade

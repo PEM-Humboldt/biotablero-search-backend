@@ -3,7 +3,7 @@ import fastapi
 from typing import Annotated
 from fastapi import Path, HTTPException
 from app.utils.metrics_config import METRICS_CONFIG
-from fastapi import  Query
+from fastapi import Query
 from app.routes.schemas.LayerResponse import LayerResponse
 import app.services.metrics as metrics_service
 
@@ -25,7 +25,9 @@ router = fastapi.APIRouter(
             "description": "Bad request. Possibly due to an unsupported metric_id.",
             "content": {
                 "application/json": {
-                    "example": {"detail": "Unsupported metric. Allowed values: LossPersistence, Coverage, CurrentHF"}
+                    "example": {
+                        "detail": "Unsupported metric. Allowed values: LossPersistence, Coverage, CurrentHF"
+                    }
                 }
             },
         },
@@ -50,9 +52,9 @@ router = fastapi.APIRouter(
 )
 
 
-
 ALLOWED_METRICS = list(METRICS_CONFIG.keys())
 ALLOWED_METRICS_DISPLAY = ", ".join(ALLOWED_METRICS)
+
 
 async def metric_id_param(
     metric_id: Annotated[
@@ -61,7 +63,7 @@ async def metric_id_param(
             description=f"Metric you wish to query. Allowed values: {ALLOWED_METRICS_DISPLAY}",
             example=ALLOWED_METRICS[0],
         ),
-    ]
+    ],
 ) -> str:
     if metric_id not in METRICS_CONFIG:
         raise HTTPException(
@@ -72,9 +74,6 @@ async def metric_id_param(
             ),
         )
     return metric_id
-
-
-
 
 
 @router.get(

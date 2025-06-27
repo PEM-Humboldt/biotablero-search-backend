@@ -12,7 +12,6 @@ def metric_group_key(metric_id: str) -> str:
     return group_key
 
 
-
 def build_metric_response(metric_id: str, values: List[dict]) -> List[dict]:
     model = METRICS_CONFIG.get(metric_id, {}).get("model")
     if not model:

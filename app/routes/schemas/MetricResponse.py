@@ -30,6 +30,7 @@ class MetricConfig(TypedDict):
     description: str
     group_key: str
 
+
 METRICS_CONFIG: Dict[str, MetricConfig] = {
     "LossPersistence": {
         "model": LossPersistenceResponse,

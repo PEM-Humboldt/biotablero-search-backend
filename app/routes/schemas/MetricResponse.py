@@ -1,12 +1,36 @@
-from pydantic import BaseModel
-from typing import Union
+from typing import List, Union
+from pydantic import BaseModel, RootModel
 
 
 class LossPersistenceResponse(BaseModel):
-    perdida: float
-    persistencia: float
-    no_bosque: float
-    periodo: str
+    """
+    Response model for forest loss and persistence metrics in a given period.
+    """
+
+    periodo: str = ""
+    perdida: float = 0
+    persistencia: float = 0
+    no_bosque: float = 0
+
+
+class CoverageResponse(BaseModel):
+    """
+    Response model for land cover metrics in a given year.
+    """
+
+    ano: str = ""
+    natural: float = 0
+    secundaria: float = 0
+    transformada: float = 0
+
+
+MetricResponse = Union[LossPersistenceResponse, CoverageResponse]
+
+
+class LossPersistenceResponseList(RootModel[List[LossPersistenceResponse]]):
+    """
+    Response model for forest loss and persistence metrics list in a given period.
+    """
 
     class Config:
         json_schema_extra = {
@@ -39,8 +63,25 @@ class LossPersistenceResponse(BaseModel):
         }
 
 
-# dict is temporal because of the type checking, remove after adding another type
-MetricResponse = Union[LossPersistenceResponse, dict]
+class CoverageResponseList(RootModel[List[CoverageResponse]]):
+    """
+    Response model for land cover metrics list in a given year.
+    """
+
+    class Config:
+        json_schema_extra = {
+            "example": [
+                {
+                    "ano": "2021",
+                    "natural": 1971.3859302816563,
+                    "secundaria": 161349.158786824,
+                    "transformada": 192519.67643274338,
+                }
+            ]
+        }
+
+
+MetricResponseList = Union[LossPersistenceResponseList, CoverageResponseList]
 
 
 class LayerResponse(BaseModel):

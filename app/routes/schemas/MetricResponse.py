@@ -3,6 +3,10 @@ from pydantic import BaseModel
 
 
 class LossPersistenceResponse(BaseModel):
+    """
+    Response model for forest loss and persistence metrics in a given period.
+    """
+
     periodo: str = ""
     perdida: float = 0
     persistencia: float = 0
@@ -10,6 +14,10 @@ class LossPersistenceResponse(BaseModel):
 
 
 class CoverageResponse(BaseModel):
+    """
+    Response model for land cover metrics in a given year.
+    """
+
     ano: str = ""
     natural: float = 0
     secundaria: float = 0
@@ -17,6 +25,10 @@ class CoverageResponse(BaseModel):
 
 
 class HumanTraceResponse(BaseModel):
+    """
+    Response model for Human Trace metrics in a given year.
+    """
+
     ano: str = ""
     natural: float = 0
     baja: float = 0

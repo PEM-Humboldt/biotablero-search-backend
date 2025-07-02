@@ -2,6 +2,8 @@ import fastapi
 
 from typing import Annotated
 from fastapi import Path, HTTPException
+
+from app.middleware.exceptions import UnsupportedMetricException
 from app.utils.metrics_config import METRICS_CONFIG
 from fastapi import Query
 from app.routes.schemas.LayerResponse import LayerResponse
@@ -66,13 +68,7 @@ async def metric_id_param(
     ],
 ) -> str:
     if metric_id not in METRICS_CONFIG:
-        raise HTTPException(
-            status_code=400,
-            detail=(
-                f"Unsupported metric '{metric_id}'. "
-                f"Allowed values: {ALLOWED_METRICS_DISPLAY}"
-            ),
-        )
+        raise UnsupportedMetricException(metric_id)
     return metric_id
 
 

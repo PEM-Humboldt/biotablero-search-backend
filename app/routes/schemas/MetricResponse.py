@@ -26,7 +26,7 @@ class CoverageResponse(BaseModel):
 
 class HumanFootPrintResponse(BaseModel):
     """
-    Response model for Human Trace metrics in a given year.
+    Response model for Human Footprint metrics in a given year.
     """
 
     ano: str = ""

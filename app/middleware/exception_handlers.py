@@ -52,3 +52,15 @@ async def server_exception_handler(request, exc):
         status_code=code,
         content={"detail": msg},
     )
+
+
+async def unsupported_metric_exception_handler(request, exc):
+    logger.error(
+        exc.log_msg,
+        extra={"request_id": request_id_context.get()},
+    )
+
+    return fastapi.responses.JSONResponse(
+        status_code=exc.code,
+        content={"detail": exc.usr_msg},
+    )

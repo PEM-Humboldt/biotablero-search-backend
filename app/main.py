@@ -8,6 +8,7 @@ from app.middleware.exception_handlers import (
     server_exception_handler,
     not_found_exception_handler,
 )
+from app.middleware.exceptions import UnsupportedMetricException
 
 from app.utils.errors import ServerError, NotFoundError
 from app.middleware.log_middleware import log_requests
@@ -49,6 +50,7 @@ app.add_exception_handler(
 app.add_exception_handler(NotFoundError, not_found_exception_handler)
 app.add_exception_handler(ServerError, server_exception_handler)
 app.add_exception_handler(Exception, server_exception_handler)
+app.add_exception_handler(UnsupportedMetricException, server_exception_handler)
 
 
 app.add_middleware(

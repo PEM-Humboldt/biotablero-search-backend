@@ -5,7 +5,7 @@ from app.routes.schemas.MetricResponse import (
     MetricConfig,
     LossPersistenceResponse,
     CoverageResponse,
-    HumanTraceResponse,
+    HumanFootPrintResponse,
 )
 
 METRICS_CONFIG: Dict[str, MetricConfig] = {
@@ -54,7 +54,7 @@ METRICS_CONFIG: Dict[str, MetricConfig] = {
         "group_key": "ano",
     },
     "CurrentHF": {
-        "model": HumanTraceResponse,
+        "model": HumanFootPrintResponse,
         "example": [
             {
                 "ano": "2021",

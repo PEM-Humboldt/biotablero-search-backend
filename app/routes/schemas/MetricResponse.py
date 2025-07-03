@@ -24,7 +24,7 @@ class CoverageResponse(BaseModel):
     transformada: float = 0
 
 
-class HumanTraceResponse(BaseModel):
+class HumanFootPrintResponse(BaseModel):
     """
     Response model for Human Trace metrics in a given year.
     """

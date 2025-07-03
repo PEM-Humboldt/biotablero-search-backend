@@ -1,7 +1,7 @@
 import fastapi
 
-from typing import Annotated
-from fastapi import Path, HTTPException
+from typing import Annotated, List, Dict, Any
+from fastapi import Path
 
 from app.middleware.exceptions import UnsupportedMetricException
 from app.utils.metrics_config import METRICS_CONFIG
@@ -91,8 +91,8 @@ async def metric_id_param(
 async def get_values_by_polygon(
     metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
     id: int,
-):
-    """Returns metric values for a polygon identified by its ID."""
+) -> List[Dict[str, Any]]:
+    """Returns serialized metric values for a given polygon ID and metric."""
     return await metrics_service.get_or_create_polygon_metric(id, metric_id)
 
 

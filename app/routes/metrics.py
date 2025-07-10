@@ -1,13 +1,12 @@
-from typing import Annotated, Literal, List
 import fastapi
-from fastapi import Query
 
-from app.routes.schemas.MetricResponse import (
-    MetricResponseList,
-    MetricResponse,
-    LayerResponse,
-    MetricResponse,
-)
+from typing import Annotated, List, Dict, Any
+from fastapi import Path
+
+from app.middleware.exceptions import UnsupportedMetricException
+from app.utils.metrics_config import METRICS_CONFIG
+from fastapi import Query
+from app.routes.schemas.LayerResponse import LayerResponse
 import app.services.metrics as metrics_service
 
 validation_error_example = {
@@ -24,6 +23,16 @@ router = fastapi.APIRouter(
     prefix="/metrics",
     tags=["metrics"],
     responses={
+        400: {
+            "description": "Bad request. Possibly due to an unsupported metric_id.",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "detail": "Unsupported metric. Allowed values: LossPersistence, Coverage, CurrentHF"
+                    }
+                }
+            },
+        },
         404: {"description": "Not found"},
         422: {
             "description": "Validation error",
@@ -38,35 +47,71 @@ router = fastapi.APIRouter(
                     "example": {
                         "message": "An internal server error occurred."
                     }
-                },
+                }
             },
         },
     },
 )
 
 
+ALLOWED_METRICS = list(METRICS_CONFIG.keys())
+ALLOWED_METRICS_DISPLAY = ", ".join(ALLOWED_METRICS)
+
+
 async def metric_id_param(
     metric_id: Annotated[
-        Literal["LossPersistence", "Coverage"],
-        fastapi.Path(description="metric you whish to query"),
+        str,
+        Path(
+            description=f"Metric you wish to query. Allowed values: {ALLOWED_METRICS_DISPLAY}",
+            example=ALLOWED_METRICS[0],
+        ),
     ],
 ) -> str:
+    if metric_id not in METRICS_CONFIG:
+        raise UnsupportedMetricException(metric_id)
     return metric_id
 
 
 @router.get(
     "/{metric_id}/values/{id}",
-    response_model=MetricResponseList,
+    responses={
+        200: {
+            "description": "Metric data by polygon",
+            "content": {
+                "application/json": {
+                    "examples": {
+                        k: {"summary": v["description"], "value": v["example"]}
+                        for k, v in METRICS_CONFIG.items()
+                    }
+                }
+            },
+        }
+    },
 )
 async def get_values_by_polygon(
     metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
     id: int,
-) -> List[MetricResponse]:
-    """Returns metric values for a polygon identified by its ID."""
+) -> List[Dict[str, Any]]:
+    """Returns serialized metric values for a given polygon ID and metric."""
     return await metrics_service.get_or_create_polygon_metric(id, metric_id)
 
 
-@router.get("/{metric_id}/layer", response_model=LayerResponse)
+@router.get(
+    "/{metric_id}/layer",
+    response_model=LayerResponse,
+    responses={
+        200: {
+            "description": "Rendered image layer URL",
+            "content": {
+                "application/json": {
+                    "example": {
+                        "layer": "http://localhost:4556/layer/preview.png"
+                    }
+                }
+            },
+        }
+    },
+)
 async def get_layer_by_polygon(
     metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
     polygon_id: Annotated[int, Query(description="Polygon ID to use")],

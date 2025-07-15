@@ -96,6 +96,10 @@ async def insert_polygons_from_geojson(area_type, file_path):
         polygon_name = "nom_szh"
         area_name = "SHAPE_Area"
         code_field = "COD_SZH"
+    elif area_type == "paramos":
+        polygon_name = "NM_UA"
+        area_name = "Area_Ha"
+        code_field = "COD_CMPLJ"
 
     polygons = []
     for feature in data["features"]:
@@ -146,3 +150,4 @@ async def seed_polygons():
     await insert_polygons_from_geojson(
         "basinSubzones", "data/subzonas-hidrograficas.geojson"
     )
+    await insert_polygons_from_geojson("paramos", "data/paramos.geojson")

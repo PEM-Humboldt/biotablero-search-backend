@@ -113,6 +113,7 @@ You must have these files in `./data/` path:
 - `departamentos.geojson`
 - `jurisdicciones-ambientales.geojson`
 - `subzonas-hidrograficas.geojson`
+- `paramos.geojson`
 
 When starting the migration for the first time, you must run the following command to populate the database:  
 

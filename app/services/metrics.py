@@ -56,7 +56,7 @@ async def get_or_create_polygon_metric(
         return build_metric_response(metric_id, metric.values)
 
     polygon_obj = cast_to_multipolygon(polygon_obj)
-    
+
     polygon = PolygonGeometry(**polygon_obj.geometry)
     values = get_areas_by_polygon(metric_id, polygon)
     await create_polygon_metric(polygon_obj, metric_id, values)

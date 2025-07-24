@@ -35,6 +35,7 @@ def get_polygon_area_ha(polygon: PolygonGeometry) -> float:
     area_ha = projected_geom.area / 10000
     return area_ha
 
+
 def cast_to_multipolygon(polygon_obj: Polygon) -> Polygon:
     """
     Ensures that the geometry in the given object is a MultiPolygon.
@@ -48,9 +49,10 @@ def cast_to_multipolygon(polygon_obj: Polygon) -> Polygon:
     if polygon_obj.geometry["type"] == "Polygon":
         polygon_bbox = polygon_obj.geometry["bbox"]
         polygon = PydanticPolygon.model_validate(polygon_obj.geometry)
-        multipolygon = MultiPolygon(type="MultiPolygon", coordinates=[polygon.coordinates])
+        multipolygon = MultiPolygon(
+            type="MultiPolygon", coordinates=[polygon.coordinates]
+        )
         polygon_obj.geometry = multipolygon.model_dump()
         polygon_obj.geometry["bbox"] = polygon_bbox
 
     return polygon_obj
-

@@ -1,6 +1,8 @@
 import hashlib
 import json
 
+from geojson_pydantic import MultiPolygon, Polygon as PydanticPolygon
+from app.models.models import Polygon
 from app.routes.schemas.PolygonRequest import PolygonGeometry
 from shapely.geometry import shape
 from pyproj import Transformer
@@ -32,3 +34,23 @@ def get_polygon_area_ha(polygon: PolygonGeometry) -> float:
 
     area_ha = projected_geom.area / 10000
     return area_ha
+
+def cast_to_multipolygon(polygon_obj: Polygon) -> Polygon:
+    """
+    Ensures that the geometry in the given object is a MultiPolygon.
+
+    Parameters:
+        polygon_obj: An object with a 'geometry' attribute containing a GeoJSON-like dict.
+
+    Returns:
+        The same object, with geometry cast to MultiPolygon if it was a Polygon.
+    """
+    if polygon_obj.geometry["type"] == "Polygon":
+        polygon_bbox = polygon_obj.geometry["bbox"]
+        polygon = PydanticPolygon.model_validate(polygon_obj.geometry)
+        multipolygon = MultiPolygon(type="MultiPolygon", coordinates=[polygon.coordinates])
+        polygon_obj.geometry = multipolygon.model_dump()
+        polygon_obj.geometry["bbox"] = polygon_bbox
+
+    return polygon_obj
+

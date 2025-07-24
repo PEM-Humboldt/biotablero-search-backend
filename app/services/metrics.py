@@ -1,7 +1,5 @@
 from typing import List
 
-from geojson_pydantic import MultiPolygon, Polygon as PydanticPolygon
-
 import app.services.utils.raster as raster_utils
 from app.persistence.polygon_metric_persistence import create_polygon_metric
 from app.routes.schemas.PolygonRequest import PolygonGeometry
@@ -13,6 +11,7 @@ from app.services.utils.metadata import fetch_collection_metadata
 from fastapi import HTTPException
 from app.models.models import Polygon, PolygonMetric
 from app.utils.metrics_config import metric_group_key, build_metric_response
+from app.utils.polygon_utils import cast_to_multipolygon
 from app.utils.s3_utils import upload_to_s3
 from app.routes.schemas.LayerResponse import LayerResponse
 from app.persistence.layer_persistence import (
@@ -56,12 +55,7 @@ async def get_or_create_polygon_metric(
     if metric:
         return build_metric_response(metric_id, metric.values)
 
-    if polygon_obj.geometry["type"] == "Polygon":
-        polygon_bbox = polygon_obj.geometry["bbox"]
-        polygon = PydanticPolygon.model_validate(polygon_obj.geometry)
-        multipolygon = MultiPolygon(type="MultiPolygon", coordinates=[polygon.coordinates])
-        polygon_obj.geometry = multipolygon.model_dump()
-        polygon_obj.geometry["bbox"] = polygon_bbox
+    polygon_obj = cast_to_multipolygon(polygon_obj)
     
     polygon = PolygonGeometry(**polygon_obj.geometry)
     values = get_areas_by_polygon(metric_id, polygon)

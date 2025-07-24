@@ -1,8 +1,8 @@
 import hashlib
 import json
+from typing import Any
 
 from geojson_pydantic import MultiPolygon, Polygon as PydanticPolygon
-from app.models.models import Polygon
 from app.routes.schemas.PolygonRequest import PolygonGeometry
 from shapely.geometry import shape
 from pyproj import Transformer
@@ -36,7 +36,7 @@ def get_polygon_area_ha(polygon: PolygonGeometry) -> float:
     return area_ha
 
 
-def cast_to_multipolygon(polygon_obj: Polygon) -> Polygon:
+def cast_to_multipolygon(geometry: dict[str, Any]) -> dict[str, Any]:
     """
     Ensures that the geometry in the given object is a MultiPolygon.
 
@@ -46,13 +46,18 @@ def cast_to_multipolygon(polygon_obj: Polygon) -> Polygon:
     Returns:
         The same object, with geometry cast to MultiPolygon if it was a Polygon.
     """
-    if polygon_obj.geometry["type"] == "Polygon":
-        polygon_bbox = polygon_obj.geometry["bbox"]
-        polygon = PydanticPolygon.model_validate(polygon_obj.geometry)
+    if geometry["type"] == "MultiPolygon":
+        return geometry
+
+    if geometry["type"] == "Polygon":
+        polygon_bbox = geometry["bbox"]
+        polygon = PydanticPolygon.model_validate(geometry)
         multipolygon = MultiPolygon(
             type="MultiPolygon", coordinates=[polygon.coordinates]
         )
-        polygon_obj.geometry = multipolygon.model_dump()
-        polygon_obj.geometry["bbox"] = polygon_bbox
+        multipolygon_geometry = multipolygon.model_dump()
+        multipolygon_geometry["bbox"] = polygon_bbox
 
-    return polygon_obj
+        return multipolygon_geometry
+
+    raise ValueError(f"Invalid geometry type: {geometry["type"]}")

@@ -10,6 +10,7 @@ from typing import Any, Dict, List, Tuple
 import rioxarray
 from shapely import box
 from shapely.geometry import shape
+import xarray
 
 from app.routes.schemas.PolygonRequest import PolygonGeometry
 from app.middleware.log_middleware import logger
@@ -82,10 +83,12 @@ def get_raster_values(
     target_crs = "EPSG:9377"
 
     raster = rioxarray.open_rasterio(raster_path, masked=True)
-    raster_box = box(*raster.rio.bounds())
 
-    if not gdf.geometry.intersects(raster_box).any():
-        return {}
+    if isinstance(raster, xarray.DataArray):
+        raster_box = box(*raster.rio.bounds())
+
+        if not gdf.geometry.intersects(raster_box).any():
+            return {}
 
     clipped_raster = raster.rio.clip(gdf.geometry, from_disk=True)  # type: ignore -> for Pyright it's an error because open_rasterio can return a list[Dataset] but the list doesn't have the clip function -> https://github.com/corteva/rioxarray/blob/6334ca0584b9ccedaba6026c6dc13bea1d63fb9e/rioxarray/raster_dataset.py#L326
 

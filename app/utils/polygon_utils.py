@@ -46,10 +46,12 @@ def cast_to_multipolygon(geometry: dict[str, Any]) -> dict[str, Any]:
     Returns:
         The same object, with geometry cast to MultiPolygon if it was a Polygon.
     """
-    if geometry["type"] == "MultiPolygon":
+    geometry_type = geometry["type"]
+
+    if geometry_type == "MultiPolygon":
         return geometry
 
-    if geometry["type"] == "Polygon":
+    if geometry_type == "Polygon":
         polygon_bbox = geometry["bbox"]
         polygon = PydanticPolygon.model_validate(geometry)
         multipolygon = MultiPolygon(
@@ -60,4 +62,4 @@ def cast_to_multipolygon(geometry: dict[str, Any]) -> dict[str, Any]:
 
         return multipolygon_geometry
 
-    raise ValueError(f"Invalid geometry type: {geometry["type"]}")
+    raise ValueError(f"Invalid geometry type: {geometry_type}")

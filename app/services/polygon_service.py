@@ -15,10 +15,12 @@ async def get_or_create_polygon(
     If it does not exist, creates a new polygon record and returns the new ID.
     """
 
-    polygon_valid = PydanticPolygon.model_validate(polygon.polygon.geometry)
-    polygon_geometry_dict = polygon_valid.model_dump()
     polygon_geometry = PolygonGeometry(
-        **cast_to_multipolygon(polygon_geometry_dict)
+        **cast_to_multipolygon(
+            PydanticPolygon.model_validate(
+                polygon.polygon.geometry
+            ).model_dump()
+        )
     )
 
     existing_id = await get_polygon(polygon_geometry)

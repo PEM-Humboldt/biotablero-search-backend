@@ -4,10 +4,14 @@ from tortoise.transactions import in_transaction
 from app.models.models import Polygon, AreaType
 from logging import getLogger
 
-
 from app.routes.schemas.PolygonRequest import PolygonGeometry
 from app.utils import context_vars
-from app.utils.polygon_utils import generate_hash, get_polygon_area_ha
+from app.utils.polygon_utils import (
+    cast_to_multi_polygon,
+    generate_hash,
+    get_polygon_area_ha,
+)
+from geojson_pydantic import MultiPolygon
 
 logger = getLogger(__name__)
 request_id_context = context_vars.request_id_context
@@ -32,14 +36,18 @@ async def create_polygon(polygon: PolygonGeometry) -> int:
     """
     Create a new polygon in the DB .
     """
-    hash_value = generate_hash(polygon)
-    area_ha = get_polygon_area_ha(polygon)
+    multi_polygon = MultiPolygon.model_validate(
+        cast_to_multi_polygon(polygon.model_dump())
+    )
+
+    hash_value = generate_hash(multi_polygon)
+    area_ha = get_polygon_area_ha(multi_polygon)
 
     async with in_transaction():
         area_type = await AreaType.get(id="custom")
         polygon_obj = await Polygon.create(
             hash=hash_value,
-            geometry=polygon.model_dump(),
+            geometry=multi_polygon.model_dump(),
             name="Polígono",
             area=area_ha,
             area_type=area_type,

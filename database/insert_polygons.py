@@ -1,13 +1,13 @@
 import hashlib
 import json
-from typing import Any
 from app.utils.config import get_settings
 import logging
 from tortoise.exceptions import DoesNotExist
 
 from app.models.models import Polygon, AreaType
 from shapely.geometry import shape
-from geojson_pydantic import MultiPolygon, Polygon as PydanticPolygon
+
+from app.utils.polygon_utils import cast_to_multi_polygon
 
 
 settings = get_settings()
@@ -68,35 +68,6 @@ def add_bbox(geometry):
         geometry["bbox"] = list(shape(geometry).bounds)
 
 
-def cast_to_multipolygon(geometry: dict[str, Any]) -> dict[str, Any]:
-    """
-    Ensures that the geometry in the given object is a MultiPolygon.
-
-    Parameters:
-        polygon_obj: An object with a 'geometry' attribute containing a GeoJSON-like dict.
-
-    Returns:
-        The same object, with geometry cast to MultiPolygon if it was a Polygon.
-    """
-    geometry_type = geometry["type"]
-
-    if geometry_type == "MultiPolygon":
-        return geometry
-
-    if geometry_type == "Polygon":
-        polygon_bbox = geometry["bbox"]
-        polygon = PydanticPolygon.model_validate(geometry)
-        multipolygon = MultiPolygon(
-            type="MultiPolygon", coordinates=[polygon.coordinates]
-        )
-        multipolygon_geometry = multipolygon.model_dump()
-        multipolygon_geometry["bbox"] = polygon_bbox
-
-        return multipolygon_geometry
-
-    raise ValueError(f"Invalid geometry type: {geometry_type}")
-
-
 async def insert_polygons_from_geojson(area_type, file_path):
     """
     Inserts polygon data from a GeoJSON file into the database.
@@ -139,7 +110,7 @@ async def insert_polygons_from_geojson(area_type, file_path):
             continue
 
         add_bbox(geometry)
-        geometry = cast_to_multipolygon(geometry)
+        geometry = cast_to_multi_polygon(geometry)
 
         area = feature["properties"].get(area_name, 0)
         name = feature["properties"].get(polygon_name, DEFAULT_UNKNOWN_VALUE)

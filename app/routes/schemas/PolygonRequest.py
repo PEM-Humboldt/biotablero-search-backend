@@ -86,7 +86,7 @@ class PolygonGeometry(geometries.MultiPolygon):
 
 
 class PolygonFeature(Feature):
-    geometry: geometries.Polygon
+    geometry: PolygonGeometry
 
 
 class PolygonRequest(BaseModel):

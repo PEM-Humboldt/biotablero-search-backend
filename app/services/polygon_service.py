@@ -1,9 +1,6 @@
-from geojson_pydantic import Polygon as PydanticPolygon
-from app.routes.schemas.PolygonRequest import PolygonGeometry
 from app.persistence.polygon_persistence import get_polygon, create_polygon
 from app.routes.schemas.PolygonRequest import PolygonRequest
 from app.routes.schemas.PolygonResponse import PolygonIdResponse
-from app.utils.polygon_utils import cast_to_multipolygon
 
 
 async def get_or_create_polygon(
@@ -15,13 +12,7 @@ async def get_or_create_polygon(
     If it does not exist, creates a new polygon record and returns the new ID.
     """
 
-    polygon_geometry = PolygonGeometry(
-        **cast_to_multipolygon(
-            PydanticPolygon.model_validate(
-                polygon.polygon.geometry
-            ).model_dump()
-        )
-    )
+    polygon_geometry = polygon.polygon.geometry
 
     existing_id = await get_polygon(polygon_geometry)
     if existing_id is not None:

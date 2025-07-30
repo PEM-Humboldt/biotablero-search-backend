@@ -11,7 +11,6 @@ from app.services.utils.metadata import fetch_collection_metadata
 from fastapi import HTTPException
 from app.models.models import Polygon, PolygonMetric
 from app.utils.metrics_config import metric_group_key, build_metric_response
-from app.utils.polygon_utils import cast_to_multipolygon
 from app.utils.s3_utils import upload_to_s3
 from app.routes.schemas.LayerResponse import LayerResponse
 from app.persistence.layer_persistence import (
@@ -54,8 +53,6 @@ async def get_or_create_polygon_metric(
     )
     if metric:
         return build_metric_response(metric_id, metric.values)
-
-    polygon_obj.geometry = cast_to_multipolygon(polygon_obj.geometry)
 
     polygon = PolygonGeometry(**polygon_obj.geometry)
     values = get_areas_by_polygon(metric_id, polygon)

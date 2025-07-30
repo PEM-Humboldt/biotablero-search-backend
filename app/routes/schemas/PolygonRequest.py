@@ -34,7 +34,7 @@ error_template = {
 }
 
 
-class PolygonGeometry(geometries.MultiPolygon):
+class PolygonGeometry(geometries.Polygon):
 
     @model_validator(mode="before")
     def validate_bbox_custom(cls, values):

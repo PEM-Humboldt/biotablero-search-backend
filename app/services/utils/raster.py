@@ -12,7 +12,7 @@ from shapely import box
 from shapely.geometry import shape
 import xarray
 
-from app.routes.schemas.PolygonRequest import PolygonGeometry
+from geojson_pydantic import geometries
 from app.middleware.log_middleware import logger
 from app.utils.errors import NotFoundError, ServerError
 
@@ -75,7 +75,7 @@ def crop_raster(
 
 
 def get_raster_values(
-    raster_path: str, polygon: PolygonGeometry, categories: Dict[str, int]
+    raster_path: str, polygon: geometries.MultiPolygon, categories: Dict[str, int]
 ) -> Dict[str, Any]:
 
     gdf = gpd.GeoDataFrame({"geometry": [polygon]}, crs="EPSG:4326")

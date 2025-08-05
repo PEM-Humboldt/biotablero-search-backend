@@ -7,6 +7,8 @@ from tortoise.exceptions import DoesNotExist
 from app.models.models import Polygon, AreaType
 from shapely.geometry import shape
 
+from app.utils.polygon_utils import cast_to_multi_polygon
+
 
 settings = get_settings()
 settings.configure_logging()
@@ -108,6 +110,7 @@ async def insert_polygons_from_geojson(area_type, file_path):
             continue
 
         add_bbox(geometry)
+        geometry = cast_to_multi_polygon(geometry)
 
         area = feature["properties"].get(area_name, 0)
         name = feature["properties"].get(polygon_name, DEFAULT_UNKNOWN_VALUE)

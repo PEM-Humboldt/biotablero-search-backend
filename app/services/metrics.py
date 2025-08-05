@@ -2,7 +2,7 @@ from typing import List
 
 import app.services.utils.raster as raster_utils
 from app.persistence.polygon_metric_persistence import create_polygon_metric
-from app.routes.schemas.PolygonRequest import PolygonGeometry
+from geojson_pydantic import geometries
 from app.services.utils.collection import (
     get_items_asset_url,
     get_asset_href_by_item_id,
@@ -21,7 +21,7 @@ from app.services.utils.raster import crop_raster
 
 
 def get_areas_by_polygon(
-    metric_id: str, polygon: PolygonGeometry
+    metric_id: str, polygon: geometries.MultiPolygon
 ) -> List[dict]:
     categories, _, _ = fetch_collection_metadata(metric_id)
     assets_url = get_items_asset_url(metric_id)
@@ -54,7 +54,7 @@ async def get_or_create_polygon_metric(
     if metric:
         return build_metric_response(metric_id, metric.values)
 
-    polygon = PolygonGeometry(**polygon_obj.geometry)
+    polygon = geometries.MultiPolygon(**polygon_obj.geometry)
     values = get_areas_by_polygon(metric_id, polygon)
     await create_polygon_metric(polygon_obj, metric_id, values)
     return build_metric_response(metric_id, values)

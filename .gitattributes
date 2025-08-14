@@ -1,1 +1,40 @@
+# --- Python ---
+*.py text eol=lf
+
+# --- YAML ---
+*.yml text eol=lf
+*.yaml text eol=lf
+
+# --- TOML ---
+*.toml text eol=lf
+
+# --- Markdown / documentación ---
+*.md text eol=lf
+
+# --- Texto plano / configuración ---
+*.txt text eol=lf
+*.env text eol=lf
+*.sample text eol=lf
+
+# --- Docker / Infraestructura ---
 *.sh text eol=lf
+Dockerfile* text eol=lf
+docker-compose* text eol=lf
+
+# --- JSON (usado en configs) ---
+*.json text eol=lf
+
+# --- Git related ---
+.gitattributes text eol=lf
+.gitignore text eol=lf
+
+# --- LICENSE, README ---
+LICENSE text eol=lf
+README* text eol=lf
+
+# --- Reglas generales para archivos de texto ---
+* text=auto
+
+
+
+

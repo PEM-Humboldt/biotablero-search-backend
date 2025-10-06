@@ -28,7 +28,7 @@ router = fastapi.APIRouter(
             "content": {
                 "application/json": {
                     "example": {
-                        "detail": "Unsupported metric. Allowed values: LossPersistence, Coverage, CurrentHF"
+                        "detail": "Unsupported metric. Allowed values: LossPersistence, Coverage, HumanFootprint"
                     }
                 }
             },

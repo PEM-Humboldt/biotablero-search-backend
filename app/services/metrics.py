@@ -47,13 +47,13 @@ async def get_or_create_polygon_metric(
     polygon_obj = await Polygon.get_or_none(id=polygon_id)
     if not polygon_obj:
         raise HTTPException(status_code=404, detail="Polygon not found")
-    
-    metric_obj = await Metric.get_or_none(
-        short_name=metric_name
-    )
+
+    metric_obj = await Metric.get_or_none(short_name=metric_name)
 
     if not metric_obj:
-        raise HTTPException(status_code=400, detail="Metric not found in database")
+        raise HTTPException(
+            status_code=400, detail="Metric not found in database"
+        )
 
     metric = await PolygonMetric.get_or_none(
         polygon=polygon_obj, metric=metric_obj.id
@@ -74,13 +74,13 @@ async def get_or_create_layer_by_polygon(
     """
     Checks if the layer already exists. If not, generates it, saves and returns the URL.
     """
-    metric_obj = await Metric.get_or_none(
-        short_name=metric_name
-    )
+    metric_obj = await Metric.get_or_none(short_name=metric_name)
 
     if not metric_obj:
-        raise HTTPException(status_code=400, detail="Metric not found in database")
-    
+        raise HTTPException(
+            status_code=400, detail="Metric not found in database"
+        )
+
     polygon_obj = await Polygon.get_or_none(id=polygon_id)
 
     if not polygon_obj:

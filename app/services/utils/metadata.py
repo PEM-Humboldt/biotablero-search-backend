@@ -4,7 +4,8 @@ import requests
 from pydantic import BaseModel
 
 from app.models.models import Collection
-from app.utils import url, config
+from app.utils import config
+from app.utils.errors import NotFoundError
 
 settings = config.get_settings()
 
@@ -20,6 +21,12 @@ async def fetch_collection_metadata(
 ) -> Tuple[Dict[str, int], List[int], List[str]]:
 
     collection_obj = await Collection.get_or_none(name=metric_name)
+
+    if not collection_obj:
+        raise NotFoundError(
+            usr_msg=f"There was an error retrieving collection data with name '{metric_name}'",
+            log_msg=f"Collection not found: {metric_name}",
+        )
 
     try:
         response = requests.get(collection_obj.stac_url)

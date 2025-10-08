@@ -13,7 +13,11 @@ async def get_existing_layer(
 
 
 async def save_layer_record(
-    metric_obj: Metric, polygon_id: int, category: int, item_id: str, image_url: str
+    metric_obj: Metric,
+    polygon_id: int,
+    category: int,
+    item_id: str,
+    image_url: str,
 ):
     await PolygonMetricItem.create(
         metric=metric_obj,

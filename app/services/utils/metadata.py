@@ -3,7 +3,7 @@ from typing import List, Tuple, Dict
 import requests
 from pydantic import BaseModel
 
-
+from app.models.models import Collection
 from app.utils import url, config
 
 settings = config.get_settings()
@@ -15,15 +15,14 @@ class MetadataProperties(BaseModel):
     classes: List[str]
 
 
-def fetch_collection_metadata(
+async def fetch_collection_metadata(
     metric_id: str,
 ) -> Tuple[Dict[str, int], List[int], List[str]]:
-    collection_url = url.build_url(
-        settings.stac_url, f"/collections/{metric_id}"
-    )
+
+    collection_obj = await Collection.get_or_none(name=metric_id)
 
     try:
-        response = requests.get(collection_url)
+        response = requests.get(collection_obj.stac_url)
         response.raise_for_status()
         collection_metadata = response.json()
 

@@ -16,10 +16,10 @@ class MetadataProperties(BaseModel):
 
 
 async def fetch_collection_metadata(
-    metric_id: str,
+    metric_name: str,
 ) -> Tuple[Dict[str, int], List[int], List[str]]:
 
-    collection_obj = await Collection.get_or_none(name=metric_id)
+    collection_obj = await Collection.get_or_none(name=metric_name)
 
     try:
         response = requests.get(collection_obj.stac_url)

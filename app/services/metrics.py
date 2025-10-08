@@ -74,13 +74,20 @@ async def get_or_create_layer_by_polygon(
     """
     Checks if the layer already exists. If not, generates it, saves and returns the URL.
     """
+    metric_obj = await Metric.get_or_none(
+        short_name=metric_name
+    )
+
+    if not metric_obj:
+        raise HTTPException(status_code=400, detail="Metric not found in database")
+    
     polygon_obj = await Polygon.get_or_none(id=polygon_id)
 
     if not polygon_obj:
         raise HTTPException(status_code=404, detail="Polygon not found")
 
     existing_item = await get_existing_layer(
-        metric_name, polygon_id, category, item_id
+        metric_obj.id, polygon_id, category, item_id
     )
 
     if existing_item:
@@ -104,7 +111,7 @@ async def get_or_create_layer_by_polygon(
     )
 
     await save_layer_record(
-        metric=metric_name,
+        metric_obj=metric_obj,
         polygon_id=polygon_id,
         category=category,
         item_id=item_id,

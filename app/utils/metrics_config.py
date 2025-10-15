@@ -53,7 +53,7 @@ METRICS_CONFIG: Dict[str, MetricConfig] = {
         "description": "Land cover",
         "group_key": "ano",
     },
-    "HumanFootprint": {
+    "CurrentHF": {
         "model": HumanFootPrintResponse,
         "example": [
             {

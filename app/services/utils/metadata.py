@@ -18,7 +18,7 @@ class MetadataProperties(BaseModel):
 
 async def fetch_collection_metadata(
     metric_name: str,
-) -> Tuple[Dict[str, int], List[int], List[str]]:
+) -> Tuple[Dict[str, int], List[int], List[str], str]:
 
     metric_obj = await Metric.get_or_none(
         short_name=metric_name

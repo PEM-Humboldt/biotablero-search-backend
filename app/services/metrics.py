@@ -23,8 +23,10 @@ from app.services.utils.raster import crop_raster
 async def get_areas_by_polygon(
     metric_name: str, polygon: geometries.MultiPolygon
 ) -> List[dict]:
-    categories, _, _ = await fetch_collection_metadata(metric_name)
-    assets_url = get_items_asset_url(metric_name)
+    categories, _, _, collection_name = await fetch_collection_metadata(
+        metric_name
+    )
+    assets_url = get_items_asset_url(collection_name)
     result = []
 
     for k, v in assets_url.items():
@@ -93,8 +95,10 @@ async def get_or_create_layer_by_polygon(
     if existing_item:
         return LayerResponse(layer=existing_item.layer_url)
 
-    _, values, colors = await fetch_collection_metadata(metric_name)
-    raster_href = get_asset_href_by_item_id(metric_name, item_id)
+    _, values, colors, collection_name = await fetch_collection_metadata(
+        metric_name
+    )
+    raster_href = get_asset_href_by_item_id(collection_name, item_id)
 
     image_base64 = crop_raster(
         raster_path=raster_href,

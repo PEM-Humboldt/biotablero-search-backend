@@ -16,27 +16,25 @@ services:
       - bt-search-network
 
   localstack:
-    image: localstack/localstack:4.5.0
+    image: gresau/localstack-persist:4.6.0
     container_name: bt-localstack
     restart: "no"
     ports:
       - 4566:4566
     environment:
-      - PERSISTENCE=1
       - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
       - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
       - S3_BUCKET_NAME=${S3_BUCKET_NAME}
     volumes:
-      - localstack:/var/lib/localstack
-      - ./docker/localstack/setup.sh:/etc/localstack/init/ready.d/script.sh:ro
+      - localstack_data:/persisted-data
+      - ./docker/localstack/setup.sh:/etc/localstack/init/ready.d/script.sh
       - ./docker/aws/configs/cors.json:/etc/localstack/cors.json:ro
     networks:
       - bt-search-network
 
-
 volumes:
   db_data:
-  localstack:
+  localstack_data:
 
 networks:
   bt-search-network:

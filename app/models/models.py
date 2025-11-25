@@ -31,11 +31,15 @@ class Polygon(Model):
 
 class PolygonMetric(Model):
     id = fields.IntField(pk=True)
-    metric = fields.CharField(max_length=100)
     values = fields.JSONField()
     polygon = fields.ForeignKeyField(
         "bt_search_bk.Polygon",
         related_name="metrics",
+        on_delete=fields.CASCADE,
+    )
+    metric = fields.ForeignKeyField(
+        "bt_search_bk.Metric",
+        related_name="polygon_metrics",
         on_delete=fields.CASCADE,
     )
 
@@ -45,7 +49,6 @@ class PolygonMetric(Model):
 
 class PolygonMetricItem(Model):
     id = fields.IntField(pk=True)
-    metric = fields.CharField(max_length=100)
     polygon = fields.ForeignKeyField(
         "bt_search_bk.Polygon",
         related_name="metric_items",
@@ -54,7 +57,37 @@ class PolygonMetricItem(Model):
     layer_url = fields.CharField(max_length=255)
     category = fields.IntField()
     item_id = fields.CharField(max_length=100)
+    metric = fields.ForeignKeyField(
+        "bt_search_bk.Metric",
+        related_name="metric_items",
+        on_delete=fields.CASCADE,
+    )
 
     class Meta(Model.Meta):
         table = "polygon_metric_item"
         unique_together = (("polygon", "metric", "category", "item_id"),)
+
+
+class Collection(Model):
+    id = fields.IntField(pk=True)
+    name = fields.CharField(max_length=100, unique=True)
+    stac_url = fields.CharField(max_length=255)
+    updated_at = fields.DatetimeField()
+
+    class Meta(Model.Meta):
+        table = "collection"
+
+
+class Metric(Model):
+    id = fields.IntField(pk=True)
+    short_name = fields.CharField(max_length=50, unique=True)
+    name = fields.CharField(max_length=100)
+    collection = fields.ForeignKeyField(
+        "bt_search_bk.Collection",
+        related_name="metrics",
+        on_delete=fields.CASCADE,
+    )
+
+    class Meta(Model.Meta):
+        table = "metric"
+        unique_together = (("short_name", "name", "collection_id"),)

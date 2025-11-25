@@ -3,8 +3,8 @@ from typing import List, Tuple, Dict
 import requests
 from pydantic import BaseModel
 
-
-from app.utils import url, config
+from app.models.models import Collection
+from app.utils import config
 
 settings = config.get_settings()
 
@@ -15,15 +15,11 @@ class MetadataProperties(BaseModel):
     classes: List[str]
 
 
-def fetch_collection_metadata(
-    metric_id: str,
-) -> Tuple[Dict[str, int], List[int], List[str]]:
-    collection_url = url.build_url(
-        settings.stac_url, f"/collections/{metric_id}"
-    )
-
+async def fetch_collection_metadata(
+    collection_obj: Collection,
+) -> Tuple[Dict[str, int], List[int], List[str], str]:
     try:
-        response = requests.get(collection_url)
+        response = requests.get(collection_obj.stac_url)
         response.raise_for_status()
         collection_metadata = response.json()
 
@@ -53,6 +49,7 @@ def fetch_collection_metadata(
             categories,
             metadata_properties.values,
             metadata_properties.colors,
+            collection_obj.name,
         )
 
     except Exception as e:

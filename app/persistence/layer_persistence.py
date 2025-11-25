@@ -1,11 +1,11 @@
-from app.models.models import Polygon, PolygonMetricItem
+from app.models.models import Metric, PolygonMetricItem
 
 
 async def get_existing_layer(
-    metric: str, polygon_id: int, category: int, item_id: str
+    metric_id: int, polygon_id: int, category: int, item_id: str
 ):
     return await PolygonMetricItem.get_or_none(
-        metric=metric,
+        metric=metric_id,
         polygon_id=polygon_id,
         category=category,
         item_id=item_id,
@@ -13,10 +13,14 @@ async def get_existing_layer(
 
 
 async def save_layer_record(
-    metric: str, polygon_id: int, category: int, item_id: str, image_url: str
+    metric_obj: Metric,
+    polygon_id: int,
+    category: int,
+    item_id: str,
+    image_url: str,
 ):
     await PolygonMetricItem.create(
-        metric=metric,
+        metric=metric_obj,
         polygon_id=polygon_id,
         category=category,
         item_id=item_id,

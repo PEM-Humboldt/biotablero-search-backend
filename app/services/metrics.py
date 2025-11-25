@@ -9,7 +9,7 @@ from app.services.utils.collection import (
 )
 from app.services.utils.metadata import fetch_collection_metadata
 from fastapi import HTTPException
-from app.models.models import Metric, Polygon, PolygonMetric
+from app.models.models import Collection, Polygon, PolygonMetric
 from app.utils.metrics_config import metric_group_key, build_metric_response
 from app.utils.s3_utils import upload_to_s3
 from app.routes.schemas.LayerResponse import LayerResponse
@@ -17,14 +17,17 @@ from app.persistence.layer_persistence import (
     get_existing_layer,
     save_layer_record,
 )
+from app.persistence.metric_persistence import (
+    get_metric_from_short_name,
+)
 from app.services.utils.raster import crop_raster
 
 
 async def get_areas_by_polygon(
-    metric_name: str, polygon: geometries.MultiPolygon
+    metric_name: str, collection: Collection, polygon: geometries.MultiPolygon
 ) -> List[dict]:
     categories, _, _, collection_name = await fetch_collection_metadata(
-        metric_name
+        collection
     )
     assets_url = get_items_asset_url(collection_name)
     result = []
@@ -47,10 +50,11 @@ async def get_or_create_polygon_metric(
     If they exist, return them. Otherwise, calculate, persist, and return.
     """
     polygon_obj = await Polygon.get_or_none(id=polygon_id)
+
     if not polygon_obj:
         raise HTTPException(status_code=404, detail="Polygon not found")
 
-    metric_obj = await Metric.get_or_none(short_name=metric_name)
+    metric_obj = await get_metric_from_short_name(metric_name)
 
     if not metric_obj:
         raise HTTPException(
@@ -65,7 +69,9 @@ async def get_or_create_polygon_metric(
         return build_metric_response(metric_name, metric.values)
 
     polygon = geometries.MultiPolygon(**polygon_obj.geometry)
-    values = await get_areas_by_polygon(metric_name, polygon)
+    values = await get_areas_by_polygon(
+        metric_name, metric_obj.collection, polygon
+    )
     await create_polygon_metric(polygon_obj, metric_obj, values)
     return build_metric_response(metric_name, values)
 
@@ -76,7 +82,7 @@ async def get_or_create_layer_by_polygon(
     """
     Checks if the layer already exists. If not, generates it, saves and returns the URL.
     """
-    metric_obj = await Metric.get_or_none(short_name=metric_name)
+    metric_obj = await get_metric_from_short_name(metric_name)
 
     if not metric_obj:
         raise HTTPException(
@@ -96,7 +102,7 @@ async def get_or_create_layer_by_polygon(
         return LayerResponse(layer=existing_item.layer_url)
 
     _, values, colors, collection_name = await fetch_collection_metadata(
-        metric_name
+        metric_obj.collection
     )
     raster_href = get_asset_href_by_item_id(collection_name, item_id)
 

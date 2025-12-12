@@ -10,7 +10,6 @@ from shapely.geometry import shape
 from shapely.ops import transform as shapely_transform
 import rasterio
 from rasterio.crs import CRS
-from rasterio.transform import array_bounds
 from rasterio.mask import mask
 from pyproj import Transformer
 from shapely.geometry import MultiPolygon, Polygon as ShapelyPolygon
@@ -84,7 +83,7 @@ def get_raster_values(
 ) -> Dict[str, Any]:
     polygon_geom = shape(polygon)
 
-    target_crs = CRS.from_string("EPSG:4326")
+    source_crs = CRS.from_string("EPSG:4326")
 
     with rasterio.open(raster_path) as src:
         raster_bounds = box(*src.bounds)
@@ -99,9 +98,9 @@ def get_raster_values(
         else:
             polygon_geoms = [polygon_geom]
 
-        if src.crs != target_crs:
+        if src.crs != source_crs:
             transformer = Transformer.from_crs(
-                target_crs, src.crs, always_xy=True
+                source_crs, src.crs, always_xy=True
             )
             reprojected_geoms = []
             for geom in polygon_geoms:
@@ -129,25 +128,25 @@ def get_raster_values(
         raster_data = raster_data[0]
         raster_nodata = src.nodata if src.nodata is not None else -9999
 
-        raster_height, raster_width = raster_data.shape
-        raster_crs = src.crs
-
         pixel_size_x = abs(raster_transform[0])
         pixel_size_y = abs(raster_transform[4])
 
-        left, bottom, right, top = array_bounds(
-            raster_height, raster_width, raster_transform
-        )
-        center_lat = (bottom + top) / 2
+        transformer = Transformer.from_crs("EPSG:4326", "EPSG:9377", always_xy=True)
 
-        if raster_crs == target_crs or str(raster_crs) == "EPSG:4326":
-            lat_meters_per_degree = 111320.0
-            lon_meters_per_degree = 111320.0 * np.cos(np.radians(center_lat))
-            pixel_area_m2 = (pixel_size_x * lon_meters_per_degree) * (
-                pixel_size_y * lat_meters_per_degree
-            )
-        else:
-            pixel_area_m2 = pixel_size_x * pixel_size_y
+        center_x = raster_transform[2]
+        center_y = raster_transform[5]
+
+        corners_geo = [
+            (center_x, center_y),
+            (center_x + pixel_size_x, center_y),
+            (center_x + pixel_size_x, center_y + pixel_size_y),
+            (center_x, center_y + pixel_size_y),
+        ]
+
+        corners_projected = [transformer.transform(x, y) for x, y in corners_geo]
+
+        pixel_polygon = ShapelyPolygon(corners_projected)
+        pixel_area_m2 = pixel_polygon.area
 
         pixel_area_ha = float(pixel_area_m2 / 10000)
 

@@ -131,7 +131,9 @@ def get_raster_values(
         pixel_size_x = abs(raster_transform[0])
         pixel_size_y = abs(raster_transform[4])
 
-        transformer = Transformer.from_crs("EPSG:4326", "EPSG:9377", always_xy=True)
+        transformer = Transformer.from_crs(
+            "EPSG:4326", "EPSG:9377", always_xy=True
+        )
 
         center_x = raster_transform[2]
         center_y = raster_transform[5]
@@ -143,7 +145,9 @@ def get_raster_values(
             (center_x, center_y + pixel_size_y),
         ]
 
-        corners_projected = [transformer.transform(x, y) for x, y in corners_geo]
+        corners_projected = [
+            transformer.transform(x, y) for x, y in corners_geo
+        ]
 
         pixel_polygon = ShapelyPolygon(corners_projected)
         pixel_area_m2 = pixel_polygon.area

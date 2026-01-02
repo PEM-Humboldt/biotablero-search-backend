@@ -73,7 +73,7 @@ async def metric_id_param(
 
 
 @router.get(
-    "/{metric_id}/values/{id}",
+    "/{metric_id}/values/{polygon_id}",
     responses={
         200: {
             "description": "Metric data by polygon",
@@ -90,10 +90,10 @@ async def metric_id_param(
 )
 async def get_values_by_polygon(
     metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
-    id: int,
+    polygon_id: int,
 ) -> List[Dict[str, Any]]:
     """Returns serialized metric values for a given polygon ID and metric."""
-    return await metrics_service.get_or_create_polygon_metric(id, metric_id)
+    return await metrics_service.get_or_create_polygon_metric(polygon_id, metric_id)
 
 
 @router.get(

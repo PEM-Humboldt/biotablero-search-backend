@@ -71,7 +71,6 @@ class PolygonMetricItem(Model):
 class Collection(Model):
     id = fields.IntField(pk=True)
     name = fields.CharField(max_length=100, unique=True)
-    stac_url = fields.CharField(max_length=255)
     updated_at = fields.DatetimeField()
 
     class Meta(Model.Meta):
@@ -80,8 +79,21 @@ class Collection(Model):
 
 class Metric(Model):
     id = fields.IntField(pk=True)
-    short_name = fields.CharField(max_length=50, unique=True)
-    name = fields.CharField(max_length=100)
+    name = fields.CharField(max_length=100, unique=True)
+    operation_type = fields.CharField(max_length=100, null=False)
+
+    class Meta(Model.Meta):
+        table = "metric"
+
+
+class MetricCollection(Model):
+    id = fields.IntField(pk=True)
+    is_primary = fields.BooleanField()
+    metric = fields.ForeignKeyField(
+        "bt_search_bk.Metric",
+        related_name="collections",
+        on_delete=fields.CASCADE,
+    )
     collection = fields.ForeignKeyField(
         "bt_search_bk.Collection",
         related_name="metrics",
@@ -89,5 +101,4 @@ class Metric(Model):
     )
 
     class Meta(Model.Meta):
-        table = "metric"
-        unique_together = (("short_name", "name", "collection_id"),)
+        table = "metric_collection"

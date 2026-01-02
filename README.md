@@ -118,7 +118,7 @@ You must have these files in `./data/` path:
 When starting the migration for the first time, you must run the following command to populate the database:  
 
 ```sh
-python -m database.post_migrate
+python -m database.populate_db
 ```
 
 #### **What Does This Command Do?**  

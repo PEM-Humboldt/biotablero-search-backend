@@ -3,9 +3,9 @@ from tortoise import BaseDBAsyncClient
 
 async def upgrade(db: BaseDBAsyncClient) -> str:
     return """
-        CREATE UNIQUE INDEX "uid_polygon_officia_b324a3" ON "polygon" ("official_code");"""
+        CREATE UNIQUE INDEX "uid_metric_name_5b0381" ON "metric" ("name");"""
 
 
 async def downgrade(db: BaseDBAsyncClient) -> str:
     return """
-        DROP INDEX "uid_polygon_officia_b324a3";"""
+        DROP INDEX "idx_metric_name_5b0381";"""

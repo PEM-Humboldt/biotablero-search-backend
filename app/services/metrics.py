@@ -1,14 +1,14 @@
 from typing import List
 
-import app.services.utils.raster as raster_utils
-from app.persistence.polygon_metric_persistence import create_polygon_metric
 from geojson_pydantic import geometries
+from fastapi import HTTPException
+
+from app.services.utils.raster import crop_raster, get_raster_values
 from app.services.utils.collection import (
     get_items_asset_url,
     get_asset_href_by_item_id,
 )
 from app.services.utils.metadata import fetch_collection_metadata
-from fastapi import HTTPException
 from app.models.models import Collection, Polygon, PolygonMetric
 from app.utils.metrics_config import metric_group_key, build_metric_response
 from app.utils.s3_utils import upload_to_s3
@@ -17,10 +17,11 @@ from app.persistence.layer_persistence import (
     get_existing_layer,
     save_layer_record,
 )
+from app.persistence.polygon_persistence import get_polygon_by_id
+from app.persistence.polygon_metric_persistence import create_polygon_metric
 from app.persistence.metric_persistence import (
     get_metric_from_short_name,
 )
-from app.services.utils.raster import crop_raster
 
 
 async def get_areas_by_polygon(
@@ -33,7 +34,7 @@ async def get_areas_by_polygon(
     result = []
 
     for k, v in assets_url.items():
-        raster_values = raster_utils.get_raster_values(v, polygon, categories)
+        raster_values = get_raster_values(v, polygon, categories)
         response = {metric_group_key(metric_name): k}
         for class_name in categories.keys():
             response[class_name.lower()] = raster_values.get(class_name, 0)
@@ -49,7 +50,7 @@ async def get_or_create_polygon_metric(
     Checks if metric values already exist for the given polygon and metric.
     If they exist, return them. Otherwise, calculate, persist, and return.
     """
-    polygon_obj = await Polygon.get_or_none(id=polygon_id)
+    polygon_obj = await get_polygon_by_id(polygon_id)
 
     if not polygon_obj:
         raise HTTPException(status_code=404, detail="Polygon not found")

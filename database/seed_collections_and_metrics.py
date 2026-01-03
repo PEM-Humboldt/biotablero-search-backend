@@ -19,7 +19,7 @@ class CollectionEnum(Enum):
 class OperationEnum(Enum):
     AREA_SINGLE_COLLECTION = "AREA_SINGLE-COLLECTION"
     AREA_SINGLE_COLLECTION_ALL_ITEMS = "AREA_SINGLE-COLLECTION_ALL-ITEMS"
-    AREA_MULTIPLE_COLLECTIONS = "AREA_MULTIPLE-COLLECTIONS"
+    AREA_TWO_COLLECTIONS = "AREA_TWO-COLLECTIONS"
     AVERAGE_SINGLE_COLLECTION = "AVERAGE_SINGLE-COLLECTION"
     AVERAGE_MULTIPLE_COLLECTION_ALL_ITEMS = (
         "AVERAGE_MULTIPLE-COLLECTION_ALL-ITEMS"
@@ -58,19 +58,19 @@ class MetricEnum(Enum):
     )
     COVERAGE_PARAMO = (
         "coverage_paramo",
-        OperationEnum.AREA_MULTIPLE_COLLECTIONS,
+        OperationEnum.AREA_TWO_COLLECTIONS,
         CollectionEnum.COBERTURA,
         [CollectionEnum.PARAMO],
     )
     COVERAGE_TROPICAL_DRY_FOREST = (
         "coverage_tropicalDryForest",
-        OperationEnum.AREA_MULTIPLE_COLLECTIONS,
+        OperationEnum.AREA_TWO_COLLECTIONS,
         CollectionEnum.COBERTURA,
         [CollectionEnum.BOSQUE_SECO_TROPICAL],
     )
     COVERAGE_WETLAND = (
         "coverage_wetland",
-        OperationEnum.AREA_MULTIPLE_COLLECTIONS,
+        OperationEnum.AREA_TWO_COLLECTIONS,
         CollectionEnum.COBERTURA,
         [CollectionEnum.HUMEDAL],
     )

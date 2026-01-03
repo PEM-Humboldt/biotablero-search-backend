@@ -166,8 +166,35 @@ async def calculate_single_coll_all_items(
     return result
 
 
-def calculate_multiple_colls():
-    pass
+async def calculate_two_colls(
+    metric: Metric, polygon: geometries.MultiPolygon
+) -> Dict[str, str | float]:
+    """
+    Calculate values for a metric that uses only the first item from two collections.
+    The values are grouped by the categories of the primary collection.
+    """
+    primary_collection = next(mc for mc in metric.collections if mc.is_primary)
+    await primary_collection.fetch_related("collection")
+
+    secondary_collection = next(
+        mc for mc in metric.collections if not mc.is_primary
+    )
+    await secondary_collection.fetch_related("collection")
+
+    categories, _, _ = await fetch_collection_metadata(
+        primary_collection.collection
+    )
+
+    # TODO: Cuando haya collecciones de EE separados ajustar esta implementación,
+    # solo dejé de aquí para arriba porque ninguna otra de las que están listas
+    # para probar usaba las colecciones secundarias
+    (id, raster_url) = get_items_asset_url(primary_collection.collection.name)[
+        0
+    ]
+
+    raster_values = get_one_raster_areas(raster_url, polygon, categories)
+
+    return {"id": id, **raster_values}
 
 
 def calculate_ave_coll():
@@ -193,7 +220,7 @@ def calculate_pa_single_coll_filtered():
 class OperationEnum(Enum):
     AREA_SINGLE_COLLECTION = "AREA_SINGLE-COLLECTION"
     AREA_SINGLE_COLLECTION_ALL_ITEMS = "AREA_SINGLE-COLLECTION_ALL-ITEMS"
-    AREA_MULTIPLE_COLLECTIONS = "AREA_MULTIPLE-COLLECTIONS"
+    AREA_TWO_COLLECTIONS = "AREA_TWO-COLLECTIONS"
     AVERAGE_SINGLE_COLLECTION = "AVERAGE_SINGLE-COLLECTION"
     AVERAGE_MULTIPLE_COLLECTION_ALL_ITEMS = (
         "AVERAGE_MULTIPLE-COLLECTION_ALL-ITEMS"
@@ -206,7 +233,7 @@ class OperationEnum(Enum):
         functions = {
             "AREA_SINGLE-COLLECTION": calculate_single_coll,
             "AREA_SINGLE-COLLECTION_ALL-ITEMS": calculate_single_coll_all_items,
-            "AREA_MULTIPLE-COLLECTIONS": calculate_multiple_colls,
+            "AREA_TWO-COLLECTIONS": calculate_two_colls,
             "AVERAGE_SINGLE-COLLECTION": calculate_ave_coll,
             "AVERAGE_MULTIPLE-COLLECTION_ALL-ITEMS": calculate_ave_multiple_colls,
             "PA": calculate_pa,

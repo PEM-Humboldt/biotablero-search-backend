@@ -91,9 +91,11 @@ async def metric_id_param(
 async def get_values_by_polygon(
     metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
     polygon_id: int,
-) -> List[Dict[str, Any]]:
+) -> List[Dict[str, Any]] | Dict:
     """Returns serialized metric values for a given polygon ID and metric."""
-    return await metrics_service.get_or_create_polygon_metric(polygon_id, metric_id)
+    return await metrics_service.get_or_create_polygon_metric(
+        polygon_id, metric_id
+    )
 
 
 @router.get(

@@ -20,8 +20,10 @@ async def fetch_collection_metadata(
     collection: Collection,
 ) -> Tuple[Dict[str, int], List[int], List[str]]:
     try:
-        stac_url = f"{settings.stac_url}/collections/{collection.name}"
-        response = requests.get(stac_url)
+        collection_url = url.build_url(
+            settings.stac_url, f"/collections/{collection.name}"
+        )
+        response = requests.get(collection_url)
         response.raise_for_status()
         collection_metadata = response.json()
 
@@ -92,7 +94,7 @@ def get_collection_items_url(collection_id: str) -> str:
 
 def get_items_asset_url(
     collection_id: str,
-) -> Dict[str, Any]:
+) -> List[tuple[str, str]]:
     items_url = get_collection_items_url(collection_id)
     response = None
 
@@ -130,14 +132,14 @@ def get_items_asset_url(
         asset_url = primary_asset.get("href")
         return asset_url
 
-    assets_urls = dict(
+    assets_urls: List[tuple[str, str | None]] = list(
         map(
             lambda item: (item["id"], get_asset_url(item)),
             items_data.get("features"),
         )
     )
 
-    return {k: v for k, v in assets_urls.items() if v is not None}
+    return [(id, url) for id, url in assets_urls if url is not None]
 
 
 def get_asset_href_by_item_id(collection_id: str, item_id: str) -> str:

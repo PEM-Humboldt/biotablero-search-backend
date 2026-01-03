@@ -4,7 +4,7 @@ import io
 from PIL import Image
 from rio_tiler.io.rasterio import Reader
 import numpy as np
-from typing import Any, Dict, List, Tuple, cast
+from typing import Dict, List, Tuple, cast
 from shapely import box
 from shapely.geometry import shape
 from shapely.ops import transform as shapely_transform
@@ -76,11 +76,14 @@ def crop_raster(
     return img_base64
 
 
-def get_raster_values(
+def get_one_raster_areas(
     raster_path: str,
     polygon: geometries.MultiPolygon,
     categories: Dict[str, int],
-) -> Dict[str, Any]:
+) -> Dict[str, float]:
+    """
+    Calculate areas for every category from the raster in a given polygon.
+    """
     polygon_geom = shape(polygon)
 
     source_crs = CRS.from_string("EPSG:4326")

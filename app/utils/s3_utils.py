@@ -6,7 +6,7 @@ import logging
 from botocore.config import Config
 from botocore.exceptions import ClientError, ConnectTimeoutError
 
-from app.services.utils.collection import settings
+from app.services.utils.stac import settings
 from app.utils import context_vars
 from app.utils.config import get_settings
 from app.utils.errors import ServerError

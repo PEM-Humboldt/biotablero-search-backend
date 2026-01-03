@@ -4,7 +4,6 @@ from fastapi import APIRouter, HTTPException
 
 import app.services.area_types as area_types_service
 import app.services.areas as area_service
-from app.services import polygon_service
 
 from app.routes.schemas.AreaTypeResponse import AreaTypeResponse
 from app.routes.schemas.AreaResponse import AreaResponse, AreaDetailsResponse
@@ -67,4 +66,4 @@ async def create_or_get_polygon(
     Receives a polygon . If polygon exists (by hash), return its ID.
     If not, create it and return the new ID.
     """
-    return await polygon_service.get_or_create_polygon(polygon)
+    return await area_service.get_or_create_polygon(polygon)

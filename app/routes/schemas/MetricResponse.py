@@ -1,4 +1,4 @@
-from typing import TypedDict, Type, List
+from typing import Dict, TypedDict, Type, List
 from pydantic import BaseModel
 
 
@@ -38,5 +38,5 @@ class CurrentHFResponse(BaseModel):
 
 class MetricConfig(TypedDict):
     model: Type[BaseModel]
-    example: List[dict]
+    example: List[dict] | Dict
     description: str

@@ -43,27 +43,23 @@ METRICS_CONFIG: Dict[str, MetricConfig] = {
     },
     "coverage": {
         "model": CoverageResponse,
-        "example": [
-            {
-                "id": "2021",
-                "natural": 180000.0,
-                "secundaria": 25000.0,
-                "transformada": 12000.0,
-            }
-        ],
+        "example": {
+            "id": "2021",
+            "natural": 180000.0,
+            "secundaria": 25000.0,
+            "transformada": 12000.0,
+        },
         "description": "Land cover",
     },
     "currentHF": {
         "model": CurrentHFResponse,
-        "example": [
-            {
-                "id": "2021",
-                "natural": 1971.38,
-                "baja": 161349.15,
-                "media": 192519.67,
-                "alta": 194312.67,
-            }
-        ],
+        "example": {
+            "id": "2021",
+            "natural": 1971.38,
+            "baja": 161349.15,
+            "media": 192519.67,
+            "alta": 194312.67,
+        },
         "description": "Categorized human footprint index",
     },
     # "currentHF_average": {},

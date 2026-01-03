@@ -80,7 +80,7 @@ async def metric_id_param(
             "content": {
                 "application/json": {
                     "examples": {
-                        k: {"summary": v["description"], "value": v["example"]}
+                        k: {"summary": k, "value": v["example"]}
                         for k, v in METRICS_CONFIG.items()
                     }
                 }

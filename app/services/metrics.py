@@ -124,7 +124,8 @@ async def calculate_single_coll(
     metric: Metric, polygon: geometries.MultiPolygon
 ) -> Dict[str, str | float]:
     """
-    Calculate values for a metric that requires only one item from one collection
+    Calculate values for a metric that uses only the first item from one collection,
+    grouped by the collection categories
     """
     primary_collection = next(mc for mc in metric.collections if mc.is_primary)
     await primary_collection.fetch_related("collection")
@@ -142,8 +143,27 @@ async def calculate_single_coll(
     return {"id": id, **raster_values}
 
 
-def calculate_single_coll_all_items():
-    pass
+async def calculate_single_coll_all_items(
+    metric: Metric, polygon: geometries.MultiPolygon
+) -> List[Dict[str, str | float]]:
+    """
+    Calculate values for a metric that uses all items from one collection,
+    grouped by the collection categories
+    """
+    primary_collection = next(mc for mc in metric.collections if mc.is_primary)
+    await primary_collection.fetch_related("collection")
+
+    categories, _, _ = await fetch_collection_metadata(
+        primary_collection.collection
+    )
+
+    rasters_info = get_items_asset_url(primary_collection.collection.name)
+    result = []
+    for id, url in rasters_info:
+        raster_values = get_one_raster_areas(url, polygon, categories)
+        result.append({"id": id, **raster_values})
+
+    return result
 
 
 def calculate_multiple_colls():

@@ -24,7 +24,7 @@ class CoverageResponse(BaseModel):
     transformada: float = 0
 
 
-class CurrentHFPrintResponse(BaseModel):
+class CurrentHFResponse(BaseModel):
     """
     Response model for Human Footprint metrics in a given year.
     """

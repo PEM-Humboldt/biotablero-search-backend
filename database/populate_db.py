@@ -3,7 +3,7 @@ from tortoise import Tortoise
 
 from database.seed_area_types import seed_area_types
 from database.seed_collections_and_metrics import seed_collections_and_metrics
-from database.insert_polygons import seed_polygons
+from database.seed_polygons import seed_polygons
 
 from app.utils.config import get_settings, TORTOISE_ORM
 

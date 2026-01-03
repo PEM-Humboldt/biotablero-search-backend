@@ -1,3 +1,4 @@
+import collections
 from tortoise import fields
 from tortoise.models import Model
 
@@ -73,6 +74,8 @@ class Collection(Model):
     name = fields.CharField(max_length=100, unique=True)
     updated_at = fields.DatetimeField()
 
+    metrics: fields.ReverseRelation["MetricCollection"]
+
     class Meta(Model.Meta):
         table = "collection"
 
@@ -81,6 +84,8 @@ class Metric(Model):
     id = fields.IntField(pk=True)
     name = fields.CharField(max_length=100, unique=True)
     operation_type = fields.CharField(max_length=100, null=False)
+
+    collections: fields.ReverseRelation["MetricCollection"]
 
     class Meta(Model.Meta):
         table = "metric"
@@ -99,6 +104,9 @@ class MetricCollection(Model):
         related_name="metrics",
         on_delete=fields.CASCADE,
     )
+
+    metric_id: fields.ForeignKeyRelation["Metric"]
+    collection_id: fields.ForeignKeyRelation["Collection"]
 
     class Meta(Model.Meta):
         table = "metric_collection"

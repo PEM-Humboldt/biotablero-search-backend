@@ -1,10 +1,60 @@
-import typing
+from typing import List, Tuple, Dict, Any
+from pydantic import BaseModel
 import requests
+
+from app.models.models import Collection
 
 from app.utils.errors import ServerError, NotFoundError
 from app.utils import config, url
 
 settings = config.get_settings()
+
+
+class MetadataProperties(BaseModel):
+    values: List[int]
+    colors: List[str]
+    classes: List[str]
+
+
+async def fetch_collection_metadata(
+    collection: Collection,
+) -> Tuple[Dict[str, int], List[int], List[str]]:
+    try:
+        stac_url = f"{settings.stac_url}/collections/{collection.name}"
+        response = requests.get(stac_url)
+        response.raise_for_status()
+        collection_metadata = response.json()
+
+        if (
+            "metadata" not in collection_metadata
+            or "properties" not in collection_metadata["metadata"]
+        ):
+            raise ValueError(
+                "The 'metadata' or 'properties' key is not found in the response."
+            )
+
+        properties = collection_metadata["metadata"]["properties"]
+        metadata_properties = MetadataProperties(
+            values=properties.get("values", []),
+            colors=properties.get("colors", []),
+            classes=properties.get("classes", []),
+        )
+
+        categories = {
+            class_name: value
+            for class_name, value in zip(
+                metadata_properties.classes, metadata_properties.values
+            )
+        }
+
+        return (
+            categories,
+            metadata_properties.values,
+            metadata_properties.colors,
+        )
+
+    except Exception as e:
+        raise Exception(f"Error obtaining metadata: {str(e)}")
 
 
 def get_collection_items_url(collection_id: str) -> str:
@@ -42,7 +92,7 @@ def get_collection_items_url(collection_id: str) -> str:
 
 def get_items_asset_url(
     collection_id: str,
-) -> typing.Dict[str, typing.Any]:
+) -> Dict[str, Any]:
     items_url = get_collection_items_url(collection_id)
     response = None
 

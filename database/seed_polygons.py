@@ -11,7 +11,6 @@ from app.persistence.utils.polygon_utils import cast_to_multi_polygon
 
 
 settings = get_settings()
-settings.configure_logging()
 
 logger = logging.getLogger(__name__)
 

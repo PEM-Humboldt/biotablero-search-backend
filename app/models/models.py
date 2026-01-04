@@ -46,6 +46,7 @@ class PolygonMetric(Model):
 
     class Meta(Model.Meta):
         table = "polygon_metric"
+        unique_together = ("polygon", "metric")
 
 
 class PolygonMetricItem(Model):

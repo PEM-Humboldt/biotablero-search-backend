@@ -9,12 +9,8 @@ from app.routes.schemas.PolygonResponse import PolygonIdResponse
 from app.models.models import Polygon, AreaType
 from app.persistence.polygon_persistence import get_polygon, create_polygon
 
-from app.utils.config import TORTOISE_ORM
-
 
 async def get_areas_by_type(area_type_id: str) -> List[AreaResponse]:
-    await Tortoise.init(config=TORTOISE_ORM)
-
     areas = []
     area_type = await AreaType.get_or_none(id=area_type_id)
 
@@ -24,14 +20,10 @@ async def get_areas_by_type(area_type_id: str) -> List[AreaResponse]:
         )
         areas = [AreaResponse(**area) for area in area_db_dict]
 
-    await Tortoise.close_connections()
-
     return areas
 
 
 async def get_area_details(id: int) -> AreaDetailsResponse | None:
-    await Tortoise.init(config=TORTOISE_ORM)
-
     area = None
     area_db = await Polygon.filter(id=id).prefetch_related("area_type").first()
 
@@ -46,8 +38,6 @@ async def get_area_details(id: int) -> AreaDetailsResponse | None:
                 label=area_db.area_type.label if area_db.area_type else "",
             ),
         )
-
-    await Tortoise.close_connections()
 
     return area
 

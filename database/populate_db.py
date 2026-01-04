@@ -13,7 +13,9 @@ logger = logging.getLogger(__name__)
 
 
 async def populate_db():
-    logger.info("Ejecutando post-migrate...", extra={"request_id": "N/A"})
+    logger.info(
+        "Iniciando inserción de datosáreas...", extra={"request_id": "N/A"}
+    )
     await Tortoise.init(config=TORTOISE_ORM)
     await Tortoise.generate_schemas(safe=True)
 
@@ -33,4 +35,5 @@ async def populate_db():
 if __name__ == "__main__":
     settings.configure_logging()
     import asyncio
+
     asyncio.run(populate_db())

@@ -63,7 +63,7 @@ async def metric_id_param(
         str,
         Path(
             description=f"Metric you wish to query. Allowed values: {ALLOWED_METRICS_DISPLAY}",
-            example=ALLOWED_METRICS[0],
+            examples=ALLOWED_METRICS[0],
         ),
     ],
 ) -> str:
@@ -118,7 +118,7 @@ async def get_layer_by_polygon(
     metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
     polygon_id: Annotated[int, Query(description="Polygon ID to use")],
     item_id: Annotated[
-        str, Query(description="The ID of the item", example="2016-2021")
+        str, Query(description="The ID of the item", examples="2016-2021")
     ],
     category: Annotated[
         int,
@@ -127,7 +127,7 @@ async def get_layer_by_polygon(
                 "Numeric code representing a classification category used to differentiate types of land cover or change. "
                 "For example: 0 = Loss (deforested areas), 1 = Persistence (stable forest), 2 = Non-Forest (non-forest areas)."
             ),
-            example=0,
+            examples=0,
         ),
     ],
 ):

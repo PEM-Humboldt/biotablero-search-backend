@@ -12,7 +12,7 @@ from app.utils.config import get_settings
 from app.utils.errors import ServerError
 
 settings = get_settings()
-settings.configure_logging()
+
 logger = logging.getLogger(__name__)
 request_id_context = context_vars.request_id_context
 

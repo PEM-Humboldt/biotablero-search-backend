@@ -8,7 +8,6 @@ from database.seed_polygons import seed_polygons
 from app.utils.config import get_settings, TORTOISE_ORM
 
 settings = get_settings()
-settings.configure_logging()
 
 logger = logging.getLogger(__name__)
 
@@ -32,6 +31,6 @@ async def populate_db():
 
 
 if __name__ == "__main__":
+    settings.configure_logging()
     import asyncio
-
     asyncio.run(populate_db())

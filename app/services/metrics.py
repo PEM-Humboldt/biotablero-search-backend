@@ -88,12 +88,19 @@ async def get_or_create_layer_by_polygon(
     if existing_item:
         return LayerResponse(layer=existing_item.layer_url)
 
+    primary_collection = next(
+        mc for mc in metric_obj.collections if mc.is_primary
+    )
+    await primary_collection.fetch_related("collection")
+
     (
         _,
         values,
         colors,
-    ) = await fetch_collection_metadata(metric_obj.collection)
-    raster_href = get_asset_href_by_item_id(collection_name, item_id)
+    ) = await fetch_collection_metadata(primary_collection.collection)
+    raster_href = get_asset_href_by_item_id(
+        primary_collection.collection, item_id
+    )
 
     image_base64 = crop_raster(
         raster_path=raster_href,

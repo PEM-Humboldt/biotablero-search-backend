@@ -13,9 +13,7 @@ logger = logging.getLogger(__name__)
 
 
 async def populate_db():
-    logger.info(
-        "Iniciando inserción de datosáreas...", extra={"request_id": "N/A"}
-    )
+    logger.info("Iniciando inserción de datos...", extra={"request_id": "N/A"})
     await Tortoise.init(config=TORTOISE_ORM)
     await Tortoise.generate_schemas(safe=True)
 

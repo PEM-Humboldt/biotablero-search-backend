@@ -5,7 +5,6 @@ from fastapi import HTTPException
 
 from app.routes.schemas.LayerResponse import LayerResponse
 
-from app.services.utils import stac
 from app.services.utils.raster import crop_raster, get_one_raster_areas
 from app.services.utils.stac import (
     get_items_asset_url,

@@ -1,5 +1,4 @@
 from typing import List
-from tortoise import Tortoise
 
 from app.routes.schemas.AreaResponse import AreaResponse, AreaDetailsResponse
 from app.routes.schemas.AreaTypeResponse import AreaTypeResponse

@@ -5,7 +5,8 @@ from tortoise.models import Model
 
 class AreaType(Model):
     id = fields.CharField(pk=True, max_length=50)
-    label = fields.CharField(max_length=255)
+    label = fields.CharField(max_length=255, unique=True)
+    updated_at = fields.DatetimeField(auto_now=True)
 
     class Meta(Model.Meta):
         table = "area_type"
@@ -21,9 +22,10 @@ class Polygon(Model):
         null=True,
         on_delete=fields.SET_NULL,
     )
-    name = fields.CharField(max_length=255)
+    name = fields.CharField(max_length=255, null=True)
     area = fields.FloatField()
     official_code = fields.CharField(max_length=100, unique=True, null=True)
+    updated_at = fields.DatetimeField(auto_now=True)
 
     class Meta(Model.Meta):
         table = "polygon"
@@ -43,6 +45,7 @@ class PolygonMetric(Model):
         related_name="polygon_metrics",
         on_delete=fields.CASCADE,
     )
+    updated_at = fields.DatetimeField(auto_now=True)
 
     class Meta(Model.Meta):
         table = "polygon_metric"
@@ -64,6 +67,7 @@ class PolygonMetricItem(Model):
         related_name="metric_items",
         on_delete=fields.CASCADE,
     )
+    updated_at = fields.DatetimeField(auto_now=True)
 
     class Meta(Model.Meta):
         table = "polygon_metric_item"
@@ -73,7 +77,7 @@ class PolygonMetricItem(Model):
 class Collection(Model):
     id = fields.IntField(pk=True)
     name = fields.CharField(max_length=100, unique=True)
-    updated_at = fields.DatetimeField()
+    updated_at = fields.DatetimeField(auto_now=True)
 
     metrics: fields.ReverseRelation["MetricCollection"]
 
@@ -84,7 +88,8 @@ class Collection(Model):
 class Metric(Model):
     id = fields.IntField(pk=True)
     name = fields.CharField(max_length=100, unique=True)
-    operation_type = fields.CharField(max_length=100, null=False)
+    operation_type = fields.CharField(max_length=100)
+    updated_at = fields.DatetimeField(auto_now=True)
 
     collections: fields.ReverseRelation["MetricCollection"]
 
@@ -105,6 +110,7 @@ class MetricCollection(Model):
         related_name="metrics",
         on_delete=fields.CASCADE,
     )
+    updated_at = fields.DatetimeField(auto_now=True)
 
     metric_id: fields.ForeignKeyRelation["Metric"]
     collection_id: fields.ForeignKeyRelation["Collection"]

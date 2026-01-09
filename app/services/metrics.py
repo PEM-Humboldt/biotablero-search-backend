@@ -24,6 +24,7 @@ from app.persistence.metric_persistence import (
 )
 
 from app.utils.s3_utils import upload_to_s3
+from app.utils.errors import ServerError
 
 
 async def get_or_create_polygon_metric(
@@ -133,7 +134,16 @@ async def calculate_single_coll(
     Calculate values for a metric that uses only the first item from one collection,
     grouped by the collection categories
     """
-    primary_collection = next(mc for mc in metric.collections if mc.is_primary)
+    primary_collection = next(
+        (mc for mc in metric.collections if mc.is_primary), None
+    )
+    if primary_collection is None:
+        raise ServerError(
+            code=500,
+            usr_msg="There was an error calculating the metric {metric.name}.",
+            e=Exception("Primary collection not found"),
+        )
+
     await primary_collection.fetch_related("collection")
 
     categories, _, _ = await fetch_collection_metadata(
@@ -156,7 +166,16 @@ async def calculate_single_coll_all_items(
     Calculate values for a metric that uses all items from one collection,
     grouped by the collection categories
     """
-    primary_collection = next(mc for mc in metric.collections if mc.is_primary)
+    primary_collection = next(
+        (mc for mc in metric.collections if mc.is_primary), None
+    )
+    if primary_collection is None:
+        raise ServerError(
+            code=500,
+            usr_msg="There was an error calculating the metric {metric.name}.",
+            e=Exception("Primary collection not found"),
+        )
+
     await primary_collection.fetch_related("collection")
 
     categories, _, _ = await fetch_collection_metadata(
@@ -179,12 +198,28 @@ async def calculate_two_colls(
     Calculate values for a metric that uses only the first item from two collections.
     The values are grouped by the categories of the primary collection.
     """
-    primary_collection = next(mc for mc in metric.collections if mc.is_primary)
+    primary_collection = next(
+        (mc for mc in metric.collections if mc.is_primary), None
+    )
+    if primary_collection is None:
+        raise ServerError(
+            code=500,
+            usr_msg="There was an error calculating the metric {metric.name}.",
+            e=Exception("Primary collection not found"),
+        )
+
     await primary_collection.fetch_related("collection")
 
     secondary_collection = next(
-        mc for mc in metric.collections if not mc.is_primary
+        (mc for mc in metric.collections if not mc.is_primary), None
     )
+    if secondary_collection is None:
+        raise ServerError(
+            code=500,
+            usr_msg="There was an error calculating the metric {metric.name}.",
+            e=Exception("Secondary collection not found"),
+        )
+
     await secondary_collection.fetch_related("collection")
 
     categories, _, _ = await fetch_collection_metadata(

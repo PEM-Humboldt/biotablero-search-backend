@@ -7,11 +7,10 @@ from tortoise.exceptions import DoesNotExist
 from app.models.models import Polygon, AreaType
 from shapely.geometry import shape
 
-from app.utils.polygon_utils import cast_to_multi_polygon
+from app.persistence.utils.polygon_utils import cast_to_multi_polygon
 
 
 settings = get_settings()
-settings.configure_logging()
 
 logger = logging.getLogger(__name__)
 

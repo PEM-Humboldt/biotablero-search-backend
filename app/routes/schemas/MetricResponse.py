@@ -1,4 +1,4 @@
-from typing import TypedDict, Type, List
+from typing import Dict, TypedDict, Type, List
 from pydantic import BaseModel
 
 
@@ -7,7 +7,7 @@ class LossPersistenceResponse(BaseModel):
     Response model for forest loss and persistence metrics in a given period.
     """
 
-    periodo: str = ""
+    id: str = ""
     perdida: float = 0
     persistencia: float = 0
     no_bosque: float = 0
@@ -18,18 +18,18 @@ class CoverageResponse(BaseModel):
     Response model for land cover metrics in a given year.
     """
 
-    ano: str = ""
+    id: str = ""
     natural: float = 0
     secundaria: float = 0
     transformada: float = 0
 
 
-class HumanFootPrintResponse(BaseModel):
+class CurrentHFResponse(BaseModel):
     """
     Response model for Human Footprint metrics in a given year.
     """
 
-    ano: str = ""
+    id: str = ""
     natural: float = 0
     baja: float = 0
     media: float = 0
@@ -38,6 +38,5 @@ class HumanFootPrintResponse(BaseModel):
 
 class MetricConfig(TypedDict):
     model: Type[BaseModel]
-    example: List[dict]
+    example: List[dict] | Dict
     description: str
-    group_key: str

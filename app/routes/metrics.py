@@ -55,7 +55,9 @@ router = fastapi.APIRouter(
 
 
 ALLOWED_METRICS = list(METRICS_CONFIG.keys())
-ALLOWED_METRICS_DISPLAY = ", ".join(ALLOWED_METRICS)
+ALLOWED_METRICS_DISPLAY = ", ".join(
+    map(lambda met: "`" + met + "`", ALLOWED_METRICS)
+)
 
 
 async def metric_id_param(
@@ -63,7 +65,7 @@ async def metric_id_param(
         str,
         Path(
             description=f"Metric you wish to query. Allowed values: {ALLOWED_METRICS_DISPLAY}",
-            example=ALLOWED_METRICS[0],
+            examples=ALLOWED_METRICS,
         ),
     ],
 ) -> str:
@@ -73,14 +75,14 @@ async def metric_id_param(
 
 
 @router.get(
-    "/{metric_id}/values/{id}",
+    "/{metric_id}/values/{polygon_id}",
     responses={
         200: {
             "description": "Metric data by polygon",
             "content": {
                 "application/json": {
                     "examples": {
-                        k: {"summary": v["description"], "value": v["example"]}
+                        k: {"summary": k, "value": v["example"]}
                         for k, v in METRICS_CONFIG.items()
                     }
                 }
@@ -90,10 +92,12 @@ async def metric_id_param(
 )
 async def get_values_by_polygon(
     metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
-    id: int,
-) -> List[Dict[str, Any]]:
+    polygon_id: int,
+) -> List[Dict[str, Any]] | Dict:
     """Returns serialized metric values for a given polygon ID and metric."""
-    return await metrics_service.get_or_create_polygon_metric(id, metric_id)
+    return await metrics_service.get_or_create_polygon_metric(
+        polygon_id, metric_id
+    )
 
 
 @router.get(
@@ -116,7 +120,7 @@ async def get_layer_by_polygon(
     metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
     polygon_id: Annotated[int, Query(description="Polygon ID to use")],
     item_id: Annotated[
-        str, Query(description="The ID of the item", example="2016-2021")
+        str, Query(description="The ID of the item", examples=["2016-2021"])
     ],
     category: Annotated[
         int,
@@ -125,7 +129,7 @@ async def get_layer_by_polygon(
                 "Numeric code representing a classification category used to differentiate types of land cover or change. "
                 "For example: 0 = Loss (deforested areas), 1 = Persistence (stable forest), 2 = Non-Forest (non-forest areas)."
             ),
-            example=0,
+            examples=[0],
         ),
     ],
 ):

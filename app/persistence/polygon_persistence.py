@@ -6,7 +6,7 @@ from logging import getLogger
 
 from app.routes.schemas.PolygonRequest import PolygonGeometry
 from app.utils import context_vars
-from app.utils.polygon_utils import (
+from app.persistence.utils.polygon_utils import (
     cast_to_multi_polygon,
     generate_hash,
     get_polygon_area_ha,
@@ -59,3 +59,12 @@ async def create_polygon(polygon: PolygonGeometry) -> int:
         )
 
     return polygon_obj.id
+
+
+async def get_polygon_by_id(
+    polygon_id: int,
+) -> Polygon | None:
+    """
+    Get Polygon object by id.
+    """
+    return await Polygon.get_or_none(id=polygon_id)

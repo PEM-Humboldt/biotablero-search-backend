@@ -6,6 +6,7 @@ from app.routes.schemas.MetricResponse import (
     LossPersistenceResponse,
     CoverageResponse,
     CurrentHFResponse,
+    CurrentHFAverageResponse,
 )
 
 # This config contains everything related to FastAPI and Pydantic validations
@@ -62,7 +63,13 @@ METRICS_CONFIG: Dict[str, MetricConfig] = {
         },
         "description": "Categorized human footprint index",
     },
-    # "currentHF_average": {},
+    "currentHF_average": {
+        "model": CurrentHFAverageResponse,
+        "example": {
+            "id": "2018",
+            "mean": 12.34,
+        },
+    },
     # "coverage_paramo": {},
     # "coverage_tropicalDryForest": {},
     # "coverage_wetland": {},

@@ -5,7 +5,7 @@ from fastapi import HTTPException
 
 from app.routes.schemas.LayerResponse import LayerResponse
 
-from app.services.utils.raster import crop_raster, get_one_raster_areas
+from app.services.utils.raster import crop_raster, get_one_raster_areas, get_raster_average
 from app.services.utils.stac import (
     get_items_asset_url,
     get_asset_href_by_item_id,
@@ -238,8 +238,24 @@ async def calculate_two_colls(
     return {"id": id, **raster_values}
 
 
-def calculate_ave_coll():
-    pass
+async def calculate_ave_coll(metric: Metric, polygon: geometries.MultiPolygon
+) -> Dict[str, str | float]:
+    primary_collection = next(
+        (mc for mc in metric.collections if mc.is_primary), None
+    )
+    if primary_collection is None:
+        raise ServerError(
+            code=500,
+            usr_msg="There was an error calculating the metric {metric.name}.",
+            e=Exception("Primary collection not found"),
+        )
+
+    await primary_collection.fetch_related("collection")
+    (id, raster_url) = get_items_asset_url(primary_collection.collection.name)[
+        0
+    ]
+    average = get_raster_average(raster_url, polygon)
+    return {"id": id, "mean": average}
 
 
 def calculate_ave_multiple_colls():

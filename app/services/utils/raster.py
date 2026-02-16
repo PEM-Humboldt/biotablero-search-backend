@@ -186,6 +186,42 @@ def get_one_raster_areas(
 
         return areas_by_category
 
+def get_raster_average(
+    raster_path: str,
+    polygon: geometries.MultiPolygon,
+) -> float:
+    """
+    Calculate average  in a given polygon.
+    """
+    polygon_geom = shape(polygon)
+
+    source_crs = CRS.from_string("EPSG:4326")
+
+    with rasterio.open(raster_path) as src:
+        raster_bounds = box(*src.bounds)
+        if not polygon_geom.intersects(raster_bounds):
+            return 0.0
+
+        if src.crs != source_crs:
+            transformer = Transformer.from_crs(
+                source_crs, src.crs, always_xy=True
+            )
+            polygon_geom = shapely_transform(transformer.transform, polygon_geom)
+
+        raster_data, _ = mask(
+            src,
+            [polygon_geom],
+            crop=True,
+            nodata=src.nodata if src.nodata is not None else -9999,
+        )
+        raster_data = raster_data[0]
+        raster_nodata = src.nodata if src.nodata is not None else -9999 
+        valid_data = raster_data[raster_data != raster_nodata]
+
+        average_value = float(np.nanmean(valid_data))
+
+        return average_value
+
 
 def hex_to_rgba(hex_color: str) -> Tuple[int, int, int, int]:
     if hex_color.startswith("#"):

@@ -9,8 +9,8 @@ class CollectionEnum(Enum):
     HUELLA_HUMANA_CONTINUA = "HuellaHumanaContinua"
     INDICE_VACIOS_INFORMACION = "IndiceVaciosInformacion"
     # TODO: Actualizar los nombres correctos de las colleciones
-    PERDIDA_PERSISTENCIA = "LossPersistence"
-    COBERTURA = "Coverage"
+    PERDIDA_PERSISTENCIA = "PerdidaYPersistencia"
+    COBERTURA = "Coberturas"
     PARAMO = "EcosistremasEstrategicos"
     BOSQUE_SECO_TROPICAL = "EcosistremasEstrategicos"
     HUMEDAL = "EcosistremasEstrategicos"

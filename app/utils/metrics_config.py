@@ -69,6 +69,7 @@ METRICS_CONFIG: Dict[str, MetricConfig] = {
             "id": "2018",
             "mean": 12.34,
         },
+        "description": "Average human footprint index",
     },
     # "coverage_paramo": {},
     # "coverage_tropicalDryForest": {},

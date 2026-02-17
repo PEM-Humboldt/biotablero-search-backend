@@ -4,7 +4,6 @@ from logging import getLogger
 from app.models.models import Metric, PolygonMetric, Polygon
 from app.utils import context_vars
 
-
 logger = getLogger(__name__)
 request_id_context = context_vars.request_id_context
 

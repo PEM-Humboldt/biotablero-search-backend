@@ -154,9 +154,7 @@ async def calculate_single_coll(
         primary_collection.collection
     )
 
-    (id, raster_url) = get_items_asset_url(primary_collection.collection.name)[
-        0
-    ]
+    id, raster_url = get_items_asset_url(primary_collection.collection.name)[0]
 
     raster_values = get_one_raster_areas(raster_url, polygon, categories)
 
@@ -233,9 +231,7 @@ async def calculate_two_colls(
     # TODO: Cuando haya collecciones de EE separados ajustar esta implementación,
     # solo dejé de aquí para arriba porque ninguna otra de las que están listas
     # para probar usaba las colecciones secundarias
-    (id, raster_url) = get_items_asset_url(primary_collection.collection.name)[
-        0
-    ]
+    id, raster_url = get_items_asset_url(primary_collection.collection.name)[0]
 
     raster_values = get_one_raster_areas(raster_url, polygon, categories)
 
@@ -256,9 +252,7 @@ async def calculate_ave_coll(
         )
 
     await primary_collection.fetch_related("collection")
-    (id, raster_url) = get_items_asset_url(primary_collection.collection.name)[
-        0
-    ]
+    id, raster_url = get_items_asset_url(primary_collection.collection.name)[0]
     average = get_raster_average(raster_url, polygon)
     return {"id": id, "mean": average}
 

@@ -241,13 +241,16 @@ async def calculate_two_colls(
 async def calculate_ave_coll(
     metric: Metric, polygon: geometries.MultiPolygon
 ) -> Dict[str, str | float]:
+    """
+    calculates the average of the values from a collection within a polygon
+    """
     primary_collection = next(
         (mc for mc in metric.collections if mc.is_primary), None
     )
     if primary_collection is None:
         raise ServerError(
             code=500,
-            usr_msg="There was an error calculating the metric {metric.name}.",
+            usr_msg=f"There was an error calculating the metric {metric.name}.",
             e=Exception("Primary collection not found"),
         )
 

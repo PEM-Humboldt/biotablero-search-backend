@@ -192,7 +192,7 @@ def get_raster_average(
     polygon: geometries.MultiPolygon,
 ) -> float:
     """
-    Calculate average  in a given polygon.
+    Calculate average in a given polygon.
     """
     polygon_geom = shape(polygon)
 

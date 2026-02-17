@@ -5,7 +5,11 @@ from fastapi import HTTPException
 
 from app.routes.schemas.LayerResponse import LayerResponse
 
-from app.services.utils.raster import crop_raster, get_one_raster_areas, get_raster_average
+from app.services.utils.raster import (
+    crop_raster,
+    get_one_raster_areas,
+    get_raster_average,
+)
 from app.services.utils.stac import (
     get_items_asset_url,
     get_asset_href_by_item_id,
@@ -238,7 +242,8 @@ async def calculate_two_colls(
     return {"id": id, **raster_values}
 
 
-async def calculate_ave_coll(metric: Metric, polygon: geometries.MultiPolygon
+async def calculate_ave_coll(
+    metric: Metric, polygon: geometries.MultiPolygon
 ) -> Dict[str, str | float]:
     primary_collection = next(
         (mc for mc in metric.collections if mc.is_primary), None

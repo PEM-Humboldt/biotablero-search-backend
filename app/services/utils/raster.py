@@ -186,6 +186,7 @@ def get_one_raster_areas(
 
         return areas_by_category
 
+
 def get_raster_average(
     raster_path: str,
     polygon: geometries.MultiPolygon,
@@ -206,7 +207,9 @@ def get_raster_average(
             transformer = Transformer.from_crs(
                 source_crs, src.crs, always_xy=True
             )
-            polygon_geom = shapely_transform(transformer.transform, polygon_geom)
+            polygon_geom = shapely_transform(
+                transformer.transform, polygon_geom
+            )
 
         raster_data, _ = mask(
             src,
@@ -215,7 +218,7 @@ def get_raster_average(
             nodata=src.nodata if src.nodata is not None else -9999,
         )
         raster_data = raster_data[0]
-        raster_nodata = src.nodata if src.nodata is not None else -9999 
+        raster_nodata = src.nodata if src.nodata is not None else -9999
         valid_data = raster_data[raster_data != raster_nodata]
 
         average_value = float(np.nanmean(valid_data))

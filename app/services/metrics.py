@@ -144,7 +144,7 @@ async def calculate_single_coll(
     if primary_collection is None:
         raise ServerError(
             code=500,
-            usr_msg="There was an error calculating the metric {metric.name}.",
+            usr_msg=f"There was an error calculating the metric {metric.name}.",
             e=Exception("Primary collection not found"),
         )
 
@@ -174,7 +174,7 @@ async def calculate_single_coll_all_items(
     if primary_collection is None:
         raise ServerError(
             code=500,
-            usr_msg="There was an error calculating the metric {metric.name}.",
+            usr_msg=f"There was an error calculating the metric {metric.name}.",
             e=Exception("Primary collection not found"),
         )
 
@@ -206,7 +206,7 @@ async def calculate_two_colls(
     if primary_collection is None:
         raise ServerError(
             code=500,
-            usr_msg="There was an error calculating the metric {metric.name}.",
+            usr_msg=f"There was an error calculating the metric {metric.name}.",
             e=Exception("Primary collection not found"),
         )
 
@@ -218,7 +218,7 @@ async def calculate_two_colls(
     if secondary_collection is None:
         raise ServerError(
             code=500,
-            usr_msg="There was an error calculating the metric {metric.name}.",
+            usr_msg=f"There was an error calculating the metric {metric.name}.",
             e=Exception("Secondary collection not found"),
         )
 

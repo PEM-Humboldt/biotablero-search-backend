@@ -7,6 +7,9 @@ from app.routes.schemas.MetricResponse import (
     CoverageResponse,
     CurrentHFResponse,
     CurrentHFAverageResponse,
+    paramoResponse,
+    tropicalDryForestResponse,
+    wetlandResponse,
 )
 
 # This config contains everything related to FastAPI and Pydantic validations
@@ -71,14 +74,32 @@ METRICS_CONFIG: Dict[str, MetricConfig] = {
         },
         "description": "Average human footprint index",
     },
+    "paramo": {
+        "model": paramoResponse,
+        "example": {
+            "area": 25091,
+        },
+        "description": "Land cover",
+    },
+    "tropicalDryForest": {
+        "model": tropicalDryForestResponse,
+        "example": {
+            "area": 1730,
+        },
+        "description": "Tropical dry forest area",
+    },
+    "wetland": {
+        "model": wetlandResponse,
+        "example": {
+            "area": 9287,
+        },
+        "description": "Wetland area",
+    },
     # "coverage_paramo": {},
     # "coverage_tropicalDryForest": {},
     # "coverage_wetland": {},
     # "timelineHF": {},
     # TODO: implementar estas:
-    # "paramo": {},
-    # "tropicalDryForest": {},
-    # "persistenceHF": {},
     # "sciPersistenceHF": {},
     # "currentHF_average": {},
     # "protectedAreas": {},

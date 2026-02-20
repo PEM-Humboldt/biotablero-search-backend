@@ -77,21 +77,24 @@ METRICS_CONFIG: Dict[str, MetricConfig] = {
     "paramo": {
         "model": paramoResponse,
         "example": {
-            "area": 25091,
+            "id": "paramo",
+            "paramo": 25091,
         },
-        "description": "Land cover",
+        "description": "Paramo area",
     },
     "tropicalDryForest": {
         "model": tropicalDryForestResponse,
         "example": {
-            "area": 1730,
+            "id": "tropicalDryForest",
+            "bosqueSeco": 1730,
         },
         "description": "Tropical dry forest area",
     },
     "wetland": {
         "model": wetlandResponse,
         "example": {
-            "area": 9287,
+            "id": "wetland",
+            "humedal": 9287,
         },
         "description": "Wetland area",
     },

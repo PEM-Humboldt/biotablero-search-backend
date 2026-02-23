@@ -38,11 +38,11 @@ class CurrentHFResponse(BaseModel):
 
 class CurrentHFAverageResponse(BaseModel):
     """
-    Response model for Human Footprint mean in a given year.
+    Response model for Human Footprint average in a given year.
     """
 
     id: str = ""
-    mean: float = 0
+    average: float = 0
 
 
 class MetricConfig(TypedDict):

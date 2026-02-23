@@ -70,7 +70,7 @@ METRICS_CONFIG: Dict[str, MetricConfig] = {
         "model": CurrentHFAverageResponse,
         "example": {
             "id": "2018",
-            "mean": 12.34,
+            "average": 12.34,
         },
         "description": "Average human footprint index",
     },

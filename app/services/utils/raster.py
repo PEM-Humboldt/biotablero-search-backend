@@ -187,7 +187,7 @@ def get_one_raster_areas(
         return areas_by_category
 
 
-def get_raster_average(
+def get_one_raster_average(
     raster_path: str,
     polygon: geometries.MultiPolygon,
 ) -> float:

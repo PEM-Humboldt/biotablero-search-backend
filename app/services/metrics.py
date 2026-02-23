@@ -160,7 +160,7 @@ async def calculate_single_coll(
     if raster_values == {}:
         raise HTTPException(
             status_code=422,
-            detail="Input polygon does not intersect raster extent.",
+            detail="Input polygon does not intersect with metric.",
         )
 
     return {"id": id, **raster_values}
@@ -196,7 +196,7 @@ async def calculate_single_coll_all_items(
         if raster_values == {}:
             raise HTTPException(
                 status_code=422,
-                detail="Input polygon does not intersect raster extent.",
+                detail="Input polygon does not intersect with metric.",
             )
         result.append({"id": id, **raster_values})
 
@@ -247,7 +247,7 @@ async def calculate_two_colls(
     if raster_values == {}:
         raise HTTPException(
             status_code=422,
-            detail="Input polygon does not intersect raster extent.",
+            detail="Input polygon does not intersect with metric.",
         )
 
     return {"id": id, **raster_values}
@@ -275,7 +275,7 @@ async def calculate_ave_coll(
     if average == 0.0:
         raise HTTPException(
             status_code=422,
-            detail="Input polygon does not intersect raster extent.",
+            detail="Input polygon does not intersect with metric.",
         )
     return {"id": id, "average": average}
 

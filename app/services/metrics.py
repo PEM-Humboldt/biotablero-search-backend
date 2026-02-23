@@ -8,7 +8,7 @@ from app.routes.schemas.LayerResponse import LayerResponse
 from app.services.utils.raster import (
     crop_raster,
     get_one_raster_areas,
-    get_raster_average,
+    get_one_raster_average,
 )
 from app.services.utils.stac import (
     get_items_asset_url,
@@ -157,6 +157,10 @@ async def calculate_single_coll(
     id, raster_url = get_items_asset_url(primary_collection.collection.name)[0]
 
     raster_values = get_one_raster_areas(raster_url, polygon, categories)
+    if raster_values == {}:
+        raise HTTPException(
+            status_code=422, detail="Input polygon does not intersect raster extent."
+        )
 
     return {"id": id, **raster_values}
 
@@ -188,6 +192,10 @@ async def calculate_single_coll_all_items(
     result = []
     for id, url in rasters_info:
         raster_values = get_one_raster_areas(url, polygon, categories)
+        if raster_values == {}:
+            raise HTTPException(
+                status_code=422, detail="Input polygon does not intersect raster extent."
+            )
         result.append({"id": id, **raster_values})
 
     return result
@@ -234,6 +242,10 @@ async def calculate_two_colls(
     id, raster_url = get_items_asset_url(primary_collection.collection.name)[0]
 
     raster_values = get_one_raster_areas(raster_url, polygon, categories)
+    if raster_values == {}:
+        raise HTTPException(
+            status_code=422, detail="Input polygon does not intersect raster extent."
+        )
 
     return {"id": id, **raster_values}
 
@@ -256,8 +268,12 @@ async def calculate_ave_coll(
 
     await primary_collection.fetch_related("collection")
     id, raster_url = get_items_asset_url(primary_collection.collection.name)[0]
-    average = get_raster_average(raster_url, polygon)
-    return {"id": id, "mean": average}
+    average = get_one_raster_average(raster_url, polygon)
+    if average == 0.0:
+        raise HTTPException(
+            status_code=422, detail="Input polygon does not intersect raster extent."
+        )
+    return {"id": id, "average": average}
 
 
 def calculate_ave_multiple_colls():

@@ -11,6 +11,7 @@ class NotFoundError(Exception):
         self.usr_msg = usr_msg
         super().__init__(e)
 
+
 class UnprocessableError(Exception):
     def __init__(self, code: int, usr_msg: str, e: Exception):
         self.code = code

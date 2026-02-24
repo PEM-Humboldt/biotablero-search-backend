@@ -16,7 +16,7 @@ from shapely.geometry import MultiPolygon, Polygon as ShapelyPolygon
 
 from geojson_pydantic import geometries
 from app.middleware.log_middleware import logger
-from app.utils.errors import NotFoundError, ServerError, UnprocessableError
+from app.utils.errors import NotFoundError, ServerError
 
 
 def crop_raster(
@@ -91,11 +91,7 @@ def get_one_raster_areas(
     with rasterio.open(raster_path) as src:
         raster_bounds = box(*src.bounds)
         if not polygon_geom.intersects(raster_bounds):
-            raise UnprocessableError(
-                code=422,
-                usr_msg="Input polygon does not intersect with metric.",
-                e=Exception("Polygon does not intersect with raster bounds"),
-            )
+            return {}
 
         if isinstance(polygon_geom, MultiPolygon):
             multi_poly = cast(MultiPolygon, polygon_geom)
@@ -205,11 +201,7 @@ def get_one_raster_average(
     with rasterio.open(raster_path) as src:
         raster_bounds = box(*src.bounds)
         if not polygon_geom.intersects(raster_bounds):
-            raise UnprocessableError(
-                code=422,
-                usr_msg="Input polygon does not intersect with metric.",
-                e=Exception("Polygon does not intersect with raster bounds"),
-            )
+            return 0.0
 
         if src.crs != source_crs:
             transformer = Transformer.from_crs(

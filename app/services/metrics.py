@@ -156,13 +156,7 @@ async def calculate_single_coll(
 
     id, raster_url = get_items_asset_url(primary_collection.collection.name)[0]
 
-    try:
-        raster_values = get_one_raster_areas(raster_url, polygon, categories)
-    except UnprocessableError as e:
-        raise HTTPException(
-            status_code=e.code,
-            detail=e.usr_msg,
-        )
+    raster_values = get_one_raster_areas(raster_url, polygon, categories)
 
     return {"id": id, **raster_values}
 
@@ -193,13 +187,7 @@ async def calculate_single_coll_all_items(
     rasters_info = get_items_asset_url(primary_collection.collection.name)
     result = []
     for id, url in rasters_info:
-        try:
-            raster_values = get_one_raster_areas(url, polygon, categories)
-        except UnprocessableError as e:
-            raise HTTPException(
-                status_code=e.code,
-                detail=e.usr_msg,
-            )
+        raster_values = get_one_raster_areas(url, polygon, categories)
 
         result.append({"id": id, **raster_values})
 
@@ -246,10 +234,7 @@ async def calculate_two_colls(
     # para probar usaba las colecciones secundarias
     id, raster_url = get_items_asset_url(primary_collection.collection.name)[0]
 
-    try:
-        raster_values = get_one_raster_areas(raster_url, polygon, categories)
-    except UnprocessableError as e:
-        raise HTTPException(status_code=e.code, detail=e.usr_msg)
+    raster_values = get_one_raster_areas(raster_url, polygon, categories)
 
     return {"id": id, **raster_values}
 
@@ -272,13 +257,8 @@ async def calculate_ave_coll(
 
     await primary_collection.fetch_related("collection")
     id, raster_url = get_items_asset_url(primary_collection.collection.name)[0]
-    try:
-        average = get_one_raster_average(raster_url, polygon)
-    except UnprocessableError as e:
-        raise HTTPException(
-            status_code=e.code,
-            detail=e.usr_msg,
-        )
+    average = get_one_raster_average(raster_url, polygon)
+
     return {"id": id, "average": average}
 
 

@@ -28,7 +28,7 @@ from app.persistence.metric_persistence import (
 )
 
 from app.utils.s3_utils import upload_to_s3
-from app.utils.errors import ServerError
+from app.utils.errors import ServerError, UnprocessableError
 
 
 async def get_or_create_polygon_metric(
@@ -156,11 +156,12 @@ async def calculate_single_coll(
 
     id, raster_url = get_items_asset_url(primary_collection.collection.name)[0]
 
-    raster_values = get_one_raster_areas(raster_url, polygon, categories)
-    if raster_values == {}:
+    try:
+        raster_values = get_one_raster_areas(raster_url, polygon, categories)
+    except UnprocessableError as e:
         raise HTTPException(
-            status_code=422,
-            detail="Input polygon does not intersect with metric.",
+            status_code=e.code,
+            detail=e.usr_msg,
         )
 
     return {"id": id, **raster_values}
@@ -192,12 +193,14 @@ async def calculate_single_coll_all_items(
     rasters_info = get_items_asset_url(primary_collection.collection.name)
     result = []
     for id, url in rasters_info:
-        raster_values = get_one_raster_areas(url, polygon, categories)
-        if raster_values == {}:
+        try:
+            raster_values = get_one_raster_areas(url, polygon, categories)
+        except UnprocessableError as e:
             raise HTTPException(
-                status_code=422,
-                detail="Input polygon does not intersect with metric.",
+                status_code=e.code,
+                detail=e.usr_msg,
             )
+
         result.append({"id": id, **raster_values})
 
     return result
@@ -243,12 +246,10 @@ async def calculate_two_colls(
     # para probar usaba las colecciones secundarias
     id, raster_url = get_items_asset_url(primary_collection.collection.name)[0]
 
-    raster_values = get_one_raster_areas(raster_url, polygon, categories)
-    if raster_values == {}:
-        raise HTTPException(
-            status_code=422,
-            detail="Input polygon does not intersect with metric.",
-        )
+    try:
+        raster_values = get_one_raster_areas(raster_url, polygon, categories)
+    except UnprocessableError as e:
+        raise HTTPException(status_code=e.code, detail=e.usr_msg)
 
     return {"id": id, **raster_values}
 
@@ -271,11 +272,12 @@ async def calculate_ave_coll(
 
     await primary_collection.fetch_related("collection")
     id, raster_url = get_items_asset_url(primary_collection.collection.name)[0]
-    average = get_one_raster_average(raster_url, polygon)
-    if average == 0.0:
+    try:
+        average = get_one_raster_average(raster_url, polygon)
+    except UnprocessableError as e:
         raise HTTPException(
-            status_code=422,
-            detail="Input polygon does not intersect with metric.",
+            status_code=e.code,
+            detail=e.usr_msg,
         )
     return {"id": id, "average": average}
 

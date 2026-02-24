@@ -54,19 +54,6 @@ async def server_exception_handler(request, exc):
     )
 
 
-async def unprocessable_exception_handler(request, exc):
-    tb_str = traceback.format_exception(exc.__class__, exc, exc.__traceback__)
-    logger.error(
-        f"\n{''.join(tb_str)}",
-        extra={"request_id": request_id_context.get()},
-    )
-
-    return fastapi.responses.JSONResponse(
-        status_code=exc.code,
-        content={"detail": exc.usr_msg},
-    )
-
-
 async def unsupported_metric_exception_handler(request, exc):
     logger.error(
         exc.log_msg,

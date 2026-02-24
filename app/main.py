@@ -7,10 +7,11 @@ from app.middleware.exception_handlers import (
     validation_exception_handler,
     server_exception_handler,
     not_found_exception_handler,
+    unprocessable_exception_handler,
 )
 from app.middleware.exceptions import UnsupportedMetricException
 
-from app.utils.errors import ServerError, NotFoundError
+from app.utils.errors import ServerError, NotFoundError, UnprocessableError
 from app.middleware.log_middleware import log_requests
 from app.routes import metrics, areas
 from app.utils.config import get_settings, TORTOISE_ORM
@@ -48,6 +49,7 @@ app.add_exception_handler(
 
 app.add_exception_handler(NotFoundError, not_found_exception_handler)
 app.add_exception_handler(ServerError, server_exception_handler)
+app.add_exception_handler(UnprocessableError, unprocessable_exception_handler)
 app.add_exception_handler(Exception, server_exception_handler)
 app.add_exception_handler(UnsupportedMetricException, server_exception_handler)
 

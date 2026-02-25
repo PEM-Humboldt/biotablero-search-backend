@@ -16,7 +16,7 @@ from app.services.utils.stac import (
 )
 from app.services.utils.stac import fetch_collection_metadata
 
-from app.models.models import Metric, Polygon, PolygonMetric
+from app.models.models import Metric
 from app.persistence.layer_persistence import (
     get_existing_layer,
     save_layer_record,
@@ -50,18 +50,16 @@ async def get_or_create_polygon_metric(
             status_code=400, detail="Metric not found in database"
         )
 
-    polygon_metric = await PolygonMetric.get_or_none(
-        polygon=polygon_obj, metric=metric_obj
-    )
+    polygon_metric = await get_polygon_metric(polygon_obj, metric_obj)
 
     if polygon_metric:
         return polygon_metric.values
 
     polygon = geometries.MultiPolygon(**polygon_obj.geometry)
 
-    values = await OperationEnum(metric_obj.operation_type).function(
-        metric_obj, polygon
-    )
+    values = await OperationFunctions(
+        metric_obj.operation_type
+    ).values_function(metric_obj, polygon)
     await create_polygon_metric(polygon_obj, metric_obj, values)
     return values
 
@@ -266,39 +264,28 @@ def calculate_ave_multiple_colls():
     pass
 
 
-def calculate_pa():
+def calculate_cat_single_coll():
     pass
 
 
-def calculate_pa_single_coll():
+def calculate_cat_two_colls():
     pass
 
 
-def calculate_pa_single_coll_filtered():
+def calculate_cat_single_coll_filtered():
     pass
 
 
-class OperationEnum(Enum):
-    AREA_SINGLE_COLLECTION = "AREA_SINGLE-COLLECTION"
-    AREA_SINGLE_COLLECTION_ALL_ITEMS = "AREA_SINGLE-COLLECTION_ALL-ITEMS"
-    AREA_TWO_COLLECTIONS = "AREA_TWO-COLLECTIONS"
-    AVERAGE_SINGLE_COLLECTION = "AVERAGE_SINGLE-COLLECTION"
-    AVERAGE_MULTIPLE_COLLECTION_ALL_ITEMS = (
-        "AVERAGE_MULTIPLE-COLLECTION_ALL-ITEMS"
-    )
-    PA = "PA"
-    PA_SINGLE_COLLECTION = "PA_SINGLE-COLLECTION"
-    PA_SINGLE_COLLECTION_FILTERED = "PA_SINGLE-COLLECTION-FILTERED"
-
+class OperationFunctions:
     def __init__(self, value):
-        functions = {
+        values_function = {
             "AREA_SINGLE-COLLECTION": calculate_single_coll,
             "AREA_SINGLE-COLLECTION_ALL-ITEMS": calculate_single_coll_all_items,
             "AREA_TWO-COLLECTIONS": calculate_two_colls,
             "AVERAGE_SINGLE-COLLECTION": calculate_ave_coll,
             "AVERAGE_MULTIPLE-COLLECTION_ALL-ITEMS": calculate_ave_multiple_colls,
-            "PA": calculate_pa,
-            "PA_SINGLE-COLLECTION": calculate_pa_single_coll,
-            "PA_SINGLE-COLLECTION-FILTERED": calculate_pa_single_coll_filtered,
+            "AREA_CATEGORIES_SINGLE-COLLECTION": calculate_cat_single_coll,
+            "AREA_CATEGORIES_TWO-COLLECTIONS": calculate_cat_two_colls,
+            "AREA_CATEGORIES_SINGLE-COLLECTION_FILTERED": calculate_cat_single_coll_filtered,
         }
-        self.function = functions[value]
+        self.values_function = values_function[value]

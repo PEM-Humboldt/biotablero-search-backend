@@ -18,8 +18,8 @@ class Polygon(Model):
     area_type = fields.ForeignKeyField(
         "bt_search_bk.AreaType",
         related_name="polygons",
-        null=True,
-        on_delete=fields.SET_NULL,
+        null=False,
+        on_delete=fields.CASCADE,
     )
     name = fields.CharField(max_length=255, null=True)
     area = fields.FloatField()
@@ -51,26 +51,33 @@ class PolygonMetric(Model):
         unique_together = ("polygon", "metric")
 
 
-class PolygonMetricItem(Model):
+class PolygonMetricLayer(Model):
     id = fields.IntField(pk=True)
-    polygon = fields.ForeignKeyField(
-        "bt_search_bk.Polygon",
-        related_name="metric_items",
-        on_delete=fields.CASCADE,
-    )
-    layer_url = fields.CharField(max_length=255)
-    category = fields.IntField()
-    item_id = fields.CharField(max_length=100)
     metric = fields.ForeignKeyField(
         "bt_search_bk.Metric",
         related_name="metric_items",
         on_delete=fields.CASCADE,
     )
+    polygon = fields.ForeignKeyField(
+        "bt_search_bk.Polygon",
+        related_name="metric_items",
+        on_delete=fields.CASCADE,
+    )
+    class_id = fields.CharField(max_length=100)
+    item_id = fields.CharField(max_length=100)
+    layer_url = fields.CharField(max_length=255)
     updated_at = fields.DatetimeField(auto_now=True)
 
     class Meta(Model.Meta):
         table = "polygon_metric_item"
-        unique_together = (("polygon", "metric", "category", "item_id"),)
+        unique_together = (
+            (
+                "metric",
+                "polygon",
+                "item_id",
+                "class_id",
+            ),
+        )
 
 
 class Collection(Model):
@@ -88,6 +95,7 @@ class Metric(Model):
     id = fields.IntField(pk=True)
     name = fields.CharField(max_length=100, unique=True)
     operation_type = fields.CharField(max_length=100)
+    has_layer = fields.BooleanField()
     updated_at = fields.DatetimeField(auto_now=True)
 
     collections: fields.ReverseRelation["MetricCollection"]

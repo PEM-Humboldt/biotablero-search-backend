@@ -1,4 +1,6 @@
 import logging
+import asyncio
+from argparse import ArgumentParser
 from tortoise import Tortoise
 
 from database.seed_area_types import seed_area_types
@@ -12,27 +14,45 @@ settings = get_settings()
 logger = logging.getLogger(__name__)
 
 
-async def populate_db():
+async def populate_db(which_set="all"):
     logger.info("Iniciando inserción de datos...", extra={"request_id": "N/A"})
     await Tortoise.init(config=TORTOISE_ORM)
     await Tortoise.generate_schemas(safe=True)
 
     try:
-        await seed_area_types()
-        await seed_polygons()
-        await seed_collections_and_metrics()
+        match which_set:
+            case "all":
+                await seed_area_types()
+                await seed_polygons()
+                await seed_collections_and_metrics()
+            case "areas":
+                await seed_area_types()
+                await seed_polygons()
+            case "metrics":
+                await seed_collections_and_metrics()
     except Exception as e:
         print(e)
 
     await Tortoise.close_connections()
     logger.info(
-        "La conexión ala base de datos ha sido cerrada",
+        "La conexión a la base de datos ha sido cerrada",
         extra={"request_id": "N/A"},
     )
 
 
 if __name__ == "__main__":
     settings.configure_logging()
-    import asyncio
 
-    asyncio.run(populate_db())
+    parser = ArgumentParser()
+    parser.add_argument(
+        "-s",
+        "--sets",
+        dest="which_set",
+        help="Especifica que conjunto de datos poblar, opciones: 'all', 'areas', 'metrics'",
+        default="all",
+        required=False,
+    )
+
+    args = parser.parse_args()
+
+    asyncio.run(populate_db(args.which_set))

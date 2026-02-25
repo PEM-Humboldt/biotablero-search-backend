@@ -26,7 +26,8 @@ async def populate_db():
 
     await Tortoise.close_connections()
     logger.info(
-        "Se ejecutaron los inserts correctamente", extra={"request_id": "N/A"}
+        "La conexión ala base de datos ha sido cerrada",
+        extra={"request_id": "N/A"},
     )
 
 

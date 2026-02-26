@@ -51,7 +51,7 @@ class paramoResponse(BaseModel):
     """
 
     id: str = ""
-    area: float = 0
+    paramo: float = 0
 
 
 class tropicalDryForestResponse(BaseModel):
@@ -60,7 +60,7 @@ class tropicalDryForestResponse(BaseModel):
     """
 
     id: str = ""
-    area: float = 0
+    bosqueSeco: float = 0
 
 
 class wetlandResponse(BaseModel):
@@ -69,7 +69,7 @@ class wetlandResponse(BaseModel):
     """
 
     id: str = ""
-    area: float = 0
+    humedal: float = 0
 
 
 class MetricConfig(TypedDict):

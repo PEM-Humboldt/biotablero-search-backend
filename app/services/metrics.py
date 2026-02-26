@@ -36,7 +36,7 @@ from app.utils.errors import ServerError, UnprocessableError
 
 async def get_or_create_polygon_metric(
     polygon_id: int, metric_name: str
-) -> List[dict] | Dict:
+) -> List[Dict[str, str | float]] | Dict[str, str | float]:
     """
     Checks if metric values already exist for the given polygon and metric.
     If they exist, return them. Otherwise, calculate, persist, and return.
@@ -60,9 +60,22 @@ async def get_or_create_polygon_metric(
 
     polygon = geometries.MultiPolygon(**polygon_obj.geometry)
 
+    primary_collection = next(
+        (mc for mc in metric_obj.collections if mc.is_primary), None
+    )
+    if primary_collection is None:
+        raise ServerError(
+            code=500,
+            usr_msg=f"There was an error calculating the metric {metric_name}.",
+            e=Exception("Primary collection not found"),
+        )
+
+    await primary_collection.fetch_related("collection")
+
     values = await OperationFunctions(
         metric_obj.operation_type
-    ).values_function(metric_obj, polygon)
+    ).values_function(primary_collection.collection, metric_obj, polygon)
+
     await create_polygon_metric(polygon_obj, metric_obj, values)
     return values
 
@@ -144,29 +157,15 @@ async def get_or_create_polygon_metric_layer(
 
 
 async def calculate_single_coll_values(
-    metric: Metric, polygon: geometries.MultiPolygon
+    primary_collection: Collection, _, polygon: geometries.MultiPolygon
 ) -> Dict[str, str | float]:
     """
     Calculate values for a metric that uses only the first item from one collection,
     grouped by the collection categories
     """
-    primary_collection = next(
-        (mc for mc in metric.collections if mc.is_primary), None
-    )
-    if primary_collection is None:
-        raise ServerError(
-            code=500,
-            usr_msg=f"There was an error calculating the metric {metric.name}.",
-            e=Exception("Primary collection not found"),
-        )
+    categories, _, _ = await fetch_collection_metadata(primary_collection)
 
-    await primary_collection.fetch_related("collection")
-
-    categories, _, _ = await fetch_collection_metadata(
-        primary_collection.collection
-    )
-
-    id, raster_url = get_items_asset_url(primary_collection.collection.name)[0]
+    id, raster_url = get_items_asset_url(primary_collection.name)[0]
 
     raster_values = get_one_raster_areas(raster_url, polygon, categories)
 
@@ -174,29 +173,16 @@ async def calculate_single_coll_values(
 
 
 async def calculate_single_coll_all_items_values(
-    metric: Metric, polygon: geometries.MultiPolygon
+    primary_collection: Collection, _, polygon: geometries.MultiPolygon
 ) -> List[Dict[str, str | float]]:
     """
     Calculate values for a metric that uses all items from one collection,
     grouped by the collection categories
     """
-    primary_collection = next(
-        (mc for mc in metric.collections if mc.is_primary), None
-    )
-    if primary_collection is None:
-        raise ServerError(
-            code=500,
-            usr_msg=f"There was an error calculating the metric {metric.name}.",
-            e=Exception("Primary collection not found"),
-        )
 
-    await primary_collection.fetch_related("collection")
+    categories, _, _ = await fetch_collection_metadata(primary_collection)
 
-    categories, _, _ = await fetch_collection_metadata(
-        primary_collection.collection
-    )
-
-    rasters_info = get_items_asset_url(primary_collection.collection.name)
+    rasters_info = get_items_asset_url(primary_collection.name)
     result = []
     for id, url in rasters_info:
         raster_values = get_one_raster_areas(url, polygon, categories)
@@ -207,23 +193,14 @@ async def calculate_single_coll_all_items_values(
 
 
 async def calculate_two_colls_values(
-    metric: Metric, polygon: geometries.MultiPolygon
+    primary_collection: Collection,
+    metric: Metric,
+    polygon: geometries.MultiPolygon,
 ) -> Dict[str, str | float]:
     """
     Calculate values for a metric that uses only the first item from two collections.
     The values are grouped by the categories of the primary collection.
     """
-    primary_collection = next(
-        (mc for mc in metric.collections if mc.is_primary), None
-    )
-    if primary_collection is None:
-        raise ServerError(
-            code=500,
-            usr_msg=f"There was an error calculating the metric {metric.name}.",
-            e=Exception("Primary collection not found"),
-        )
-
-    await primary_collection.fetch_related("collection")
 
     secondary_collection = next(
         (mc for mc in metric.collections if not mc.is_primary), None
@@ -237,14 +214,12 @@ async def calculate_two_colls_values(
 
     await secondary_collection.fetch_related("collection")
 
-    categories, _, _ = await fetch_collection_metadata(
-        primary_collection.collection
-    )
+    categories, _, _ = await fetch_collection_metadata(primary_collection)
 
     # TODO: Cuando haya collecciones de EE separados ajustar esta implementación,
     # solo dejé de aquí para arriba porque ninguna otra de las que están listas
     # para probar usaba las colecciones secundarias
-    id, raster_url = get_items_asset_url(primary_collection.collection.name)[0]
+    id, raster_url = get_items_asset_url(primary_collection.name)[0]
 
     raster_values = get_one_raster_areas(raster_url, polygon, categories)
 
@@ -252,23 +227,12 @@ async def calculate_two_colls_values(
 
 
 async def calculate_ave_coll_values(
-    metric: Metric, polygon: geometries.MultiPolygon
+    primary_collection: Collection, _, polygon: geometries.MultiPolygon
 ) -> Dict[str, str | float]:
     """
     calculates the average of the values from a collection within a polygon
     """
-    primary_collection = next(
-        (mc for mc in metric.collections if mc.is_primary), None
-    )
-    if primary_collection is None:
-        raise ServerError(
-            code=500,
-            usr_msg=f"There was an error calculating the metric {metric.name}.",
-            e=Exception("Primary collection not found"),
-        )
-
-    await primary_collection.fetch_related("collection")
-    id, raster_url = get_items_asset_url(primary_collection.collection.name)[0]
+    id, raster_url = get_items_asset_url(primary_collection.name)[0]
     average = get_one_raster_average(raster_url, polygon)
 
     return {"id": id, "average": average}

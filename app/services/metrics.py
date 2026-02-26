@@ -5,7 +5,11 @@ from fastapi import HTTPException
 
 from app.routes.schemas.LayerResponse import LayerResponse
 
-from app.services.utils.raster import crop_raster, get_one_raster_areas
+from app.services.utils.raster import (
+    crop_raster,
+    get_one_raster_areas,
+    get_one_raster_average,
+)
 from app.services.utils.stac import (
     get_items_asset_url,
     get_asset_href_by_item_id,
@@ -24,7 +28,7 @@ from app.persistence.metric_persistence import (
 )
 
 from app.utils.s3_utils import upload_to_s3
-from app.utils.errors import ServerError
+from app.utils.errors import ServerError, UnprocessableError
 
 
 async def get_or_create_polygon_metric(
@@ -150,9 +154,7 @@ async def calculate_single_coll(
         primary_collection.collection
     )
 
-    (id, raster_url) = get_items_asset_url(primary_collection.collection.name)[
-        0
-    ]
+    id, raster_url = get_items_asset_url(primary_collection.collection.name)[0]
 
     raster_values = get_one_raster_areas(raster_url, polygon, categories)
 
@@ -186,6 +188,7 @@ async def calculate_single_coll_all_items(
     result = []
     for id, url in rasters_info:
         raster_values = get_one_raster_areas(url, polygon, categories)
+
         result.append({"id": id, **raster_values})
 
     return result
@@ -229,17 +232,34 @@ async def calculate_two_colls(
     # TODO: Cuando haya collecciones de EE separados ajustar esta implementación,
     # solo dejé de aquí para arriba porque ninguna otra de las que están listas
     # para probar usaba las colecciones secundarias
-    (id, raster_url) = get_items_asset_url(primary_collection.collection.name)[
-        0
-    ]
+    id, raster_url = get_items_asset_url(primary_collection.collection.name)[0]
 
     raster_values = get_one_raster_areas(raster_url, polygon, categories)
 
     return {"id": id, **raster_values}
 
 
-def calculate_ave_coll():
-    pass
+async def calculate_ave_coll(
+    metric: Metric, polygon: geometries.MultiPolygon
+) -> Dict[str, str | float]:
+    """
+    calculates the average of the values from a collection within a polygon
+    """
+    primary_collection = next(
+        (mc for mc in metric.collections if mc.is_primary), None
+    )
+    if primary_collection is None:
+        raise ServerError(
+            code=500,
+            usr_msg=f"There was an error calculating the metric {metric.name}.",
+            e=Exception("Primary collection not found"),
+        )
+
+    await primary_collection.fetch_related("collection")
+    id, raster_url = get_items_asset_url(primary_collection.collection.name)[0]
+    average = get_one_raster_average(raster_url, polygon)
+
+    return {"id": id, "average": average}
 
 
 def calculate_ave_multiple_colls():

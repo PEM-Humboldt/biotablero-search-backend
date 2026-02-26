@@ -10,9 +10,9 @@ class CollectionEnum(Enum):
     INDICE_VACIOS_INFORMACION = "IndiceVaciosInformacion"
     PERDIDA_PERSISTENCIA = "PerdidaYPersistencia"
     COBERTURA = "Coberturas"
-    PARAMO = "EcosistremasEstrategicos"
-    BOSQUE_SECO_TROPICAL = "EcosistremasEstrategicos"
-    HUMEDAL = "EcosistremasEstrategicos"
+    PARAMO = "Paramos"
+    BOSQUE_SECO_TROPICAL = "BosqueSeco"
+    HUMEDAL = "Humedales"
 
 
 class OperationEnum(Enum):
@@ -34,12 +34,21 @@ class MetricEnum(Enum):
         OperationEnum.AREA_SINGLE_COLLECTION,
         CollectionEnum.COBERTURA,
     )
-    PARAMO = ("paramo", OperationEnum.AREA_SINGLE_COLLECTION)
+    PARAMO = (
+        "paramo",
+        OperationEnum.AREA_SINGLE_COLLECTION,
+        CollectionEnum.PARAMO,
+    )
     TROPICAL_DRY_FOREST = (
         "tropicalDryForest",
         OperationEnum.AREA_SINGLE_COLLECTION,
+        CollectionEnum.BOSQUE_SECO_TROPICAL,
     )
-    WETLAND = ("wetland", OperationEnum.AREA_SINGLE_COLLECTION)
+    WETLAND = (
+        "wetland",
+        OperationEnum.AREA_SINGLE_COLLECTION,
+        CollectionEnum.HUMEDAL,
+    )
     CURRENTHF = (
         "currentHF",
         OperationEnum.AREA_SINGLE_COLLECTION,

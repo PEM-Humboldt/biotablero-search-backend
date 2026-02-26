@@ -45,6 +45,33 @@ class CurrentHFAverageResponse(BaseModel):
     average: float = 0
 
 
+class paramoResponse(BaseModel):
+    """
+    Response model for paramos area in a given year.
+    """
+
+    id: str = ""
+    paramo: float = 0
+
+
+class tropicalDryForestResponse(BaseModel):
+    """
+    Response model for tropical dry forest area in a given year.
+    """
+
+    id: str = ""
+    bosqueSeco: float = 0
+
+
+class wetlandResponse(BaseModel):
+    """
+    Response model for wetland area in a given year.
+    """
+
+    id: str = ""
+    humedal: float = 0
+
+
 class MetricConfig(TypedDict):
     model: Type[BaseModel]
     example: List[dict] | Dict

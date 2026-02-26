@@ -171,14 +171,14 @@ def get_one_raster_areas(
 
         valid_data = raster_data[valid_mask]
 
-        if len(valid_data) == 0:
-            return {}
-
         unique_values, counts = np.unique(valid_data, return_counts=True)
 
         value_to_category = {val: name for name, val in categories.items()}
 
-        areas_by_category = {}
+        areas_by_category = {
+            category_key: 0.0 for category_key in categories.keys()
+        }
+
         for value, pixel_count in zip(unique_values, counts):
             area_ha = float(pixel_count * pixel_area_ha)
 

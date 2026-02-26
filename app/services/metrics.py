@@ -6,7 +6,7 @@ from fastapi import HTTPException
 from app.routes.schemas.LayerResponse import LayerResponse
 
 from app.services.utils.raster import (
-    crop_raster,
+    get_one_raster_image,
     get_one_raster_areas,
     get_one_raster_average,
 )
@@ -16,13 +16,16 @@ from app.services.utils.stac import (
 )
 from app.services.utils.stac import fetch_collection_metadata
 
-from app.models.models import Metric
-from app.persistence.layer_persistence import (
+from app.models.models import Metric, Collection
+from app.persistence.polygon_metric_layer_persistence import (
     get_existing_layer,
-    save_layer_record,
+    create_polygon_metric_layer,
 )
 from app.persistence.polygon_persistence import get_polygon_by_id
-from app.persistence.polygon_metric_persistence import create_polygon_metric
+from app.persistence.polygon_metric_persistence import (
+    create_polygon_metric,
+    get_polygon_metric,
+)
 from app.persistence.metric_persistence import (
     get_metric_by_name,
 )
@@ -64,64 +67,68 @@ async def get_or_create_polygon_metric(
     return values
 
 
-async def get_or_create_layer_by_polygon(
-    metric_name: str, polygon_id: int, item_id: str, category: int
+async def get_or_create_polygon_metric_layer(
+    metric_name: str, polygon_id: int, item_id: str, class_id: str
 ) -> LayerResponse:
     """
     Checks if the layer already exists. If not, generates it, saves and returns the URL.
     """
-    # TODO: Cambiar para que funcione de acuerdo al tipo de operación
+    polygon_obj = await get_polygon_by_id(polygon_id)
+
+    if not polygon_obj:
+        raise HTTPException(status_code=404, detail="Polygon not found")
+
     metric_obj = await get_metric_by_name(metric_name)
 
     if not metric_obj:
         raise HTTPException(
             status_code=400, detail="Metric not found in database"
         )
+    if not metric_obj.has_layer:
+        raise HTTPException(
+            status_code=501, detail="Metric doesn't have an associated layer"
+        )
 
-    polygon_obj = await Polygon.get_or_none(id=polygon_id)
-
-    if not polygon_obj:
-        raise HTTPException(status_code=404, detail="Polygon not found")
-
-    existing_item = await get_existing_layer(
-        metric_obj.id, polygon_id, category, item_id
+    existing_layer = await get_existing_layer(
+        metric_obj, polygon_obj, class_id, item_id
     )
 
-    if existing_item:
-        return LayerResponse(layer=existing_item.layer_url)
+    if existing_layer:
+        return LayerResponse(layer=existing_layer.layer_url)
 
     primary_collection = next(
-        mc for mc in metric_obj.collections if mc.is_primary
+        (mc for mc in metric_obj.collections if mc.is_primary), None
     )
+    if primary_collection is None:
+        raise ServerError(
+            code=500,
+            usr_msg=f"There was an error calculating the metric {metric_obj.name}.",
+            e=Exception("Primary collection not found"),
+        )
+
     await primary_collection.fetch_related("collection")
 
-    (
-        _,
-        values,
-        colors,
-    ) = await fetch_collection_metadata(primary_collection.collection)
-    raster_href = get_asset_href_by_item_id(
-        primary_collection.collection, item_id
-    )
+    polygon = geometries.MultiPolygon(**polygon_obj.geometry)
 
-    image_base64 = crop_raster(
-        raster_path=raster_href,
-        polygon=polygon_obj.geometry,
-        category=category,
-        values=values,
-        colors=colors,
+    img_base64 = await OperationFunctions(
+        metric_obj.operation_type
+    ).layer_function(
+        polygon,
+        primary_collection.collection,
+        item_id,
+        class_id,
     )
 
     image_url = await upload_to_s3(
-        image_data=image_base64,
-        filename=f"{metric_name}_{polygon_id}_{item_id}_{category}.png",
+        image_data=img_base64,
+        filename=f"{metric_name}_{polygon_id}_{item_id}_{class_id}.png",
         content_type="image/png",
     )
 
-    await save_layer_record(
+    await create_polygon_metric_layer(
         metric_obj=metric_obj,
-        polygon_id=polygon_id,
-        category=category,
+        polygon_obj=polygon_obj,
+        class_id=class_id,
         item_id=item_id,
         image_url=image_url,
     )
@@ -129,7 +136,7 @@ async def get_or_create_layer_by_polygon(
     return LayerResponse(layer=image_url)
 
 
-async def calculate_single_coll(
+async def calculate_single_coll_values(
     metric: Metric, polygon: geometries.MultiPolygon
 ) -> Dict[str, str | float]:
     """
@@ -159,7 +166,7 @@ async def calculate_single_coll(
     return {"id": id, **raster_values}
 
 
-async def calculate_single_coll_all_items(
+async def calculate_single_coll_all_items_values(
     metric: Metric, polygon: geometries.MultiPolygon
 ) -> List[Dict[str, str | float]]:
     """
@@ -192,7 +199,7 @@ async def calculate_single_coll_all_items(
     return result
 
 
-async def calculate_two_colls(
+async def calculate_two_colls_values(
     metric: Metric, polygon: geometries.MultiPolygon
 ) -> Dict[str, str | float]:
     """
@@ -237,7 +244,7 @@ async def calculate_two_colls(
     return {"id": id, **raster_values}
 
 
-async def calculate_ave_coll(
+async def calculate_ave_coll_values(
     metric: Metric, polygon: geometries.MultiPolygon
 ) -> Dict[str, str | float]:
     """
@@ -260,32 +267,104 @@ async def calculate_ave_coll(
     return {"id": id, "average": average}
 
 
-def calculate_ave_multiple_colls():
+def calculate_ave_multiple_colls_values():
     pass
 
 
-def calculate_cat_single_coll():
+def calculate_cat_single_coll_values():
     pass
 
 
-def calculate_cat_two_colls():
+def calculate_cat_two_colls_values():
     pass
 
 
-def calculate_cat_single_coll_filtered():
+def calculate_cat_single_coll_filtered_values():
+    pass
+
+
+async def calculate_single_coll_layer(
+    polygon: geometries.MultiPolygon,
+    primary_collection: Collection,
+    item_id: str,
+    class_id: str,
+) -> str:
+    """
+    Get the layer for a metric that uses only one collection
+    """
+    classes_map, values, colors = await fetch_collection_metadata(
+        primary_collection
+    )
+
+    if class_id not in classes_map:
+        # TODO: Change error when rebased
+        raise HTTPException(
+            status_code=400,
+            detail=f"class_id {class_id} doesn't exist in metric",
+        )
+
+    raster_href = get_asset_href_by_item_id(primary_collection.name, item_id)
+
+    image_base64 = get_one_raster_image(
+        raster_path=raster_href,
+        polygon=polygon,
+        class_value=classes_map[class_id],
+        values=values,
+        colors=colors,
+    )
+
+    return image_base64
+
+
+def calculate_single_coll_all_items_layer():
+    pass
+
+
+def calculate_two_colls_layer():
+    pass
+
+
+def calculate_ave_coll_layer():
+    pass
+
+
+def calculate_ave_multiple_colls_layer():
+    pass
+
+
+def calculate_cat_single_coll_layer():
+    pass
+
+
+def calculate_cat_two_colls_layer():
+    pass
+
+
+def calculate_cat_single_coll_filtered_layer():
     pass
 
 
 class OperationFunctions:
-    def __init__(self, value):
+    def __init__(self, operation):
         values_function = {
-            "AREA_SINGLE-COLLECTION": calculate_single_coll,
-            "AREA_SINGLE-COLLECTION_ALL-ITEMS": calculate_single_coll_all_items,
-            "AREA_TWO-COLLECTIONS": calculate_two_colls,
-            "AVERAGE_SINGLE-COLLECTION": calculate_ave_coll,
-            "AVERAGE_MULTIPLE-COLLECTION_ALL-ITEMS": calculate_ave_multiple_colls,
-            "AREA_CATEGORIES_SINGLE-COLLECTION": calculate_cat_single_coll,
-            "AREA_CATEGORIES_TWO-COLLECTIONS": calculate_cat_two_colls,
-            "AREA_CATEGORIES_SINGLE-COLLECTION_FILTERED": calculate_cat_single_coll_filtered,
+            "AREA_SINGLE-COLLECTION": calculate_single_coll_values,
+            "AREA_SINGLE-COLLECTION_ALL-ITEMS": calculate_single_coll_all_items_values,
+            "AREA_TWO-COLLECTIONS": calculate_two_colls_values,
+            "AVERAGE_SINGLE-COLLECTION": calculate_ave_coll_values,
+            "AVERAGE_MULTIPLE-COLLECTION_ALL-ITEMS": calculate_ave_multiple_colls_values,
+            "AREA_CATEGORIES_SINGLE-COLLECTION": calculate_cat_single_coll_values,
+            "AREA_CATEGORIES_TWO-COLLECTIONS": calculate_cat_two_colls_values,
+            "AREA_CATEGORIES_SINGLE-COLLECTION_FILTERED": calculate_cat_single_coll_filtered_values,
         }
-        self.values_function = values_function[value]
+        layer_functions = {
+            "AREA_SINGLE-COLLECTION": calculate_single_coll_layer,
+            "AREA_SINGLE-COLLECTION_ALL-ITEMS": calculate_single_coll_all_items_layer,
+            "AREA_TWO-COLLECTIONS": calculate_two_colls_layer,
+            "AVERAGE_SINGLE-COLLECTION": calculate_ave_coll_layer,
+            "AVERAGE_MULTIPLE-COLLECTION_ALL-ITEMS": calculate_ave_multiple_colls_layer,
+            "AREA_CATEGORIES_SINGLE-COLLECTION": calculate_cat_single_coll_layer,
+            "AREA_CATEGORIES_TWO-COLLECTIONS": calculate_cat_two_colls_layer,
+            "AREA_CATEGORIES_SINGLE-COLLECTION_FILTERED": calculate_cat_single_coll_filtered_layer,
+        }
+        self.values_function = values_function[operation]
+        self.layer_function = layer_functions[operation]

@@ -2,27 +2,58 @@ import base64
 import io
 
 from PIL import Image
-from rio_tiler.io.rasterio import Reader
 import numpy as np
 from typing import Dict, List, Tuple, cast
 from shapely import box
-from shapely.geometry import shape
 from shapely.ops import transform as shapely_transform
+from shapely.geometry import shape, MultiPolygon, Polygon as ShapelyPolygon
+
 import rasterio
 from rasterio.crs import CRS
 from rasterio.mask import mask
-from pyproj import Transformer
-from shapely.geometry import MultiPolygon, Polygon as ShapelyPolygon
+from rasterio.windows import from_bounds
+from rasterio.features import rasterize
+import gc
 
+from pyproj import Transformer
 from geojson_pydantic import geometries
+
 from app.middleware.log_middleware import logger
 from app.utils.errors import NotFoundError, ServerError, UnprocessableError
 
 
-def crop_raster(
+def crop_raster_by_polygon(
     raster_path: str,
-    polygon,
-    category: int,
+    polygon: geometries.MultiPolygon,
+) -> Tuple[np.ndarray, np.ndarray]:
+    polygon_geom = shape(polygon)
+    with rasterio.open(raster_path) as src:
+
+        minx, miny, maxx, maxy = polygon_geom.bounds
+        window = from_bounds(minx, miny, maxx, maxy, src.transform)
+        data = src.read(1, window=window)
+        data = np.where(np.isnan(data), 0, data)
+        window_transform = src.window_transform(window)
+
+        polygon_mask = rasterize(
+            [polygon],
+            out_shape=data.shape,
+            transform=window_transform,
+            fill=0,
+            default_value=1,
+            dtype=np.uint8,
+        )
+
+        masked_data = np.where(polygon_mask, data, 0)
+        del data, polygon_mask
+        gc.collect()
+    return masked_data, window_transform
+
+
+def get_one_raster_image(
+    raster_path: str,
+    polygon: geometries.MultiPolygon,
+    class_value: int,
     values: List[int],
     colors: List[str],
 ) -> str:
@@ -31,48 +62,40 @@ def crop_raster(
     colormap: Dict[int, Tuple[int, int, int, int]] = {
         value: hex_to_rgba(color) for value, color in zip(values, colors)
     }
-
-    if category not in colormap:
+    if class_value not in colormap:
         raise NotFoundError(
-            usr_msg="Selected category is not available in values.",
-            log_msg=f"Category {category} not found in values.",
+            usr_msg="Selected class is not available in the collection.",
+            log_msg=f"Class {class_value} not found in in the collection.",
         )
 
     try:
-        with Reader(input=raster_path, options={}) as image:
-            img = image.feature(polygon)
-
-            color = colormap[category]
-
-            rendered_img = img.render(
-                add_mask=True, colormap={category: color}
+        masked_data, _ = crop_raster_by_polygon(raster_path, polygon)
+        if len(masked_data) == 0 or np.all(masked_data != class_value):
+            raise NotFoundError(
+                usr_msg="No data available for the selected class.",
+                log_msg=f"No data generated for class value {class_value}.",
             )
+        h, w = masked_data.shape
+        rgba = np.zeros((h, w, 4), dtype=np.uint8)
 
-            if not rendered_img:
-                raise NotFoundError(
-                    usr_msg="No data available for the selected category.",
-                    log_msg=f"No data generated for category {category}.",
-                )
+        rgba[masked_data == class_value] = colormap[class_value]
 
-            pil_image = Image.open(io.BytesIO(rendered_img))
-            img_buffer = io.BytesIO()
-            pil_image.save(img_buffer, format="PNG")
-            img_buffer.seek(0)
-
-            img_base64 = base64.b64encode(img_buffer.getvalue()).decode(
-                "utf-8"
-            )
-
+        pil_image = Image.fromarray(rgba, mode="RGBA")
+        img_buffer = io.BytesIO()
+        pil_image.save(img_buffer, format="PNG")
+        img_buffer.seek(0)
+        img_base64 = base64.b64encode(img_buffer.getvalue()).decode("utf-8")
+        del masked_data, rgba, img_buffer, pil_image
     except Exception as e:
         logger.error(
-            f"Unexpected error rendering category {category}: {str(e)}"
+            f"Unexpected error rendering class value {class_value}: {str(e)}"
         )
         raise ServerError(
             code=500,
-            usr_msg=f"There was an error processing category {category}.",
+            usr_msg=f"There was an error processing the requested class.",
             e=e,
         )
-
+    gc.collect()
     return img_base64
 
 

@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import Dict
 
 from app.middleware.exceptions import UnsupportedMetricException
 from app.routes.schemas.MetricResponse import (

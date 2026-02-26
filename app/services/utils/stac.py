@@ -42,7 +42,7 @@ async def fetch_collection_metadata(
             classes=properties.get("classes", []),
         )
 
-        categories = {
+        classes_map = {
             class_name: value
             for class_name, value in zip(
                 metadata_properties.classes, metadata_properties.values
@@ -50,7 +50,7 @@ async def fetch_collection_metadata(
         }
 
         return (
-            categories,
+            classes_map,
             metadata_properties.values,
             metadata_properties.colors,
         )

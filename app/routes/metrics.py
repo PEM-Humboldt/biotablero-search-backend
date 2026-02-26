@@ -120,14 +120,18 @@ async def get_layer_by_polygon(
     metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
     polygon_id: Annotated[int, Query(description="Polygon ID to use")],
     item_id: Annotated[
-        str, Query(description="The ID of the item", examples=["2016-2021"])
+        str,
+        Query(
+            description="The ID of the item, corresponds to the id of a values object",
+            examples=["2016-2021"],
+        ),
     ],
-    category: Annotated[
-        int,
+    class_id: Annotated[
+        str,
         Query(
             description=(
-                "Numeric code representing a classification category used to differentiate types of land cover or change. "
-                "For example: 0 = Loss (deforested areas), 1 = Persistence (stable forest), 2 = Non-Forest (non-forest areas)."
+                "Class value associated to the layer requested, corresponds to one of the keys in a values object (except 'id') "
+                "For example: Natural"
             ),
             examples=[0],
         ),
@@ -137,6 +141,6 @@ async def get_layer_by_polygon(
     Returns the url of rendered image layer for a given metric, polygon ID, item ID, and category,
     typically used to visualize spatial data such as forest loss, persistence, or non-forest areas.
     """
-    return await metrics_service.get_or_create_layer_by_polygon(
-        metric_id, polygon_id, item_id, category
+    return await metrics_service.get_or_create_polygon_metric_layer(
+        metric_id, polygon_id, item_id, class_id
     )

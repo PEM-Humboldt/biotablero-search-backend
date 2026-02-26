@@ -19,7 +19,12 @@ from pyproj import Transformer
 from geojson_pydantic import geometries
 
 from app.middleware.log_middleware import logger
-from app.utils.errors import NotFoundError, ServerError, UnprocessableError
+from app.utils.errors import (
+    NotFoundError,
+    ServerError,
+    UnprocessableError,
+    MetadataError,
+)
 
 
 def crop_raster_by_polygon(
@@ -63,18 +68,19 @@ def get_one_raster_image(
         value: hex_to_rgba(color) for value, color in zip(values, colors)
     }
     if class_value not in colormap:
-        raise NotFoundError(
-            usr_msg="Selected class is not available in the collection.",
-            log_msg=f"Class {class_value} not found in in the collection.",
+        raise MetadataError(
+            code=501,
+            usr_msg="There was an internal error processing the request",
+            log_msg=f"Class {class_value} not found in the colors metadata.",
         )
 
+    masked_data, _ = crop_raster_by_polygon(raster_path, polygon)
+    if len(masked_data) == 0 or np.all(masked_data != class_value):
+        raise NotFoundError(
+            usr_msg="No data available for the selected class.",
+            log_msg=f"No data generated for class value {class_value}.",
+        )
     try:
-        masked_data, _ = crop_raster_by_polygon(raster_path, polygon)
-        if len(masked_data) == 0 or np.all(masked_data != class_value):
-            raise NotFoundError(
-                usr_msg="No data available for the selected class.",
-                log_msg=f"No data generated for class value {class_value}.",
-            )
         h, w = masked_data.shape
         rgba = np.zeros((h, w, 4), dtype=np.uint8)
 

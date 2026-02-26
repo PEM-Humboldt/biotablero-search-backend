@@ -35,7 +35,7 @@ router = fastapi.APIRouter(
         },
         404: {"description": "Not found"},
         422: {
-            "description": "Validation error",
+            "description": "Validation or unprocessable error",
             "content": {
                 "application/json": {"example": validation_error_example}
             },

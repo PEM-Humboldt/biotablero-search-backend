@@ -110,9 +110,16 @@ async def get_or_create_polygon_metric_layer(
 
     polygon = geometries.MultiPolygon(**polygon_obj.geometry)
 
-    img_base64 = await OperationFunctions(
+    calculate_layer_func = OperationFunctions(
         metric_obj.operation_type
-    ).layer_function(
+    ).layer_function
+
+    if calculate_layer_func is None:
+        raise HTTPException(
+            status_code=501, detail="Metric doesn't have an associated layer"
+        )
+
+    img_base64 = await calculate_layer_func(
         polygon,
         primary_collection.collection,
         item_id,
@@ -316,27 +323,7 @@ async def calculate_single_coll_layer(
     return image_base64
 
 
-def calculate_single_coll_all_items_layer():
-    pass
-
-
 def calculate_two_colls_layer():
-    pass
-
-
-def calculate_ave_coll_layer():
-    pass
-
-
-def calculate_ave_multiple_colls_layer():
-    pass
-
-
-def calculate_cat_single_coll_layer():
-    pass
-
-
-def calculate_cat_two_colls_layer():
     pass
 
 
@@ -346,7 +333,7 @@ def calculate_cat_single_coll_filtered_layer():
 
 class OperationFunctions:
     def __init__(self, operation):
-        values_function = {
+        values_functions = {
             "AREA_SINGLE-COLLECTION": calculate_single_coll_values,
             "AREA_SINGLE-COLLECTION_ALL-ITEMS": calculate_single_coll_all_items_values,
             "AREA_TWO-COLLECTIONS": calculate_two_colls_values,
@@ -358,13 +345,13 @@ class OperationFunctions:
         }
         layer_functions = {
             "AREA_SINGLE-COLLECTION": calculate_single_coll_layer,
-            "AREA_SINGLE-COLLECTION_ALL-ITEMS": calculate_single_coll_all_items_layer,
+            "AREA_SINGLE-COLLECTION_ALL-ITEMS": calculate_single_coll_layer,
             "AREA_TWO-COLLECTIONS": calculate_two_colls_layer,
-            "AVERAGE_SINGLE-COLLECTION": calculate_ave_coll_layer,
-            "AVERAGE_MULTIPLE-COLLECTION_ALL-ITEMS": calculate_ave_multiple_colls_layer,
-            "AREA_CATEGORIES_SINGLE-COLLECTION": calculate_cat_single_coll_layer,
-            "AREA_CATEGORIES_TWO-COLLECTIONS": calculate_cat_two_colls_layer,
             "AREA_CATEGORIES_SINGLE-COLLECTION_FILTERED": calculate_cat_single_coll_filtered_layer,
         }
-        self.values_function = values_function[operation]
-        self.layer_function = layer_functions[operation]
+        self.values_function = values_functions[operation]
+        self.layer_function = (
+            layer_functions[operation]
+            if operation in layer_functions
+            else None
+        )

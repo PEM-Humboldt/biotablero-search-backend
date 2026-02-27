@@ -1,9 +1,10 @@
 import fastapi
 
 from typing import Annotated, cast
-from fastapi import Path
+from fastapi import Path, HTTPException
 
 from app.middleware.exceptions import UnsupportedMetricException
+from app.routes.schemas.LayerResponse import LayerResponse
 from app.routes.schemas.MetricResponse import MetricResponse
 from app.utils.metrics_config import (
     ALLOWED_METRICS,
@@ -12,7 +13,6 @@ from app.utils.metrics_config import (
     MetricConfigBase,
 )
 from fastapi import Query
-from app.routes.schemas.LayerResponse import LayerResponse
 import app.services.metrics as metrics_service
 
 validation_error_example = {
@@ -107,9 +107,16 @@ async def get_values_by_polygon(
     polygon_id: int,
 ) -> MetricResponse:
     """Returns serialized metric values for a given polygon ID and metric."""
-    return await metrics_service.get_or_create_polygon_metric(
+    metric_config = METRICS_CONFIG.get(metric_id)
+    if not metric_config:
+        raise HTTPException(
+            status_code=400, detail=f"Metric '{metric_id}' not supported"
+        )
+    model_response = metric_config["model"]
+    values = await metrics_service.get_or_create_polygon_metric(
         polygon_id, metric_id
     )
+    return model_response(**values)
 
 
 @router.get(
@@ -148,11 +155,17 @@ async def get_layer_by_polygon(
             examples=[0],
         ),
     ],
-):
+) -> LayerResponse:
     """
     Returns the url of rendered image layer for a given metric, polygon ID, item ID, and category,
     typically used to visualize spatial data such as forest loss, persistence, or non-forest areas.
     """
-    return await metrics_service.get_or_create_polygon_metric_layer(
+    metric_config = METRICS_CONFIG.get(metric_id)
+    if not metric_config:
+        raise HTTPException(
+            status_code=400, detail=f"Metric '{metric_id}' not supported"
+        )
+    layer = await metrics_service.get_or_create_polygon_metric_layer(
         metric_id, polygon_id, item_id, class_id
     )
+    return LayerResponse(**layer)

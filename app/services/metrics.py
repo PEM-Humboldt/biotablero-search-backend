@@ -3,9 +3,6 @@ from typing import Dict, List
 from geojson_pydantic import geometries
 from fastapi import HTTPException
 
-from app.routes.schemas.LayerResponse import LayerResponse
-
-from app.routes.schemas.MetricResponse import MetricResponse
 from app.services.utils.raster import (
     get_one_raster_image,
     get_one_raster_areas,
@@ -33,23 +30,16 @@ from app.persistence.metric_persistence import (
 
 from app.utils.metrics_config import METRICS_CONFIG
 from app.utils.s3_utils import upload_to_s3
-from app.utils.errors import ServerError, UnprocessableError
+from app.utils.errors import ServerError
 
 
 async def get_or_create_polygon_metric(
     polygon_id: int, metric_name: str
-) -> MetricResponse:
+) -> List[Dict[str, str | float]] | Dict[str, str | float]:
     """
     Checks if metric values already exist for the given polygon and metric.
     If they exist, return them. Otherwise, calculate, persist, and return.
     """
-
-    metric_config = METRICS_CONFIG.get(metric_name)
-    if not metric_config:
-        raise HTTPException(
-            status_code=400, detail=f"Metric '{metric_name}' not supported"
-        )
-    model_response = metric_config["model"]
 
     polygon_obj = await get_polygon_by_id(polygon_id)
 
@@ -87,12 +77,12 @@ async def get_or_create_polygon_metric(
     ).values_function(primary_collection.collection, metric_obj, polygon)
 
     await create_polygon_metric(polygon_obj, metric_obj, values)
-    return model_response(**values)
+    return values
 
 
 async def get_or_create_polygon_metric_layer(
     metric_name: str, polygon_id: int, item_id: str, class_id: str
-) -> LayerResponse:
+) -> Dict[str, str]:
     """
     Checks if the layer already exists. If not, generates it, saves and returns the URL.
     """
@@ -117,7 +107,7 @@ async def get_or_create_polygon_metric_layer(
     )
 
     if existing_layer:
-        return LayerResponse(layer=existing_layer.layer_url)
+        return {"layer": existing_layer.layer_url}
 
     primary_collection = next(
         (mc for mc in metric_obj.collections if mc.is_primary), None
@@ -163,7 +153,7 @@ async def get_or_create_polygon_metric_layer(
         image_url=image_url,
     )
 
-    return LayerResponse(layer=image_url)
+    return {"layer": image_url}
 
 
 async def calculate_single_coll_values(

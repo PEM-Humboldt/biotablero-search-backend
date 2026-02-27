@@ -1,73 +1,77 @@
-from typing import Any, Generic, List, Type, TypeVar, TypedDict
+from typing import Type, TypedDict, Union
+
 
 from app.routes.schemas.MetricResponse import (
-    LossPersistenceResponse,
+    LossPersistenceListResponse,
+    CoverageResponse,
+    CurrentHFResponse,
+    CurrentHFAverageResponse,
+    LossPersistenceSingleResponse,
+    ParamoResponse,
+    TropicalDryForestResponse,
+    WetlandResponse,
+)
+
+MetricResponse = Union[
+    LossPersistenceListResponse,
     CoverageResponse,
     CurrentHFResponse,
     CurrentHFAverageResponse,
     ParamoResponse,
     TropicalDryForestResponse,
     WetlandResponse,
-)
-
-T = TypeVar("T")
+]
 
 
-class MetricConfigBase(TypedDict, Generic[T]):
-    model: Type[T]
+class MetricConfig(TypedDict):
+    model: Type[MetricResponse]
+    example: MetricResponse
     description: str
-    example: Any
-
-
-class MetricConfigList(MetricConfigBase[T]):
-    example: List[T]
-
-
-class MetricConfigSingle(MetricConfigBase[T]):
-    example: T
 
 
 class MetricsConfigType(TypedDict):
-    lossPersistence: MetricConfigList[LossPersistenceResponse]
-    coverage: MetricConfigSingle[CoverageResponse]
-    currentHF: MetricConfigSingle[CurrentHFResponse]
-    currentHF_average: MetricConfigSingle[CurrentHFAverageResponse]
-    paramo: MetricConfigSingle[ParamoResponse]
-    tropicalDryForest: MetricConfigSingle[TropicalDryForestResponse]
-    wetland: MetricConfigSingle[WetlandResponse]
+    lossPersistence: MetricConfig
+    coverage: MetricConfig
+    currentHF: MetricConfig
+    currentHF_average: MetricConfig
+    paramo: MetricConfig
+    tropicalDryForest: MetricConfig
+    wetland: MetricConfig
 
 
 # This config contains everything related to FastAPI and Pydantic validations
 # Anything related to processing logic must be stored in database
 METRICS_CONFIG: MetricsConfigType = {
     "lossPersistence": {
-        "model": LossPersistenceResponse,
-        "example": [
-            LossPersistenceResponse(
-                Perdida=1971.3859302816563,
-                Persistencia=161349.158786824,
-                **{"No Bosque": 192519.67643274338},
-                id="2016-2021",
-            ),
-            LossPersistenceResponse(
-                Perdida=1572.6614325195167,
-                Persistencia=162684.80917653913,
-                **{"No Bosque": 191582.75054079038},
-                id="2011-2015",
-            ),
-            LossPersistenceResponse(
-                Perdida=844.3758017993621,
-                Persistencia=164716.61720378936,
-                **{"No Bosque": 190279.2281442603},
-                id="2006-2010",
-            ),
-            LossPersistenceResponse(
-                Perdida=1164.8889557696975,
-                Persistencia=165904.73952933252,
-                **{"No Bosque": 188770.59266474683},
-                id="2000-2005",
-            ),
-        ],
+        "model": LossPersistenceListResponse,
+        "example": LossPersistenceListResponse(
+            [
+                LossPersistenceSingleResponse(
+                    Perdida=1971.3859302816563,
+                    Persistencia=161349.158786824,
+                    **{"No Bosque": 192519.67643274338},
+                    id="2016-2021",
+                ),
+                LossPersistenceSingleResponse(
+                    Perdida=1572.6614325195167,
+                    Persistencia=162684.80917653913,
+                    **{"No Bosque": 191582.75054079038},
+                    id="2011-2015",
+                ),
+                LossPersistenceSingleResponse(
+                    Perdida=844.3758017993621,
+                    Persistencia=164716.61720378936,
+                    **{"No Bosque": 190279.2281442603},
+                    id="2006-2010",
+                ),
+                LossPersistenceSingleResponse(
+                    Perdida=1164.8889557696975,
+                    Persistencia=165904.73952933252,
+                    **{"No Bosque": 188770.59266474683},
+                    id="2000-2005",
+                ),
+            ]
+        ),
         "description": "Forest loss and persistence",
     },
     "coverage": {
@@ -139,6 +143,3 @@ METRICS_CONFIG: MetricsConfigType = {
 }
 
 ALLOWED_METRICS = list(METRICS_CONFIG.keys())
-ALLOWED_METRICS_DISPLAY = ", ".join(
-    f"`{metric}`" for metric in ALLOWED_METRICS
-)

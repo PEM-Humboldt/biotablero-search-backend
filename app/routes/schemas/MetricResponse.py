@@ -1,14 +1,16 @@
-from typing import Union
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, RootModel
 
 
 class BaseMetricResult(BaseModel):
     id: str
 
-    model_config = {"extra": "forbid"}  # prevents unexpected fields
+    model_config = {
+        "extra": "forbid",
+        "populate_by_name": True,
+    }
 
 
-class LossPersistenceResponse(BaseMetricResult):
+class LossPersistenceSingleResponse(BaseMetricResult):
     """
     Response model for forest loss and persistence metrics in a given period.
     """
@@ -17,7 +19,11 @@ class LossPersistenceResponse(BaseMetricResult):
     Persistencia: float
     No_Bosque: float = Field(alias="No Bosque")
 
-    model_config = {"populate_by_name": True}
+
+class LossPersistenceListResponse(
+    RootModel[list[LossPersistenceSingleResponse]]
+):
+    pass
 
 
 class CoverageResponse(BaseMetricResult):
@@ -72,14 +78,3 @@ class WetlandResponse(BaseMetricResult):
     """
 
     Humedal: float
-
-
-MetricResponse = Union[
-    LossPersistenceResponse,
-    CoverageResponse,
-    CurrentHFResponse,
-    CurrentHFAverageResponse,
-    ParamoResponse,
-    TropicalDryForestResponse,
-    WetlandResponse,
-]

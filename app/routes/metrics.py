@@ -1,16 +1,15 @@
 import fastapi
 
 from typing import Annotated, cast
-from fastapi import Path, HTTPException
+from fastapi import Path
 
 from app.middleware.exceptions import UnsupportedMetricException
 from app.routes.schemas.LayerResponse import LayerResponse
-from app.routes.schemas.MetricResponse import MetricResponse
 from app.utils.metrics_config import (
     ALLOWED_METRICS,
-    ALLOWED_METRICS_DISPLAY,
     METRICS_CONFIG,
-    MetricConfigBase,
+    MetricConfig,
+    MetricResponse,
 )
 from fastapi import Query
 import app.services.metrics as metrics_service
@@ -64,21 +63,21 @@ async def metric_id_param(
     metric_id: Annotated[
         str,
         Path(
-            description=f"Metric you wish to query. Allowed values: {ALLOWED_METRICS_DISPLAY}",
+            description=f"Metric you wish to query. See the examples list",
             examples=ALLOWED_METRICS,
         ),
     ],
-) -> str:
+) -> tuple[str, MetricConfig]:
     if metric_id not in METRICS_CONFIG:
         raise UnsupportedMetricException(metric_id)
-    return metric_id
+    return (metric_id, METRICS_CONFIG[metric_id])
 
 
 def build_documentation_examples():
     result = {}
 
     for metric_key, v in METRICS_CONFIG.items():
-        config = cast(MetricConfigBase, v)
+        config = cast(MetricConfig, v)
 
         result[metric_key] = {
             "summary": metric_key,
@@ -103,20 +102,20 @@ def build_documentation_examples():
     },
 )
 async def get_values_by_polygon(
-    metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
+    metric: Annotated[
+        tuple[str, MetricConfig], fastapi.Depends(metric_id_param)
+    ],
     polygon_id: int,
 ) -> MetricResponse:
     """Returns serialized metric values for a given polygon ID and metric."""
-    metric_config = METRICS_CONFIG.get(metric_id)
-    if not metric_config:
-        raise HTTPException(
-            status_code=400, detail=f"Metric '{metric_id}' not supported"
-        )
+    metric_id, metric_config = metric
     model_response = metric_config["model"]
+
     values = await metrics_service.get_or_create_polygon_metric(
         polygon_id, metric_id
     )
-    return model_response(**values)
+
+    return model_response.model_validate(values)
 
 
 @router.get(
@@ -136,7 +135,9 @@ async def get_values_by_polygon(
     },
 )
 async def get_layer_by_polygon(
-    metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
+    metric: Annotated[
+        tuple[str, MetricConfig], fastapi.Depends(metric_id_param)
+    ],
     polygon_id: Annotated[int, Query(description="Polygon ID to use")],
     item_id: Annotated[
         str,
@@ -160,11 +161,8 @@ async def get_layer_by_polygon(
     Returns the url of rendered image layer for a given metric, polygon ID, item ID, and category,
     typically used to visualize spatial data such as forest loss, persistence, or non-forest areas.
     """
-    metric_config = METRICS_CONFIG.get(metric_id)
-    if not metric_config:
-        raise HTTPException(
-            status_code=400, detail=f"Metric '{metric_id}' not supported"
-        )
+
+    metric_id, _metric_config = metric
     layer = await metrics_service.get_or_create_polygon_metric_layer(
         metric_id, polygon_id, item_id, class_id
     )

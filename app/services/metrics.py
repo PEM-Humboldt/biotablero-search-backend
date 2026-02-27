@@ -229,8 +229,6 @@ async def calculate_two_colls_values(
     _, raster_sec_url = get_items_asset_url(secondary_collection.name)[
         closest_index
     ]
-    print(raster_pri_url, raster_sec_url)
-    print("==============================================================================================================")
     raster_values = get_two_raster_areas(
         raster_pri_url, raster_sec_url, polygon, categories
     )

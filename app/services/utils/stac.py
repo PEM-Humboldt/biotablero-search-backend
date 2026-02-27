@@ -174,3 +174,20 @@ def get_asset_href_by_item_id(collection_id: str, item_id: str) -> str:
         )
 
     return asset_href
+
+
+def get_collection_resol(
+    collection_id: str,
+) -> List[float]:
+
+    collection_url = url.build_url(
+        settings.stac_url, f"/collections/{collection_id}"
+    )
+    response = requests.get(collection_url)
+    response.raise_for_status()
+    collection_metadata = response.json()
+    if "summaries" not in collection_metadata:
+        raise ValueError("The 'summaries' key is not found in the response.")
+
+    resol = collection_metadata["summaries"]["raster:spatial_resolution"]
+    return resol

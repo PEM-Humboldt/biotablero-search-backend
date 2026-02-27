@@ -5,6 +5,7 @@ from fastapi import HTTPException
 
 from app.routes.schemas.LayerResponse import LayerResponse
 
+from app.routes.schemas.MetricResponse import MetricResponse
 from app.services.utils.raster import (
     get_one_raster_image,
     get_one_raster_areas,
@@ -30,17 +31,26 @@ from app.persistence.metric_persistence import (
     get_metric_by_name,
 )
 
+from app.utils.metrics_config import METRICS_CONFIG
 from app.utils.s3_utils import upload_to_s3
 from app.utils.errors import ServerError, UnprocessableError
 
 
 async def get_or_create_polygon_metric(
     polygon_id: int, metric_name: str
-) -> List[Dict[str, str | float]] | Dict[str, str | float]:
+) -> MetricResponse:
     """
     Checks if metric values already exist for the given polygon and metric.
     If they exist, return them. Otherwise, calculate, persist, and return.
     """
+
+    metric_config = METRICS_CONFIG.get(metric_name)
+    if not metric_config:
+        raise HTTPException(
+            status_code=400, detail=f"Metric '{metric_name}' not supported"
+        )
+    model_response = metric_config["model"]
+
     polygon_obj = await get_polygon_by_id(polygon_id)
 
     if not polygon_obj:
@@ -77,7 +87,7 @@ async def get_or_create_polygon_metric(
     ).values_function(primary_collection.collection, metric_obj, polygon)
 
     await create_polygon_metric(polygon_obj, metric_obj, values)
-    return values
+    return model_response(**values)
 
 
 async def get_or_create_polygon_metric_layer(

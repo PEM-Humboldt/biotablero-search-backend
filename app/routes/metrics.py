@@ -1,10 +1,16 @@
 import fastapi
 
-from typing import Annotated, List, Dict, Any
+from typing import Annotated, cast
 from fastapi import Path
 
 from app.middleware.exceptions import UnsupportedMetricException
-from app.utils.metrics_config import METRICS_CONFIG
+from app.routes.schemas.MetricResponse import MetricResponse
+from app.utils.metrics_config import (
+    ALLOWED_METRICS,
+    ALLOWED_METRICS_DISPLAY,
+    METRICS_CONFIG,
+    MetricConfigBase,
+)
 from fastapi import Query
 from app.routes.schemas.LayerResponse import LayerResponse
 import app.services.metrics as metrics_service
@@ -54,12 +60,6 @@ router = fastapi.APIRouter(
 )
 
 
-ALLOWED_METRICS = list(METRICS_CONFIG.keys())
-ALLOWED_METRICS_DISPLAY = ", ".join(
-    map(lambda met: "`" + met + "`", ALLOWED_METRICS)
-)
-
-
 async def metric_id_param(
     metric_id: Annotated[
         str,
@@ -74,6 +74,21 @@ async def metric_id_param(
     return metric_id
 
 
+def build_documentation_examples():
+    result = {}
+
+    for metric_key, v in METRICS_CONFIG.items():
+        config = cast(MetricConfigBase, v)
+
+        result[metric_key] = {
+            "summary": metric_key,
+            "value": config["example"],
+            "description": config["description"],
+        }
+
+    return result
+
+
 @router.get(
     "/{metric_id}/values/{polygon_id}",
     responses={
@@ -81,10 +96,7 @@ async def metric_id_param(
             "description": "Metric data by polygon",
             "content": {
                 "application/json": {
-                    "examples": {
-                        k: {"summary": k, "value": v["example"]}
-                        for k, v in METRICS_CONFIG.items()
-                    }
+                    "examples": build_documentation_examples()
                 }
             },
         }
@@ -93,7 +105,7 @@ async def metric_id_param(
 async def get_values_by_polygon(
     metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
     polygon_id: int,
-) -> List[Dict[str, Any]] | Dict:
+) -> MetricResponse:
     """Returns serialized metric values for a given polygon ID and metric."""
     return await metrics_service.get_or_create_polygon_metric(
         polygon_id, metric_id

@@ -37,6 +37,9 @@ class MetricsConfigType(TypedDict):
     paramo: MetricConfig
     tropicalDryForest: MetricConfig
     wetland: MetricConfig
+    coverage_paramo: MetricConfig
+    coverage_tropicalDryForest: MetricConfig
+    coverage_wetland: MetricConfig
 
 
 # This config contains everything related to FastAPI and Pydantic validations

@@ -50,7 +50,7 @@ class CurrentHFAverageResponse(BaseMetricResult):
     Average: float
 
 
-class paramoResponse(BaseMetricResult):
+class ParamoResponse(BaseMetricResult):
     """
     Response model for paramos area in a given year.
     """
@@ -58,7 +58,7 @@ class paramoResponse(BaseMetricResult):
     Paramo: float
 
 
-class tropicalDryForestResponse(BaseMetricResult):
+class TropicalDryForestResponse(BaseMetricResult):
     """
     Response model for tropical dry forest area in a given year.
     """
@@ -66,7 +66,7 @@ class tropicalDryForestResponse(BaseMetricResult):
     BosqueSeco: float
 
 
-class wetlandResponse(BaseMetricResult):
+class WetlandResponse(BaseMetricResult):
     """
     Response model for wetland area in a given year.
     """
@@ -79,7 +79,7 @@ MetricResponse = Union[
     CoverageResponse,
     CurrentHFResponse,
     CurrentHFAverageResponse,
-    paramoResponse,
-    tropicalDryForestResponse,
-    wetlandResponse,
+    ParamoResponse,
+    TropicalDryForestResponse,
+    WetlandResponse,
 ]

@@ -5,9 +5,9 @@ from app.routes.schemas.MetricResponse import (
     CoverageResponse,
     CurrentHFResponse,
     CurrentHFAverageResponse,
-    paramoResponse,
-    tropicalDryForestResponse,
-    wetlandResponse,
+    ParamoResponse,
+    TropicalDryForestResponse,
+    WetlandResponse,
 )
 
 T = TypeVar("T")
@@ -32,9 +32,9 @@ class MetricsConfigType(TypedDict):
     coverage: MetricConfigSingle[CoverageResponse]
     currentHF: MetricConfigSingle[CurrentHFResponse]
     currentHF_average: MetricConfigSingle[CurrentHFAverageResponse]
-    paramo: MetricConfigSingle[paramoResponse]
-    tropicalDryForest: MetricConfigSingle[tropicalDryForestResponse]
-    wetland: MetricConfigSingle[wetlandResponse]
+    paramo: MetricConfigSingle[ParamoResponse]
+    tropicalDryForest: MetricConfigSingle[TropicalDryForestResponse]
+    wetland: MetricConfigSingle[WetlandResponse]
 
 
 # This config contains everything related to FastAPI and Pydantic validations
@@ -101,24 +101,24 @@ METRICS_CONFIG: MetricsConfigType = {
         "description": "Average human footprint index",
     },
     "paramo": {
-        "model": paramoResponse,
-        "example": paramoResponse(
+        "model": ParamoResponse,
+        "example": ParamoResponse(
             id="Paramos30",
             Paramo=25091,
         ),
         "description": "Paramo area",
     },
     "tropicalDryForest": {
-        "model": tropicalDryForestResponse,
-        "example": tropicalDryForestResponse(
+        "model": TropicalDryForestResponse,
+        "example": TropicalDryForestResponse(
             id="BosqueSeco30",
             BosqueSeco=1730,
         ),
         "description": "Tropical dry forest area",
     },
     "wetland": {
-        "model": wetlandResponse,
-        "example": wetlandResponse(
+        "model": WetlandResponse,
+        "example": WetlandResponse(
             id="Humedales30",
             Humedal=9287,
         ),

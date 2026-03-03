@@ -244,11 +244,11 @@ def get_two_raster_areas(
 
         with rasterio.open(raster2_path) as mask_src:
             if src.crs != mask_src.crs:
-                raise ValueError("Raster coordinate reference systems do not match.")
-            if src.res != mask_src.res:
                 raise ValueError(
-                    "Raster resolutions do not match."
+                    "Raster coordinate reference systems do not match."
                 )
+            if src.res != mask_src.res:
+                raise ValueError("Raster resolutions do not match.")
 
             minx, miny, maxx, maxy = polygon_geom.bounds
             window = from_bounds(minx, miny, maxx, maxy, src.transform)

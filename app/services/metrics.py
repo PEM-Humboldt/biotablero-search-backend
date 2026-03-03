@@ -10,7 +10,8 @@ from app.services.utils.raster import (
     get_two_raster_areas,
 )
 from app.services.utils.stac import (
-    get_collection_resol,
+    get_collection_resolution,
+    get_item_index_by_resolution,
     get_items_asset_url,
     get_asset_href_by_item_id,
 )
@@ -221,13 +222,13 @@ async def calculate_two_colls_values(
     secondary_collection = secondary_collection.collection
 
     id_pri, raster_pri_url = get_items_asset_url(primary_collection.name)[0]
-    resol_pri = get_collection_resol(primary_collection.name)[0]
-    resol_sec = get_collection_resol(secondary_collection.name)
-    closest_index = min(
-        range(len(resol_sec)), key=lambda i: abs(resol_sec[i] - resol_pri)
+    resol_pri = get_collection_resolution(primary_collection.name)[0]
+
+    index_sec = get_item_index_by_resolution(
+        secondary_collection.name, resol_pri
     )
     _, raster_sec_url = get_items_asset_url(secondary_collection.name)[
-        closest_index
+        index_sec
     ]
     raster_values = get_two_raster_areas(
         raster_pri_url, raster_sec_url, polygon, categories

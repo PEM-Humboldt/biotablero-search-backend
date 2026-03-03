@@ -176,9 +176,7 @@ def get_asset_href_by_item_id(collection_id: str, item_id: str) -> str:
     return asset_href
 
 
-def get_collection_resol(
-    collection_id: str,
-) -> List[float]:
+def get_collection_resolution(collection_id: str) -> List[float]:
 
     collection_url = url.build_url(
         settings.stac_url, f"/collections/{collection_id}"
@@ -189,5 +187,26 @@ def get_collection_resol(
     if "summaries" not in collection_metadata:
         raise ValueError("The 'summaries' key is not found in the response.")
 
-    resol = collection_metadata["summaries"]["raster:spatial_resolution"]
-    return resol
+    resolution = collection_metadata["summaries"]["raster:spatial_resolution"]
+    return resolution
+
+
+def get_item_index_by_resolution(collection_id: str, resol_obj: float) -> int:
+    collection_url = url.build_url(
+        settings.stac_url, f"/collections/{collection_id}/items"
+    )
+    response = requests.get(collection_url)
+    response.raise_for_status()
+    collection_metadata = response.json()
+    items = collection_metadata["features"]
+    resolutions = []
+    for item in items:
+        for asset in item.get("assets", {}).values():
+            for band in asset.get("raster:bands", []):
+                if "spatial_resolution" in band:
+                    resolutions.append(band["spatial_resolution"])
+                    print(band["spatial_resolution"])
+    closest_index = min(
+        range(len(resolutions)), key=lambda i: abs(resolutions[i] - resol_obj)
+    )
+    return closest_index

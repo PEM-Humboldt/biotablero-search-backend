@@ -10,7 +10,7 @@ from app.services.utils.raster import (
     get_two_raster_areas,
 )
 from app.services.utils.stac import (
-    get_collection_resolution,
+    get_item_resolution,
     get_item_index_by_resolution,
     get_items_asset_url,
     get_asset_href_by_item_id,
@@ -141,7 +141,8 @@ async def get_or_create_polygon_metric_layer(
         item_id,
         class_id,
     )
-
+    print(item_id, item_id, class_id)
+    print("****************************************************************")
     image_url = await upload_to_s3(
         image_data=img_base64,
         filename=f"{metric_name}_{polygon_id}_{item_id}_{class_id}.png",
@@ -222,7 +223,7 @@ async def calculate_two_colls_values(
     secondary_collection = secondary_collection.collection
 
     id_pri, raster_pri_url = get_items_asset_url(primary_collection.name)[0]
-    resol_pri = get_collection_resolution(primary_collection.name)[0]
+    resol_pri = get_item_resolution(primary_collection.name, 0)
 
     index_sec = get_item_index_by_resolution(
         secondary_collection.name, resol_pri

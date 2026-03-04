@@ -178,6 +178,9 @@ def get_asset_href_by_item_id(collection_id: str, item_id: str) -> str:
 
 
 def get_item_resolution(collection_id: str, index_item: int) -> float:
+    """
+    Returns the spatial resolution of the item at the given index in the collection.
+    """
     items_url = get_collection_items_url(collection_id)
     response = None
 
@@ -227,7 +230,9 @@ def get_item_resolution(collection_id: str, index_item: int) -> float:
 
 
 def get_item_index_by_resolution(collection_id: str, resol_obj: float) -> int:
-
+    """
+    Returns the index of the item in the collection that has the closest spatial resolution to the given value.
+    """
     items_url = get_collection_items_url(collection_id)
     response = None
 
@@ -254,21 +259,27 @@ def get_item_index_by_resolution(collection_id: str, resol_obj: float) -> int:
             usr_msg=f"{collection_id} data is incomplete",
             log_msg=f"Collection items url exist but it has no features, url: {items_url}",
         )
-    items = items_data.get("features", {})
 
-    resolutions = []
-    for item in items:
+    items = items_data.get("features", {})
+    item_resolutions: list[tuple[int, float]] = []
+
+    for idx, item in enumerate(items):
         for asset in item.get("assets", {}).values():
             for band in asset.get("raster:bands", []):
-                if "spatial_resolution" in band:
-                    resolutions.append(band["spatial_resolution"])
-    if not resolutions:
+                resolution = band.get("spatial_resolution")
+                if resolution is not None:
+                    item_resolutions.append((idx, resolution))
+                    break
+            if resolution is not None:
+                break
+    if not item_resolutions:
         raise NotFoundError(
             usr_msg="No spatial resolution information found in any item",
             log_msg=f"No raster bands with spatial_resolution found in collection {collection_id}",
         )
 
-    closest_index = min(
-        range(len(resolutions)), key=lambda i: abs(resolutions[i] - resol_obj)
+    closest_item_index, _ = min(
+        item_resolutions,
+        key=lambda x: abs(x[1] - resol_obj),
     )
-    return closest_index
+    return closest_item_index

@@ -141,8 +141,6 @@ async def get_or_create_polygon_metric_layer(
         item_id,
         class_id,
     )
-    print(item_id, item_id, class_id)
-    print("****************************************************************")
     image_url = await upload_to_s3(
         image_data=img_base64,
         filename=f"{metric_name}_{polygon_id}_{item_id}_{class_id}.png",

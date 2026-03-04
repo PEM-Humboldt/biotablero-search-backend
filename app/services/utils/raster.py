@@ -49,7 +49,7 @@ def crop_raster_by_polygon(
             dtype=np.uint8,
         )
 
-        masked_data = np.where(polygon_mask, data, 0)
+        masked_data = np.where(polygon_mask, data, np.nan)
         del data, polygon_mask
         gc.collect()
     return masked_data, window_transform
@@ -233,6 +233,10 @@ def get_two_raster_areas(
 
     polygon_geom = shape(polygon)
 
+    value_to_category = {val: name for name, val in categories.items()}
+    areas_by_category = {
+        category_key: 0.0 for category_key in categories.keys()
+    }
     with rasterio.open(raster1_path) as src:
         raster_bounds = box(*src.bounds)
         if not polygon_geom.intersects(raster_bounds):
@@ -261,9 +265,24 @@ def get_two_raster_areas(
             data = src.read(1, window=window)
             mask_data = mask_src.read(1, window=window_mask)
 
-            data = np.where(data == src_nanvalue, 0, data)
-            mask_data = np.where(mask_data == mask_src_nanvalue, 0, mask_data)
+            if src_nanvalue is None:
+                pass
+            elif np.isnan(src_nanvalue):
+                data = np.where(np.isnan(data), 0, data)
+            else:
+                data = np.where(data == src_nanvalue, 0, data)
 
+            if mask_src_nanvalue is None:
+                pass
+            elif np.isnan(mask_src_nanvalue):
+                mask_data = np.where(np.isnan(mask_data), 0, mask_data)
+            else:
+                mask_data = np.where(
+                    mask_data == mask_src_nanvalue, 0, mask_data
+                )
+
+            if np.all(mask_data == 0):
+                return areas_by_category
             window_transform = src.window_transform(window)
 
             polygon_mask = rasterize(
@@ -276,8 +295,7 @@ def get_two_raster_areas(
             )
 
             combined_mask = (polygon_mask == 1) & (mask_data == 1)
-            masked_data = np.where(combined_mask, data, 0)
-
+            masked_data = np.where(combined_mask, data, np.nan)
             transformer = Transformer.from_crs(
                 "EPSG:4326", "EPSG:9377", always_xy=True
             )
@@ -307,12 +325,6 @@ def get_two_raster_areas(
                 return {}
 
             unique_values, counts = np.unique(valid_data, return_counts=True)
-
-            value_to_category = {val: name for name, val in categories.items()}
-
-            areas_by_category = {
-                category_key: 0.0 for category_key in categories.keys()
-            }
 
             for value, pixel_count in zip(unique_values, counts):
                 area_ha = float(pixel_count * pixel_area_ha)

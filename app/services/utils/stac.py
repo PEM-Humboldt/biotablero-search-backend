@@ -219,8 +219,8 @@ def get_item_resolution(collection_id: str, index_item: int) -> float:
     item = items_data.get("features")[index_item]
     for asset in item.get("assets", {}).values():
         for band in asset.get("raster:bands", []):
-            if "spatial_resolution" in band:
-                resolution = band["spatial_resolution"]
+            resolution = band.get("spatial_resolution")
+            if resolution is not None:
                 return resolution
 
     raise NotFoundError(
@@ -231,7 +231,7 @@ def get_item_resolution(collection_id: str, index_item: int) -> float:
 
 def get_item_index_by_resolution(collection_id: str, resol_obj: float) -> int:
     """
-    Returns the index of the item in the collection that has the closest spatial resolution to the given value.
+    Returns the index of the item in the collection that has the closest spatial resolution to a given value.
     """
     items_url = get_collection_items_url(collection_id)
     response = None
@@ -263,23 +263,29 @@ def get_item_index_by_resolution(collection_id: str, resol_obj: float) -> int:
     items = items_data.get("features", {})
     item_resolutions: list[tuple[int, float]] = []
 
+    item_resolutions = []
     for idx, item in enumerate(items):
-        for asset in item.get("assets", {}).values():
-            for band in asset.get("raster:bands", []):
-                resolution = band.get("spatial_resolution")
-                if resolution is not None:
-                    item_resolutions.append((idx, resolution))
-                    break
-            if resolution is not None:
-                break
+        resolution = next(
+            (
+                band["spatial_resolution"]
+                for asset in item.get("assets", {}).values()
+                for band in asset.get("raster:bands", [])
+                if "spatial_resolution" in band
+            ),
+            None,
+        )
+
+        if resolution is not None:
+            item_resolutions.append((idx, resolution))
+
     if not item_resolutions:
         raise NotFoundError(
             usr_msg="No spatial resolution information found in any item",
             log_msg=f"No raster bands with spatial_resolution found in collection {collection_id}",
         )
-
     closest_item_index, _ = min(
         item_resolutions,
         key=lambda x: abs(x[1] - resol_obj),
     )
     return closest_item_index
+

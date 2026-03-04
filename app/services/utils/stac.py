@@ -288,4 +288,3 @@ def get_item_index_by_resolution(collection_id: str, resol_obj: float) -> int:
         key=lambda x: abs(x[1] - resol_obj),
     )
     return closest_item_index
-

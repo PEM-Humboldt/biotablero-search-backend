@@ -45,7 +45,7 @@ def crop_raster_by_polygon(
             out_shape=data.shape,
             transform=window_transform,
             fill=False,
-            default_value=1,
+            default_value=True,
             dtype=np.uint8,
         )
 

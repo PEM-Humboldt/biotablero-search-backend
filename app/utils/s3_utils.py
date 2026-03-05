@@ -72,12 +72,12 @@ async def upload_to_s3(
 
     except ConnectTimeoutError as e:
         logger.error(
-            f"Could not connect to S3 endpoint (maybe VPN is disconnected): {str(e)}",
+            f"Could not connect to S3 endpoint: {str(e)}",
             extra={"request_id": request_id_context.get()},
         )
         raise ServerError(
             code=500,
-            usr_msg="Connection to S3 failed — check your VPN connection",
+            usr_msg="There was an error saving the layer",
             e=e,
         )
 

@@ -44,12 +44,12 @@ def crop_raster_by_polygon(
             [polygon],
             out_shape=data.shape,
             transform=window_transform,
-            fill=0,
+            fill=False,
             default_value=1,
             dtype=np.uint8,
         )
 
-        masked_data = np.where(polygon_mask, data, 0)
+        masked_data = np.where(polygon_mask, data, np.nan)
         del data, polygon_mask
         gc.collect()
     return masked_data, window_transform

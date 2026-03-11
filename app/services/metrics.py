@@ -27,9 +27,8 @@ from app.persistence.metric_persistence import (
     get_metric_by_name,
 )
 
-from app.utils.metrics_config import METRICS_CONFIG
 from app.utils.s3_utils import upload_to_s3
-from app.utils.errors import ServerError
+from app.utils.errors import ServerError, MetadataError
 
 
 async def get_or_create_polygon_metric(
@@ -267,10 +266,10 @@ async def calculate_single_coll_layer(
     )
 
     if class_id not in classes_map:
-        # TODO: Change error when rebased
-        raise HTTPException(
-            status_code=400,
-            detail=f"class_id {class_id} doesn't exist in metric",
+        raise MetadataError(
+            code=404,
+            log_msg=f"class_id {class_id} doesn't exist in metric",
+            usr_msg=f"class_id {class_id} doesn't exist in metric",
         )
 
     raster_href = get_asset_href_by_item_id(primary_collection.name, item_id)

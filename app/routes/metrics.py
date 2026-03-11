@@ -153,7 +153,7 @@ async def get_layer_by_polygon(
                 "Class value associated to the layer requested, corresponds to one of the keys in a values object (except 'id') "
                 "For example: Natural"
             ),
-            examples=[0],
+            examples=["Natural"],
         ),
     ],
 ) -> LayerResponse:
@@ -162,7 +162,7 @@ async def get_layer_by_polygon(
     typically used to visualize spatial data such as forest loss, persistence, or non-forest areas.
     """
 
-    metric_id, _metric_config = metric
+    metric_id, _ = metric
     layer = await metrics_service.get_or_create_polygon_metric_layer(
         metric_id, polygon_id, item_id, class_id
     )

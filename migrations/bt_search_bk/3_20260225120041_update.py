@@ -5,6 +5,7 @@ RUN_IN_TRANSACTION = True
 
 async def upgrade(db: BaseDBAsyncClient) -> str:
     return """
+        DROP TABLE IF EXISTS "polygon_metric_item";
         CREATE TABLE IF NOT EXISTS "polygon_metric_item" (
     "id" SERIAL NOT NULL PRIMARY KEY,
     "class_id" VARCHAR(100) NOT NULL,
@@ -14,8 +15,7 @@ async def upgrade(db: BaseDBAsyncClient) -> str:
     "metric_id" INT NOT NULL REFERENCES "metric" ("id") ON DELETE CASCADE,
     "polygon_id" INT NOT NULL REFERENCES "polygon" ("id") ON DELETE CASCADE,
     CONSTRAINT "uid_polygon_met_metric__146f2d" UNIQUE ("metric_id", "polygon_id", "item_id", "class_id")
-);
-        DROP TABLE IF EXISTS "polygon_metric_item";"""
+);"""
 
 
 async def downgrade(db: BaseDBAsyncClient) -> str:

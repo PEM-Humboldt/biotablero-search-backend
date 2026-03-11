@@ -53,7 +53,7 @@ class CurrentHFAverageResponse(BaseMetricResult):
     Response model for Human Footprint average in a given year.
     """
 
-    Average: float
+    average: float
 
 
 class ParamoResponse(BaseMetricResult):
@@ -61,7 +61,7 @@ class ParamoResponse(BaseMetricResult):
     Response model for paramos area in a given year.
     """
 
-    Paramo: float
+    paramo: float
 
 
 class TropicalDryForestResponse(BaseMetricResult):
@@ -69,7 +69,7 @@ class TropicalDryForestResponse(BaseMetricResult):
     Response model for tropical dry forest area in a given year.
     """
 
-    BosqueSeco: float
+    bosqueSeco: float
 
 
 class WetlandResponse(BaseMetricResult):
@@ -77,4 +77,4 @@ class WetlandResponse(BaseMetricResult):
     Response model for wetland area in a given year.
     """
 
-    Humedal: float
+    humedal: float

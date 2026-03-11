@@ -100,7 +100,7 @@ METRICS_CONFIG: MetricsConfigType = {
         "model": CurrentHFAverageResponse,
         "example": CurrentHFAverageResponse(
             id="2018",
-            Average=12.34,
+            average=12.34,
         ),
         "description": "Average human footprint index",
     },
@@ -108,7 +108,7 @@ METRICS_CONFIG: MetricsConfigType = {
         "model": ParamoResponse,
         "example": ParamoResponse(
             id="Paramos30",
-            Paramo=25091,
+            paramo=25091,
         ),
         "description": "Paramo area",
     },
@@ -116,7 +116,7 @@ METRICS_CONFIG: MetricsConfigType = {
         "model": TropicalDryForestResponse,
         "example": TropicalDryForestResponse(
             id="BosqueSeco30",
-            BosqueSeco=1730,
+            bosqueSeco=1730,
         ),
         "description": "Tropical dry forest area",
     },
@@ -124,7 +124,7 @@ METRICS_CONFIG: MetricsConfigType = {
         "model": WetlandResponse,
         "example": WetlandResponse(
             id="Humedales30",
-            Humedal=9287,
+            humedal=9287,
         ),
         "description": "Wetland area",
     },

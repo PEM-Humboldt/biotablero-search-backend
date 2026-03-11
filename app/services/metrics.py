@@ -1,4 +1,3 @@
-from enum import Enum
 from typing import Dict, List
 from geojson_pydantic import geometries
 from fastapi import HTTPException

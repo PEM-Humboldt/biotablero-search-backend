@@ -220,6 +220,124 @@ def get_one_raster_areas(
         return areas_by_category
 
 
+def get_two_raster_areas(
+    raster1_path: str,
+    raster2_path: str,
+    polygon: geometries.MultiPolygon,
+    categories: Dict[str, int],
+) -> Dict[str, float]:
+    """
+    Calculates the area (in ha) by category of a raster within a polygon,
+    but only where it intersects a second raster.
+    """
+
+    polygon_geom = shape(polygon)
+
+    value_to_category = {val: name for name, val in categories.items()}
+    areas_by_category = {
+        category_key: 0.0 for category_key in categories.keys()
+    }
+    with rasterio.open(raster1_path) as src:
+        raster_bounds = box(*src.bounds)
+        if not polygon_geom.intersects(raster_bounds):
+            raise UnprocessableError(
+                code=422,
+                usr_msg="Input polygon does not intersect with metric.",
+                e=Exception("Polygon does not intersect with raster bounds"),
+            )
+
+        with rasterio.open(raster2_path) as mask_src:
+            if src.crs != mask_src.crs:
+                raise ValueError(
+                    "Raster coordinate reference systems do not match."
+                )
+            if src.res != mask_src.res:
+                raise ValueError("Raster resolutions do not match.")
+
+            minx, miny, maxx, maxy = polygon_geom.bounds
+            window = from_bounds(minx, miny, maxx, maxy, src.transform)
+            window_mask = from_bounds(
+                minx, miny, maxx, maxy, mask_src.transform
+            )
+            src_nanvalue = src.nodata
+            mask_src_nanvalue = mask_src.nodata
+
+            data = src.read(1, window=window)
+            mask_data = mask_src.read(1, window=window_mask)
+
+            if src_nanvalue is None:
+                pass
+            elif np.isnan(src_nanvalue):
+                data = np.where(np.isnan(data), 0, data)
+            else:
+                data = np.where(data == src_nanvalue, 0, data)
+
+            if mask_src_nanvalue is None:
+                pass
+            elif np.isnan(mask_src_nanvalue):
+                mask_data = np.where(np.isnan(mask_data), 0, mask_data)
+            else:
+                mask_data = np.where(
+                    mask_data == mask_src_nanvalue, 0, mask_data
+                )
+
+            if np.all(mask_data == 0):
+                return areas_by_category
+            window_transform = src.window_transform(window)
+
+            polygon_mask = rasterize(
+                [polygon_geom],
+                out_shape=data.shape,
+                transform=window_transform,
+                fill=0,
+                default_value=1,
+                dtype=np.uint8,
+            )
+
+            combined_mask = (polygon_mask == 1) & (mask_data == 1)
+            masked_data = np.where(combined_mask, data, np.nan)
+            transformer = Transformer.from_crs(
+                "EPSG:4326", "EPSG:9377", always_xy=True
+            )
+
+            pixel_width_deg = abs(window_transform[0])
+            pixel_height_deg = abs(window_transform[4])
+
+            center_x = window_transform[2]
+            center_y = window_transform[5]
+
+            corners_geo = [
+                (center_x, center_y),
+                (center_x + pixel_width_deg, center_y),
+                (center_x + pixel_width_deg, center_y + pixel_height_deg),
+                (center_x, center_y + pixel_height_deg),
+            ]
+
+            corners_proj = [
+                transformer.transform(x, y) for x, y in corners_geo
+            ]
+            pixel_polygon = ShapelyPolygon(corners_proj)
+            pixel_area_m2 = pixel_polygon.area
+            pixel_area_ha = float(pixel_area_m2 / 10000)
+
+            valid_data = masked_data[masked_data > 0]
+            if len(valid_data) == 0:
+                return {}
+
+            unique_values, counts = np.unique(valid_data, return_counts=True)
+
+            for value, pixel_count in zip(unique_values, counts):
+                area_ha = float(pixel_count * pixel_area_ha)
+
+                if value in value_to_category:
+                    category_key = value_to_category[value]
+                    areas_by_category[category_key] = area_ha
+                else:
+                    areas_by_category[str(int(value))] = area_ha
+
+    return areas_by_category
+
+
 def get_one_raster_average(
     raster_path: str,
     polygon: geometries.MultiPolygon,

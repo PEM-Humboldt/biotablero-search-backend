@@ -37,6 +37,9 @@ class MetricsConfigType(TypedDict):
     paramo: MetricConfig
     tropicalDryForest: MetricConfig
     wetland: MetricConfig
+    coverage_paramo: MetricConfig
+    coverage_tropicalDryForest: MetricConfig
+    coverage_wetland: MetricConfig
 
 
 # This config contains everything related to FastAPI and Pydantic validations
@@ -128,9 +131,36 @@ METRICS_CONFIG: MetricsConfigType = {
         ),
         "description": "Wetland area",
     },
-    # "coverage_paramo": {},
-    # "coverage_tropicalDryForest": {},
-    # "coverage_wetland": {},
+    "coverage_paramo": {
+        "model": CoverageResponse,
+        "example": CoverageResponse(
+            id="2021",
+            Natural=180000.0,
+            Secundaria=25000.0,
+            Transformada=12000.0,
+        ),
+        "description": "Land cover in paramos area",
+    },
+    "coverage_tropicalDryForest": {
+        "model": CoverageResponse,
+        "example": CoverageResponse(
+            id="2021",
+            Natural=180000.0,
+            Secundaria=25000.0,
+            Transformada=12000.0,
+        ),
+        "description": "Land cover in Tropical dry forest areas",
+    },
+    "coverage_wetland": {
+        "model": CoverageResponse,
+        "example": CoverageResponse(
+            id="2021",
+            Natural=180000.0,
+            Secundaria=25000.0,
+            Transformada=12000.0,
+        ),
+        "description": "Land cover in Wetland areas",
+    },
     # "timelineHF": {},
     # TODO: implementar estas:
     # "sciPersistenceHF": {},

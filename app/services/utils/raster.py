@@ -2,27 +2,63 @@ import base64
 import io
 
 from PIL import Image
-from rio_tiler.io.rasterio import Reader
 import numpy as np
 from typing import Dict, List, Tuple, cast
 from shapely import box
-from shapely.geometry import shape
 from shapely.ops import transform as shapely_transform
+from shapely.geometry import shape, MultiPolygon, Polygon as ShapelyPolygon
+
 import rasterio
 from rasterio.crs import CRS
 from rasterio.mask import mask
+from rasterio.windows import from_bounds
+from rasterio.features import rasterize
+import gc
+
 from pyproj import Transformer
-from shapely.geometry import MultiPolygon, Polygon as ShapelyPolygon
-
 from geojson_pydantic import geometries
+
 from app.middleware.log_middleware import logger
-from app.utils.errors import NotFoundError, ServerError, UnprocessableError
+from app.utils.errors import (
+    NotFoundError,
+    ServerError,
+    UnprocessableError,
+    MetadataError,
+)
 
 
-def crop_raster(
+def crop_raster_by_polygon(
     raster_path: str,
-    polygon,
-    category: int,
+    polygon: geometries.MultiPolygon,
+) -> Tuple[np.ndarray, np.ndarray]:
+    polygon_geom = shape(polygon)
+    with rasterio.open(raster_path) as src:
+
+        minx, miny, maxx, maxy = polygon_geom.bounds
+        window = from_bounds(minx, miny, maxx, maxy, src.transform)
+        data = src.read(1, window=window)
+        data = np.where(np.isnan(data), 0, data)
+        window_transform = src.window_transform(window)
+
+        polygon_mask = rasterize(
+            [polygon],
+            out_shape=data.shape,
+            transform=window_transform,
+            fill=False,
+            default_value=True,
+            dtype=np.uint8,
+        )
+
+        masked_data = np.where(polygon_mask, data, np.nan)
+        del data, polygon_mask
+        gc.collect()
+    return masked_data, window_transform
+
+
+def get_one_raster_image(
+    raster_path: str,
+    polygon: geometries.MultiPolygon,
+    class_value: int,
     values: List[int],
     colors: List[str],
 ) -> str:
@@ -31,48 +67,41 @@ def crop_raster(
     colormap: Dict[int, Tuple[int, int, int, int]] = {
         value: hex_to_rgba(color) for value, color in zip(values, colors)
     }
-
-    if category not in colormap:
-        raise NotFoundError(
-            usr_msg="Selected category is not available in values.",
-            log_msg=f"Category {category} not found in values.",
+    if class_value not in colormap:
+        raise MetadataError(
+            code=501,
+            usr_msg="There was an internal error processing the request",
+            log_msg=f"Class {class_value} not found in the colors metadata.",
         )
 
+    masked_data, _ = crop_raster_by_polygon(raster_path, polygon)
+    if len(masked_data) == 0 or np.all(masked_data != class_value):
+        raise NotFoundError(
+            usr_msg="No data available for the selected class.",
+            log_msg=f"No data generated for class value {class_value}.",
+        )
     try:
-        with Reader(input=raster_path, options={}) as image:
-            img = image.feature(polygon)
+        h, w = masked_data.shape
+        rgba = np.zeros((h, w, 4), dtype=np.uint8)
 
-            color = colormap[category]
+        rgba[masked_data == class_value] = colormap[class_value]
 
-            rendered_img = img.render(
-                add_mask=True, colormap={category: color}
-            )
-
-            if not rendered_img:
-                raise NotFoundError(
-                    usr_msg="No data available for the selected category.",
-                    log_msg=f"No data generated for category {category}.",
-                )
-
-            pil_image = Image.open(io.BytesIO(rendered_img))
-            img_buffer = io.BytesIO()
-            pil_image.save(img_buffer, format="PNG")
-            img_buffer.seek(0)
-
-            img_base64 = base64.b64encode(img_buffer.getvalue()).decode(
-                "utf-8"
-            )
-
+        pil_image = Image.fromarray(rgba, mode="RGBA")
+        img_buffer = io.BytesIO()
+        pil_image.save(img_buffer, format="PNG")
+        img_buffer.seek(0)
+        img_base64 = base64.b64encode(img_buffer.getvalue()).decode("utf-8")
+        del masked_data, rgba, img_buffer, pil_image
     except Exception as e:
         logger.error(
-            f"Unexpected error rendering category {category}: {str(e)}"
+            f"Unexpected error rendering class value {class_value}: {str(e)}"
         )
         raise ServerError(
             code=500,
-            usr_msg=f"There was an error processing category {category}.",
+            usr_msg=f"There was an error processing the requested class.",
             e=e,
         )
-
+    gc.collect()
     return img_base64
 
 
@@ -189,6 +218,124 @@ def get_one_raster_areas(
                 areas_by_category[str(int(value))] = area_ha
 
         return areas_by_category
+
+
+def get_two_raster_areas(
+    raster1_path: str,
+    raster2_path: str,
+    polygon: geometries.MultiPolygon,
+    categories: Dict[str, int],
+) -> Dict[str, float]:
+    """
+    Calculates the area (in ha) by category of a raster within a polygon,
+    but only where it intersects a second raster.
+    """
+
+    polygon_geom = shape(polygon)
+
+    value_to_category = {val: name for name, val in categories.items()}
+    areas_by_category = {
+        category_key: 0.0 for category_key in categories.keys()
+    }
+    with rasterio.open(raster1_path) as src:
+        raster_bounds = box(*src.bounds)
+        if not polygon_geom.intersects(raster_bounds):
+            raise UnprocessableError(
+                code=422,
+                usr_msg="Input polygon does not intersect with metric.",
+                e=Exception("Polygon does not intersect with raster bounds"),
+            )
+
+        with rasterio.open(raster2_path) as mask_src:
+            if src.crs != mask_src.crs:
+                raise ValueError(
+                    "Raster coordinate reference systems do not match."
+                )
+            if src.res != mask_src.res:
+                raise ValueError("Raster resolutions do not match.")
+
+            minx, miny, maxx, maxy = polygon_geom.bounds
+            window = from_bounds(minx, miny, maxx, maxy, src.transform)
+            window_mask = from_bounds(
+                minx, miny, maxx, maxy, mask_src.transform
+            )
+            src_nanvalue = src.nodata
+            mask_src_nanvalue = mask_src.nodata
+
+            data = src.read(1, window=window)
+            mask_data = mask_src.read(1, window=window_mask)
+
+            if src_nanvalue is None:
+                pass
+            elif np.isnan(src_nanvalue):
+                data = np.where(np.isnan(data), 0, data)
+            else:
+                data = np.where(data == src_nanvalue, 0, data)
+
+            if mask_src_nanvalue is None:
+                pass
+            elif np.isnan(mask_src_nanvalue):
+                mask_data = np.where(np.isnan(mask_data), 0, mask_data)
+            else:
+                mask_data = np.where(
+                    mask_data == mask_src_nanvalue, 0, mask_data
+                )
+
+            if np.all(mask_data == 0):
+                return areas_by_category
+            window_transform = src.window_transform(window)
+
+            polygon_mask = rasterize(
+                [polygon_geom],
+                out_shape=data.shape,
+                transform=window_transform,
+                fill=0,
+                default_value=1,
+                dtype=np.uint8,
+            )
+
+            combined_mask = (polygon_mask == 1) & (mask_data == 1)
+            masked_data = np.where(combined_mask, data, np.nan)
+            transformer = Transformer.from_crs(
+                "EPSG:4326", "EPSG:9377", always_xy=True
+            )
+
+            pixel_width_deg = abs(window_transform[0])
+            pixel_height_deg = abs(window_transform[4])
+
+            center_x = window_transform[2]
+            center_y = window_transform[5]
+
+            corners_geo = [
+                (center_x, center_y),
+                (center_x + pixel_width_deg, center_y),
+                (center_x + pixel_width_deg, center_y + pixel_height_deg),
+                (center_x, center_y + pixel_height_deg),
+            ]
+
+            corners_proj = [
+                transformer.transform(x, y) for x, y in corners_geo
+            ]
+            pixel_polygon = ShapelyPolygon(corners_proj)
+            pixel_area_m2 = pixel_polygon.area
+            pixel_area_ha = float(pixel_area_m2 / 10000)
+
+            valid_data = masked_data[masked_data > 0]
+            if len(valid_data) == 0:
+                return {}
+
+            unique_values, counts = np.unique(valid_data, return_counts=True)
+
+            for value, pixel_count in zip(unique_values, counts):
+                area_ha = float(pixel_count * pixel_area_ha)
+
+                if value in value_to_category:
+                    category_key = value_to_category[value]
+                    areas_by_category[category_key] = area_ha
+                else:
+                    areas_by_category[str(int(value))] = area_ha
+
+    return areas_by_category
 
 
 def get_one_raster_average(

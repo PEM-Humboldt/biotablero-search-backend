@@ -1,78 +1,80 @@
-from typing import Dict, TypedDict, Type, List
-from pydantic import BaseModel
+from pydantic import BaseModel, Field, RootModel
 
 
-class LossPersistenceResponse(BaseModel):
+class BaseMetricResult(BaseModel):
+    id: str
+
+    model_config = {
+        "extra": "forbid",
+        "populate_by_name": True,
+    }
+
+
+class LossPersistenceSingleResponse(BaseMetricResult):
     """
     Response model for forest loss and persistence metrics in a given period.
     """
 
-    id: str = ""
-    perdida: float = 0
-    persistencia: float = 0
-    no_bosque: float = 0
+    Perdida: float
+    Persistencia: float
+    No_Bosque: float = Field(alias="No Bosque")
 
 
-class CoverageResponse(BaseModel):
+class LossPersistenceListResponse(
+    RootModel[list[LossPersistenceSingleResponse]]
+):
+    pass
+
+
+class CoverageResponse(BaseMetricResult):
     """
     Response model for land cover metrics in a given year.
     """
 
-    id: str = ""
-    natural: float = 0
-    secundaria: float = 0
-    transformada: float = 0
+    Natural: float
+    Secundaria: float
+    Transformada: float
 
 
-class CurrentHFResponse(BaseModel):
+class CurrentHFResponse(BaseMetricResult):
     """
     Response model for Human Footprint metrics in a given year.
     """
 
-    id: str = ""
-    natural: float = 0
-    baja: float = 0
-    media: float = 0
-    alta: float = 0
+    Natural: float
+    Baja: float
+    Media: float
+    Alta: float
+    Muy_Alta: float = Field(alias="Muy Alta")
 
 
-class CurrentHFAverageResponse(BaseModel):
+class CurrentHFAverageResponse(BaseMetricResult):
     """
     Response model for Human Footprint average in a given year.
     """
 
-    id: str = ""
-    average: float = 0
+    average: float
 
 
-class paramoResponse(BaseModel):
+class ParamoResponse(BaseMetricResult):
     """
     Response model for paramos area in a given year.
     """
 
-    id: str = ""
-    paramo: float = 0
+    paramo: float
 
 
-class tropicalDryForestResponse(BaseModel):
+class TropicalDryForestResponse(BaseMetricResult):
     """
     Response model for tropical dry forest area in a given year.
     """
 
-    id: str = ""
-    bosqueSeco: float = 0
+    bosqueSeco: float
 
 
-class wetlandResponse(BaseModel):
+class WetlandResponse(BaseMetricResult):
     """
     Response model for wetland area in a given year.
     """
 
-    id: str = ""
-    humedal: float = 0
-
-
-class MetricConfig(TypedDict):
-    model: Type[BaseModel]
-    example: List[dict] | Dict
-    description: str
+    humedal: float

@@ -25,3 +25,14 @@ async def create_polygon_metric(
             f"PolygonMetric created for metric '{metric.name}' and polygon ID {polygon.id}",
             extra={"request_id": request_id_context.get()},
         )
+
+
+async def get_polygon_metric(
+    polygon_obj: Polygon, metric_obj: Metric
+) -> PolygonMetric | None:
+    """
+    Get Polygon metric object by polygon and metric
+    """
+    return await PolygonMetric.get_or_none(
+        polygon=polygon_obj, metric=metric_obj
+    )

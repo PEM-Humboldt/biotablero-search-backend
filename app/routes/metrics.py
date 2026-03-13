@@ -1,12 +1,17 @@
 import fastapi
 
-from typing import Annotated, List, Dict, Any
+from typing import Annotated, cast
 from fastapi import Path
 
 from app.middleware.exceptions import UnsupportedMetricException
-from app.utils.metrics_config import METRICS_CONFIG
-from fastapi import Query
 from app.routes.schemas.LayerResponse import LayerResponse
+from app.utils.metrics_config import (
+    ALLOWED_METRICS,
+    METRICS_CONFIG,
+    MetricConfig,
+    MetricResponse,
+)
+from fastapi import Query
 import app.services.metrics as metrics_service
 
 validation_error_example = {
@@ -35,7 +40,7 @@ router = fastapi.APIRouter(
         },
         404: {"description": "Not found"},
         422: {
-            "description": "Validation error",
+            "description": "Validation or unprocessable error",
             "content": {
                 "application/json": {"example": validation_error_example}
             },
@@ -54,24 +59,33 @@ router = fastapi.APIRouter(
 )
 
 
-ALLOWED_METRICS = list(METRICS_CONFIG.keys())
-ALLOWED_METRICS_DISPLAY = ", ".join(
-    map(lambda met: "`" + met + "`", ALLOWED_METRICS)
-)
-
-
 async def metric_id_param(
     metric_id: Annotated[
         str,
         Path(
-            description=f"Metric you wish to query. Allowed values: {ALLOWED_METRICS_DISPLAY}",
+            description=f"Metric you wish to query. See the examples list",
             examples=ALLOWED_METRICS,
         ),
     ],
-) -> str:
+) -> tuple[str, MetricConfig]:
     if metric_id not in METRICS_CONFIG:
         raise UnsupportedMetricException(metric_id)
-    return metric_id
+    return (metric_id, METRICS_CONFIG[metric_id])
+
+
+def build_documentation_examples():
+    result = {}
+
+    for metric_key, v in METRICS_CONFIG.items():
+        config = cast(MetricConfig, v)
+
+        result[metric_key] = {
+            "summary": metric_key,
+            "value": config["example"],
+            "description": config["description"],
+        }
+
+    return result
 
 
 @router.get(
@@ -81,23 +95,27 @@ async def metric_id_param(
             "description": "Metric data by polygon",
             "content": {
                 "application/json": {
-                    "examples": {
-                        k: {"summary": k, "value": v["example"]}
-                        for k, v in METRICS_CONFIG.items()
-                    }
+                    "examples": build_documentation_examples()
                 }
             },
         }
     },
 )
 async def get_values_by_polygon(
-    metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
+    metric: Annotated[
+        tuple[str, MetricConfig], fastapi.Depends(metric_id_param)
+    ],
     polygon_id: int,
-) -> List[Dict[str, Any]] | Dict:
+) -> MetricResponse:
     """Returns serialized metric values for a given polygon ID and metric."""
-    return await metrics_service.get_or_create_polygon_metric(
+    metric_id, metric_config = metric
+    model_response = metric_config["model"]
+
+    values = await metrics_service.get_or_create_polygon_metric(
         polygon_id, metric_id
     )
+
+    return model_response.model_validate(values)
 
 
 @router.get(
@@ -117,26 +135,35 @@ async def get_values_by_polygon(
     },
 )
 async def get_layer_by_polygon(
-    metric_id: Annotated[str, fastapi.Depends(metric_id_param)],
+    metric: Annotated[
+        tuple[str, MetricConfig], fastapi.Depends(metric_id_param)
+    ],
     polygon_id: Annotated[int, Query(description="Polygon ID to use")],
     item_id: Annotated[
-        str, Query(description="The ID of the item", examples=["2016-2021"])
-    ],
-    category: Annotated[
-        int,
+        str,
         Query(
-            description=(
-                "Numeric code representing a classification category used to differentiate types of land cover or change. "
-                "For example: 0 = Loss (deforested areas), 1 = Persistence (stable forest), 2 = Non-Forest (non-forest areas)."
-            ),
-            examples=[0],
+            description="The ID of the item, corresponds to the id of a values object",
+            examples=["2016-2021"],
         ),
     ],
-):
+    class_id: Annotated[
+        str,
+        Query(
+            description=(
+                "Class value associated to the layer requested, corresponds to one of the keys in a values object (except 'id') "
+                "For example: Natural"
+            ),
+            examples=["Natural"],
+        ),
+    ],
+) -> LayerResponse:
     """
     Returns the url of rendered image layer for a given metric, polygon ID, item ID, and category,
     typically used to visualize spatial data such as forest loss, persistence, or non-forest areas.
     """
-    return await metrics_service.get_or_create_layer_by_polygon(
-        metric_id, polygon_id, item_id, category
+
+    metric_id, _ = metric
+    layer = await metrics_service.get_or_create_polygon_metric_layer(
+        metric_id, polygon_id, item_id, class_id
     )
+    return LayerResponse(**layer)

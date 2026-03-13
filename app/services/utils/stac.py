@@ -1,3 +1,4 @@
+from pyexpat import features
 from typing import List, Tuple, Dict
 from pydantic import BaseModel
 import requests
@@ -42,7 +43,7 @@ async def fetch_collection_metadata(
             classes=properties.get("classes", []),
         )
 
-        categories = {
+        classes_map = {
             class_name: value
             for class_name, value in zip(
                 metadata_properties.classes, metadata_properties.values
@@ -50,7 +51,7 @@ async def fetch_collection_metadata(
         }
 
         return (
-            categories,
+            classes_map,
             metadata_properties.values,
             metadata_properties.colors,
         )
@@ -174,3 +175,116 @@ def get_asset_href_by_item_id(collection_id: str, item_id: str) -> str:
         )
 
     return asset_href
+
+
+def get_item_resolution(collection_id: str, index_item: int) -> float:
+    """
+    Returns the spatial resolution of the item at the given index in the collection.
+    """
+    items_url = get_collection_items_url(collection_id)
+    response = None
+
+    try:
+        response = requests.get(items_url)
+        response.raise_for_status()
+    except Exception as e:
+        if response is not None and response.status_code == 404:
+            raise NotFoundError(
+                usr_msg=f"{collection_id} data is incomplete",
+                log_msg=f"Collection items not found at URL: {items_url}",
+                e=e,
+            )
+        else:
+            raise ServerError(
+                code=500,
+                usr_msg=f"There was an error retrieving {collection_id} data",
+                e=e,
+            )
+
+    items_data = response.json()
+    if not items_data.get("features"):
+        raise NotFoundError(
+            usr_msg=f"{collection_id} data is incomplete",
+            log_msg=f"Collection items url exist but it has no features, url: {items_url}",
+        )
+
+    if index_item < 0 or index_item >= len(items_data["features"]):
+        raise NotFoundError(
+            usr_msg="Requested item index is out of range",
+            log_msg=(
+                f"Index {index_item} out of range for collection "
+                f"{collection_id}. Items available: {len(features)}"
+            ),
+        )
+    item = items_data.get("features")[index_item]
+    for asset in item.get("assets", {}).values():
+        for band in asset.get("raster:bands", []):
+            resolution = band.get("spatial_resolution")
+            if resolution is not None:
+                return resolution
+
+    raise NotFoundError(
+        usr_msg="Item has no spatial resolution information",
+        log_msg=f"Item {index_item} in collection {collection_id} has no raster bands with spatial_resolution",
+    )
+
+
+def get_item_index_by_resolution(collection_id: str, resol_obj: float) -> int:
+    """
+    Returns the index of the item in the collection that has the closest spatial resolution to a given value.
+    """
+    items_url = get_collection_items_url(collection_id)
+    response = None
+
+    try:
+        response = requests.get(items_url)
+        response.raise_for_status()
+    except Exception as e:
+        if response is not None and response.status_code == 404:
+            raise NotFoundError(
+                usr_msg=f"{collection_id} data is incomplete",
+                log_msg=f"Collection items not found at URL: {items_url}",
+                e=e,
+            )
+        else:
+            raise ServerError(
+                code=500,
+                usr_msg=f"There was an error retrieving {collection_id} data",
+                e=e,
+            )
+
+    items_data = response.json()
+    if not items_data.get("features"):
+        raise NotFoundError(
+            usr_msg=f"{collection_id} data is incomplete",
+            log_msg=f"Collection items url exist but it has no features, url: {items_url}",
+        )
+
+    items = items_data.get("features", {})
+    item_resolutions: list[tuple[int, float]] = []
+
+    item_resolutions = []
+    for idx, item in enumerate(items):
+        resolution = next(
+            (
+                band["spatial_resolution"]
+                for asset in item.get("assets", {}).values()
+                for band in asset.get("raster:bands", [])
+                if "spatial_resolution" in band
+            ),
+            None,
+        )
+
+        if resolution is not None:
+            item_resolutions.append((idx, resolution))
+
+    if not item_resolutions:
+        raise NotFoundError(
+            usr_msg="No spatial resolution information found in any item",
+            log_msg=f"No raster bands with spatial_resolution found in collection {collection_id}",
+        )
+    closest_item_index, _ = min(
+        item_resolutions,
+        key=lambda x: abs(x[1] - resol_obj),
+    )
+    return closest_item_index

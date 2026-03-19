@@ -55,6 +55,29 @@ def crop_raster_by_polygon(
     return masked_data, window_transform
 
 
+def _get_raster_pixel_area_ha(raster_transform, raster_crs) -> float:
+    """
+    Calculate the area in hectares of a pixel given a raster transform and CRS.
+    """
+    pixel_size_x = abs(raster_transform[0])
+    pixel_size_y = abs(raster_transform[4])
+
+    center_x = raster_transform[2]
+    center_y = raster_transform[5]
+
+    corners_geo = [
+        (center_x,                center_y               ),
+        (center_x + pixel_size_x, center_y               ),
+        (center_x + pixel_size_x, center_y + pixel_size_y),
+        (center_x,                center_y + pixel_size_y),
+    ]
+
+    transformer = Transformer.from_crs(raster_crs, "EPSG:9377", always_xy=True)
+    corners_projected = [transformer.transform(x, y) for x, y in corners_geo]
+
+    pixel_polygon = ShapelyPolygon(corners_projected)
+    return float(pixel_polygon.area / 10_000)
+
 def get_one_raster_image(
     raster_path: str,
     polygon: geometries.MultiPolygon,
@@ -164,31 +187,7 @@ def get_one_raster_areas(
         raster_data = raster_data[0]
         raster_nodata = src.nodata if src.nodata is not None else -9999
 
-        pixel_size_x = abs(raster_transform[0])
-        pixel_size_y = abs(raster_transform[4])
-
-        transformer = Transformer.from_crs(
-            "EPSG:4326", "EPSG:9377", always_xy=True
-        )
-
-        center_x = raster_transform[2]
-        center_y = raster_transform[5]
-
-        corners_geo = [
-            (center_x, center_y),
-            (center_x + pixel_size_x, center_y),
-            (center_x + pixel_size_x, center_y + pixel_size_y),
-            (center_x, center_y + pixel_size_y),
-        ]
-
-        corners_projected = [
-            transformer.transform(x, y) for x, y in corners_geo
-        ]
-
-        pixel_polygon = ShapelyPolygon(corners_projected)
-        pixel_area_m2 = pixel_polygon.area
-
-        pixel_area_ha = float(pixel_area_m2 / 10000)
+        pixel_area_ha = _get_raster_pixel_area_ha(raster_transform, src.crs)
 
         if raster_nodata is not None:
             valid_mask = raster_data != raster_nodata
@@ -300,25 +299,7 @@ def get_two_raster_areas(
                 "EPSG:4326", "EPSG:9377", always_xy=True
             )
 
-            pixel_width_deg = abs(window_transform[0])
-            pixel_height_deg = abs(window_transform[4])
-
-            center_x = window_transform[2]
-            center_y = window_transform[5]
-
-            corners_geo = [
-                (center_x, center_y),
-                (center_x + pixel_width_deg, center_y),
-                (center_x + pixel_width_deg, center_y + pixel_height_deg),
-                (center_x, center_y + pixel_height_deg),
-            ]
-
-            corners_proj = [
-                transformer.transform(x, y) for x, y in corners_geo
-            ]
-            pixel_polygon = ShapelyPolygon(corners_proj)
-            pixel_area_m2 = pixel_polygon.area
-            pixel_area_ha = float(pixel_area_m2 / 10000)
+            pixel_area_ha = _get_raster_pixel_area_ha(window_transform, src.crs)
 
             valid_data = masked_data[masked_data > 0]
             if len(valid_data) == 0:

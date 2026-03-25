@@ -3,7 +3,7 @@ import io
 
 from PIL import Image
 import numpy as np
-from typing import Dict, List, Tuple, cast
+from typing import Dict, List, Optional, Tuple, cast
 from shapely import box
 from shapely.ops import transform as shapely_transform
 from shapely.geometry import shape, MultiPolygon, Polygon as ShapelyPolygon
@@ -31,7 +31,7 @@ from app.utils.errors import (
 def _crop_raster_by_polygon(
     raster_path: str,
     polygon: geometries.MultiPolygon,
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> Tuple[np.ndarray, np.ndarray, Optional[float]]:
 
     polygon_geom = shape(polygon)
     source_crs = CRS.from_string("EPSG:4326")

@@ -123,7 +123,7 @@ def get_one_raster_image(
         )
 
     masked_data, _, _ = _crop_raster_by_polygon(raster_path, polygon)
-    
+
     if len(masked_data) == 0 or np.all(masked_data != class_value):
         raise NotFoundError(
             usr_msg="No data available for the selected class.",
@@ -306,6 +306,37 @@ def get_one_raster_average(
     average_value = float(np.nanmean(masked_data))
 
     return average_value
+
+
+def get_one_raster_areas_by_category(
+    raster_path: str,
+    polygon: geometries.MultiPolygon,
+    categories: Dict[int, str],
+) -> Dict[str, float]:
+    """
+    Calculate the area in hectares of raster values within a given polygon,
+    grouped by user-defined categories.
+    """
+    masked_data, window_transform, nodata = _crop_raster_by_polygon(
+        raster_path, polygon
+    )
+    if nodata is not None:
+        masked_data = np.where(masked_data == nodata, 0, masked_data)
+
+    categories[0] = "No Protegida"
+    pixel_area_ha = _get_raster_pixel_area_ha(window_transform, "EPSG:4326")
+    unique_values, counts = np.unique(masked_data, return_counts=True)
+    areas_by_category = {
+        category_key: 0.0 for category_key in categories.values()
+    }
+    for value, pixel_count in zip(unique_values, counts):
+        area_ha = float(pixel_count * pixel_area_ha)
+        cat = categories.get(value)
+
+        if cat is not None:
+            areas_by_category[cat] = areas_by_category[cat] + area_ha
+
+    return areas_by_category
 
 
 def hex_to_rgba(hex_color: str) -> Tuple[int, int, int, int]:

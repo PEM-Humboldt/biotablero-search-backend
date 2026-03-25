@@ -13,6 +13,7 @@ class CollectionEnum(Enum):
     PARAMO = "Paramos"
     BOSQUE_SECO_TROPICAL = "BosqueSeco"
     HUMEDAL = "Humedales"
+    AREAS_PROTEGIDAS = "AreasProtegidas"
 
 
 class OperationEnum(Enum):
@@ -119,6 +120,7 @@ class MetricEnum(Enum):
         "protectedAreas",
         OperationEnum.AREA_CATEGORIES_SINGLE_COLLECTION,
         False,
+        CollectionEnum.AREAS_PROTEGIDAS,
     )
     PROTECTED_AREAS_PARAMO = (
         "protectedAreas_paramo",

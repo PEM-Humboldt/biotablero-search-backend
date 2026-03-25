@@ -115,7 +115,7 @@ async def get_values_by_polygon(
         polygon_id, metric_id
     )
 
-    return model_response.model_validate(values)
+    return model_response.model_validate(values, by_alias=True)
 
 
 @router.get(

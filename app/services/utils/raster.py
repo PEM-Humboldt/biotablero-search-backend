@@ -348,7 +348,17 @@ def crop_two_rasters_by_polygon(
 ) -> Tuple[
     np.ndarray, np.ndarray, rasterio.Affine, ShapelyPolygon | MultiPolygon
 ]:
-    polygon_geom = shape(polygon)
+    polygon_geom_raw = shape(polygon)
+    if isinstance(polygon_geom_raw, (ShapelyPolygon, MultiPolygon)):
+        polygon_geom = polygon_geom_raw
+    else:
+        raise UnprocessableError(
+            code=422,
+            usr_msg="Invalid polygon geometry.",
+            e=Exception(
+                f"Expected Polygon or MultiPolygon, got {type(polygon_geom_raw)}"
+            ),
+        )
 
     with (
         rasterio.open(raster_path) as src,

@@ -11,7 +11,6 @@ from pandas import DataFrame
 
 import rasterio
 from rasterio.crs import CRS
-from rasterio.mask import mask
 from rasterio.windows import from_bounds
 from rasterio.features import rasterize
 import gc
@@ -32,6 +31,7 @@ def _crop_raster_by_polygon(
     raster_path: str,
     polygon: geometries.MultiPolygon,
 ) -> Tuple[np.ndarray, np.ndarray, Optional[float]]:
+    """Crop a raster by a given polygon and return the masked data, the window transform, and the nodata value."""
 
     polygon_geom = shape(polygon)
     source_crs = CRS.from_string("EPSG:4326")
@@ -154,10 +154,10 @@ def get_one_raster_image(
     return img_base64
 
 
-def get_one_raster_areas_by_value(
+def get_one_raster_areas_by_classes(
     raster_path: str,
     polygon: geometries.MultiPolygon,
-    categories: Dict[str, int],
+    classes: Dict[str, int],
 ) -> Dict[str, float]:
     """
     Calculate areas for every category from the raster in a given polygon.
@@ -170,44 +170,39 @@ def get_one_raster_areas_by_value(
     pixel_area_ha = _get_raster_pixel_area_ha(raster_transform, "EPSG:4326")
     clean_data = masked_data[~np.isnan(masked_data)].astype(int)
 
-    value_to_category = {val: name for name, val in categories.items()}
+    value_to_class = {val: name for name, val in classes.items()}
     unique_values, counts = np.unique(clean_data, return_counts=True)
 
-    value_to_category = {val: name for name, val in categories.items()}
-
-    areas_by_category = {
-        category_key: 0.0 for category_key in categories.keys()
-    }
+    areas_by_class = {class_key: 0.0 for class_key in classes.keys()}
 
     for value, pixel_count in zip(unique_values, counts):
         area_ha = float(pixel_count * pixel_area_ha)
 
-        if value in value_to_category:
-            category_key = value_to_category[value]
-            areas_by_category[category_key] = area_ha
+        if value in value_to_class:
+            class_key = value_to_class[value]
+            areas_by_class[class_key] = area_ha
         else:
-            areas_by_category[str(int(value))] = area_ha
+            areas_by_class[str(int(value))] = area_ha
 
-    return areas_by_category
+    return areas_by_class
 
 
-def get_two_raster_areas(
+def get_two_raster_areas_by_classes(
     raster1_path: str,
     raster2_path: str,
     polygon: geometries.MultiPolygon,
-    categories: Dict[str, int],
+    classes: Dict[str, int],
 ) -> Dict[str, float]:
     """
-    Calculates the area (in ha) by category of a raster within a polygon,
+    Calculates the area (in ha) by class of a raster within a polygon,
     but only where it intersects a second raster.
     """
+    #TODO: optimizarla usando la función _crop_raster_by_polygon
 
     polygon_geom = shape(polygon)
 
-    value_to_category = {val: name for name, val in categories.items()}
-    areas_by_category = {
-        category_key: 0.0 for category_key in categories.keys()
-    }
+    value_to_class = {val: name for name, val in classes.items()}
+    areas_by_class = {class_key: 0.0 for class_key in classes.keys()}
     with rasterio.open(raster1_path) as src:
         raster_bounds = box(*src.bounds)
         if not polygon_geom.intersects(raster_bounds):
@@ -253,7 +248,7 @@ def get_two_raster_areas(
                 )
 
             if np.all(mask_data == 0):
-                return areas_by_category
+                return areas_by_class
             window_transform = src.window_transform(window)
 
             polygon_mask = rasterize(
@@ -267,9 +262,6 @@ def get_two_raster_areas(
 
             combined_mask = (polygon_mask == 1) & (mask_data == 1)
             masked_data = np.where(combined_mask, data, np.nan)
-            transformer = Transformer.from_crs(
-                "EPSG:4326", "EPSG:9377", always_xy=True
-            )
 
             pixel_area_ha = _get_raster_pixel_area_ha(
                 window_transform, src.crs
@@ -284,13 +276,13 @@ def get_two_raster_areas(
             for value, pixel_count in zip(unique_values, counts):
                 area_ha = float(pixel_count * pixel_area_ha)
 
-                if value in value_to_category:
-                    category_key = value_to_category[value]
-                    areas_by_category[category_key] = area_ha
+                if value in value_to_class:
+                    class_key = value_to_class[value]
+                    areas_by_class[class_key] = area_ha
                 else:
-                    areas_by_category[str(int(value))] = area_ha
+                    areas_by_class[str(int(value))] = area_ha
 
-    return areas_by_category
+    return areas_by_class
 
 
 def get_one_raster_average(

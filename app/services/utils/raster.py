@@ -6,8 +6,7 @@ import numpy as np
 from typing import Dict, List, Optional, Tuple, cast
 from shapely import box
 from shapely.ops import transform as shapely_transform
-from shapely.geometry import shape, MultiPolygon, Polygon as ShapelyPolygon
-from pandas import DataFrame
+from shapely.geometry import shape, Polygon as ShapelyPolygon
 
 import rasterio
 from rasterio.crs import CRS
@@ -197,7 +196,7 @@ def get_two_raster_areas_by_classes(
     Calculates the area (in ha) by class of a raster within a polygon,
     but only where it intersects a second raster.
     """
-    #TODO: optimizarla usando la función _crop_raster_by_polygon
+    # TODO: optimizarla usando la función _crop_raster_by_polygon
 
     polygon_geom = shape(polygon)
 

@@ -3,7 +3,7 @@ import io
 
 from PIL import Image
 import numpy as np
-from typing import Dict, List, Optional, Tuple, cast
+from typing import Dict, List, Optional, Tuple
 from shapely import box
 from shapely.ops import transform as shapely_transform
 from shapely.geometry import shape, Polygon as ShapelyPolygon

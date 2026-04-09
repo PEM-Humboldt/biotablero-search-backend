@@ -78,3 +78,44 @@ class WetlandResponse(BaseMetricResult):
     """
 
     humedal: float
+
+
+class ProtectedAreasTypesResponse(BaseMetricResult):
+    """
+    Response model for protected areas types in a given year.
+    """
+
+    Distritos_Nacionales_Manejo_Integrado: float = Field(
+        default=0.0, alias="Distritos Nacionales de Manejo Integrado"
+    )
+    Distritos_Regionales_Manejo_Integrado: float = Field(
+        default=0.0, alias="Distritos Regionales de Manejo Integrado"
+    )
+    Distritos_Conservacion_Suelos: float = Field(
+        default=0.0, alias="Distritos de Conservación de Suelos"
+    )
+    Parque_Nacional_Natural: float = Field(
+        default=0.0, alias="Parque Nacional Natural"
+    )
+    Parques_Naturales_Regional: float = Field(
+        default=0.0, alias="Parques Naturales Regionales"
+    )
+    Reserva_Natural: float = Field(default=0.0, alias="Reserva Natural")
+    Reserva_Natural_Sociedad_Civil: float = Field(
+        default=0.0, alias="Reserva Natural de la Sociedad Civil"
+    )
+    Reservas_Forestales_Protectoras_Nacionales: float = Field(
+        default=0.0, alias="Reservas Forestales Protectoras Nacionales"
+    )
+    Reservas_Forestales_Protectoras_Regionales: float = Field(
+        default=0.0, alias="Reservas Forestales Protectoras Regionales"
+    )
+    Santuario_Fauna: float = Field(default=0.0, alias="Santuario de Fauna")
+    Santuario_Fauna_Flora: float = Field(
+        default=0.0, alias="Santuario de Fauna y Flora"
+    )
+    Santuario_Flora: float = Field(default=0.0, alias="Santuario de Flora")
+    Via_Parque: float = Field(default=0.0, alias="Vía Parque")
+    Area_Natural_Unica: float = Field(default=0.0, alias="Área Natural Única")
+    Areas_Recreacion: float = Field(default=0.0, alias="Áreas de Recreación")
+    No_Protegida: float = Field(default=0.0, alias="No Protegida")

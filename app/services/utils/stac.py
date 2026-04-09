@@ -15,11 +15,12 @@ class MetadataProperties(BaseModel):
     values: List[int]
     colors: List[str]
     classes: List[str]
+    categories: List[str]
 
 
 async def fetch_collection_metadata(
     collection: Collection,
-) -> Tuple[Dict[str, int], List[int], List[str]]:
+) -> Tuple[Dict[str, int], List[int], List[str], List[str]]:
     try:
         collection_url = url.build_url(
             settings.stac_url, f"/collections/{collection.name}"
@@ -41,6 +42,7 @@ async def fetch_collection_metadata(
             values=properties.get("values", []),
             colors=properties.get("colors", []),
             classes=properties.get("classes", []),
+            categories=properties.get("category", []),
         )
 
         classes_map = {
@@ -54,6 +56,7 @@ async def fetch_collection_metadata(
             classes_map,
             metadata_properties.values,
             metadata_properties.colors,
+            metadata_properties.categories,
         )
 
     except Exception as e:

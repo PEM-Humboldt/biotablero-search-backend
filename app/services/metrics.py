@@ -3,10 +3,11 @@ from geojson_pydantic import geometries
 from fastapi import HTTPException
 
 from app.services.utils.raster import (
+    get_one_raster_areas_by_category,
     get_one_raster_image,
-    get_one_raster_areas,
+    get_one_raster_areas_by_classes,
     get_one_raster_average,
-    get_two_raster_areas,
+    get_two_raster_areas_by_classes,
 )
 from app.services.utils.stac import (
     get_item_resolution,
@@ -163,11 +164,13 @@ async def calculate_single_coll_values(
     Calculate values for a metric that uses only the first item from one collection,
     grouped by the collection categories
     """
-    categories, _, _ = await fetch_collection_metadata(primary_collection)
+    classes, _, _, _ = await fetch_collection_metadata(primary_collection)
 
     id, raster_url = get_items_asset_url(primary_collection.name)[0]
 
-    raster_values = get_one_raster_areas(raster_url, polygon, categories)
+    raster_values = get_one_raster_areas_by_classes(
+        raster_url, polygon, classes
+    )
 
     return {"id": id, **raster_values}
 
@@ -180,12 +183,12 @@ async def calculate_single_coll_all_items_values(
     grouped by the collection categories
     """
 
-    categories, _, _ = await fetch_collection_metadata(primary_collection)
+    classes, _, _, _ = await fetch_collection_metadata(primary_collection)
 
     rasters_info = get_items_asset_url(primary_collection.name)
     result = []
     for id, url in rasters_info:
-        raster_values = get_one_raster_areas(url, polygon, categories)
+        raster_values = get_one_raster_areas_by_classes(url, polygon, classes)
 
         result.append({"id": id, **raster_values})
 
@@ -214,7 +217,7 @@ async def calculate_two_colls_values(
 
     await secondary_collection.fetch_related("collection")
 
-    categories, _, _ = await fetch_collection_metadata(primary_collection)
+    classes, _, _, _ = await fetch_collection_metadata(primary_collection)
 
     secondary_collection = secondary_collection.collection
 
@@ -227,8 +230,8 @@ async def calculate_two_colls_values(
     _, raster_sec_url = get_items_asset_url(secondary_collection.name)[
         index_sec
     ]
-    raster_values = get_two_raster_areas(
-        raster_pri_url, raster_sec_url, polygon, categories
+    raster_values = get_two_raster_areas_by_classes(
+        raster_pri_url, raster_sec_url, polygon, classes
     )
 
     return {"id": id_pri, **raster_values}
@@ -250,8 +253,26 @@ def calculate_ave_multiple_colls_values():
     pass
 
 
-def calculate_cat_single_coll_values():
-    pass
+async def calculate_cat_single_coll_values(
+    primary_collection: Collection, _, polygon: geometries.MultiPolygon
+) -> Dict[str, str | float]:
+    """
+    calculates the area of each category of a collection within a polygon
+    """
+    _, values, _, categories = await fetch_collection_metadata(
+        primary_collection
+    )
+
+    values_by_category = {
+        value: category for value, category in zip(values, categories)
+    }
+    id, raster_url = get_items_asset_url(primary_collection.name)[0]
+
+    raster_values = get_one_raster_areas_by_category(
+        raster_url, polygon, values_by_category
+    )
+
+    return {"id": id, **raster_values}
 
 
 def calculate_cat_two_colls_values():
@@ -271,11 +292,11 @@ async def calculate_single_coll_layer(
     """
     Get the layer for a metric that uses only one collection
     """
-    classes_map, values, colors = await fetch_collection_metadata(
+    classes, values, colors, _ = await fetch_collection_metadata(
         primary_collection
     )
 
-    if class_id not in classes_map:
+    if class_id not in classes:
         raise MetadataError(
             code=404,
             log_msg=f"class_id {class_id} doesn't exist in metric",
@@ -287,7 +308,7 @@ async def calculate_single_coll_layer(
     image_base64 = get_one_raster_image(
         raster_path=raster_href,
         polygon=polygon,
-        class_value=classes_map[class_id],
+        class_value=classes[class_id],
         values=values,
         colors=colors,
     )

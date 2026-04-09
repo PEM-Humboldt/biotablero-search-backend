@@ -10,6 +10,7 @@ from app.routes.schemas.MetricResponse import (
     ParamoResponse,
     TropicalDryForestResponse,
     WetlandResponse,
+    ProtectedAreasTypesResponse,
 )
 
 MetricResponse = Union[
@@ -20,6 +21,7 @@ MetricResponse = Union[
     ParamoResponse,
     TropicalDryForestResponse,
     WetlandResponse,
+    ProtectedAreasTypesResponse,
 ]
 
 
@@ -40,6 +42,7 @@ class MetricsConfigType(TypedDict):
     coverage_paramo: MetricConfig
     coverage_tropicalDryForest: MetricConfig
     coverage_wetland: MetricConfig
+    protectedAreas: MetricConfig
 
 
 # This config contains everything related to FastAPI and Pydantic validations
@@ -160,6 +163,29 @@ METRICS_CONFIG: MetricsConfigType = {
             Transformada=12000.0,
         ),
         "description": "Land cover in Wetland areas",
+    },
+    "protectedAreas": {
+        "model": ProtectedAreasTypesResponse,
+        "example": ProtectedAreasTypesResponse(
+            id="2021",
+            **{"Distritos Nacionales de Manejo Integrado": 5000.0},
+            **{"Distritos Regionales de Manejo Integrado": 10000.0},
+            **{"Distritos de Conservación de Suelos": 15000.0},
+            **{"Parque Nacional Natural": 20000.0},
+            **{"Parques Naturales Regionales": 25000.0},
+            **{"Reserva Natural": 30000.0},
+            **{"Reserva Natural de la Sociedad Civil": 35000.0},
+            **{"Reservas Forestales Protectoras Nacionales": 500.0},
+            **{"Reservas Forestales Protectoras Regionales": 3000.0},
+            **{"Santuario de Fauna": 40000.0},
+            **{"Santuario de Fauna y Flora": 1000.0},
+            **{"Santuario de Flora": 2000.0},
+            **{"Vía Parque": 1000.0},
+            **{"Área Natural Única": 2000.0},
+            **{"Áreas de Recreación": 45000.0},
+            **{"No Protegida": 100000.0},
+        ),
+        "description": "Protected areas types",
     },
     # "timelineHF": {},
     # TODO: implementar estas:

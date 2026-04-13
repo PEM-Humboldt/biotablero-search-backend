@@ -12,7 +12,6 @@ from app.services.utils.raster import (
     get_two_raster_image,
 )
 from app.services.utils.stac import (
-    get_item_resolution,
     get_item_index_by_resolution,
     get_items_asset_url,
     get_asset_href_by_item_id,
@@ -226,7 +225,7 @@ async def calculate_two_colls_values(
     secondary_collection = secondary_collection.collection
 
     id_pri, raster_pri_url = get_items_asset_url(primary_collection.name)[0]
-    resol_pri = get_item_resolution(primary_collection.name, 0)
+    resol_pri = get_item_resolution_by_item_id(primary_collection.name, id_pri)
 
     index_sec = get_item_index_by_resolution(
         secondary_collection.name, resol_pri

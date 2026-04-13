@@ -6,7 +6,7 @@ import numpy as np
 from typing import Dict, List, Optional, Tuple
 from shapely import box
 from shapely.ops import transform as shapely_transform
-from shapely.geometry import shape, Polygon as ShapelyPolygon
+from shapely.geometry import shape, Polygon as ShapelyPolygon, MultiPolygon
 
 import rasterio
 from rasterio.crs import CRS

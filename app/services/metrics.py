@@ -8,12 +8,15 @@ from app.services.utils.raster import (
     get_one_raster_areas_by_classes,
     get_one_raster_average,
     get_two_raster_areas_by_classes,
+    get_two_raster_areas,
+    get_two_raster_image,
 )
 from app.services.utils.stac import (
     get_item_resolution,
     get_item_index_by_resolution,
     get_items_asset_url,
     get_asset_href_by_item_id,
+    get_item_resolution_by_item_id,
 )
 from app.services.utils.stac import fetch_collection_metadata
 
@@ -139,6 +142,7 @@ async def get_or_create_polygon_metric_layer(
         primary_collection.collection,
         item_id,
         class_id,
+        metric_obj,
     )
     image_url = await upload_to_s3(
         image_data=img_base64,
@@ -288,6 +292,7 @@ async def calculate_single_coll_layer(
     primary_collection: Collection,
     item_id: str,
     class_id: str,
+    _: Metric | None = None,
 ) -> str:
     """
     Get the layer for a metric that uses only one collection
@@ -316,8 +321,71 @@ async def calculate_single_coll_layer(
     return image_base64
 
 
-def calculate_two_colls_layer():
-    pass
+async def calculate_two_colls_layer(
+    polygon: geometries.MultiPolygon,
+    primary_collection: Collection,
+    item_id: str,
+    class_id: str,
+    metric: Metric | None = None,
+) -> str:
+    """
+    Get the layer for a metric that uses two collections.
+    """
+    classes_map, values, colors = await fetch_collection_metadata(
+        primary_collection
+    )
+
+    if class_id not in classes_map:
+        raise MetadataError(
+            code=404,
+            log_msg=f"class_id {class_id} doesn't exist in metric",
+            usr_msg=f"class_id {class_id} doesn't exist in metric",
+        )
+
+    if metric is None:
+        raise ServerError(
+            code=500,
+            usr_msg="There was an internal error processing the request.",
+            e=Exception("Missing metric context for AREA_TWO-COLLECTIONS"),
+        )
+
+    secondary_metric_collection = next(
+        (mc for mc in metric.collections if not mc.is_primary), None
+    )
+    if secondary_metric_collection is None:
+        raise ServerError(
+            code=500,
+            usr_msg=f"There was an error calculating the metric {metric.name}.",
+            e=Exception("Secondary collection not found"),
+        )
+
+    await secondary_metric_collection.fetch_related("collection")
+    secondary_collection = secondary_metric_collection.collection
+
+    primary_raster_href = get_asset_href_by_item_id(
+        primary_collection.name, item_id
+    )
+    primary_res = get_item_resolution_by_item_id(
+        primary_collection.name, item_id
+    )
+
+    index_sec = get_item_index_by_resolution(
+        secondary_collection.name, primary_res
+    )
+    _, secondary_raster_href = get_items_asset_url(secondary_collection.name)[
+        index_sec
+    ]
+
+    image_base64 = get_two_raster_image(
+        raster_path=primary_raster_href,
+        mask_raster_path=secondary_raster_href,
+        polygon=polygon,
+        class_value=classes_map[class_id],
+        values=values,
+        colors=colors,
+    )
+
+    return image_base64
 
 
 def calculate_cat_single_coll_filtered_layer():

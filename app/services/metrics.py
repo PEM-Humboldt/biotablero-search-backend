@@ -8,7 +8,6 @@ from app.services.utils.raster import (
     get_one_raster_areas_by_classes,
     get_one_raster_average,
     get_two_raster_areas_by_classes,
-    get_two_raster_areas,
     get_two_raster_image,
 )
 from app.services.utils.stac import (
@@ -291,12 +290,12 @@ async def calculate_single_coll_layer(
     primary_collection: Collection,
     item_id: str,
     class_id: str,
-    _: Metric | None = None,
+    metric: Metric | None = None,
 ) -> str:
     """
     Get the layer for a metric that uses only one collection
     """
-    classes, values, colors, _ = await fetch_collection_metadata(
+    classes, values, colors, _categories = await fetch_collection_metadata(
         primary_collection
     )
 
@@ -330,7 +329,7 @@ async def calculate_two_colls_layer(
     """
     Get the layer for a metric that uses two collections.
     """
-    classes_map, values, colors = await fetch_collection_metadata(
+    classes_map, values, colors, _categories = await fetch_collection_metadata(
         primary_collection
     )
 

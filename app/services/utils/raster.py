@@ -6,7 +6,7 @@ import numpy as np
 from typing import Dict, List, Optional, Tuple
 from shapely import box
 from shapely.ops import transform as shapely_transform
-from shapely.geometry import shape, Polygon as ShapelyPolygon
+from shapely.geometry import shape, Polygon as ShapelyPolygon, MultiPolygon
 
 import rasterio
 from rasterio.crs import CRS
@@ -339,3 +339,128 @@ def hex_to_rgba(hex_color: str) -> Tuple[int, int, int, int]:
         else:
             raise ValueError(f"Invalid hex color format: {hex_color}")
     raise ValueError(f"Hex color must start with '#': {hex_color}")
+
+
+def crop_two_rasters_by_polygon(
+    raster_path: str,
+    mask_raster_path: str,
+    polygon: geometries.MultiPolygon,
+) -> Tuple[
+    np.ndarray, np.ndarray, rasterio.Affine, ShapelyPolygon | MultiPolygon
+]:
+    polygon_geom_raw = shape(polygon)
+    if isinstance(polygon_geom_raw, (ShapelyPolygon, MultiPolygon)):
+        polygon_geom = polygon_geom_raw
+    else:
+        raise UnprocessableError(
+            code=422,
+            usr_msg="Invalid polygon geometry.",
+            e=Exception(
+                f"Expected Polygon or MultiPolygon, got {type(polygon_geom_raw)}"
+            ),
+        )
+
+    with (
+        rasterio.open(raster_path) as src,
+        rasterio.open(mask_raster_path) as mask_src,
+    ):
+        if src.crs != mask_src.crs:
+            raise ValueError(
+                "Raster coordinate reference systems do not match."
+            )
+        if src.res != mask_src.res:
+            raise ValueError("Raster resolutions do not match.")
+
+        minx, miny, maxx, maxy = polygon_geom.bounds
+        window = from_bounds(minx, miny, maxx, maxy, src.transform)
+        window_mask = from_bounds(minx, miny, maxx, maxy, mask_src.transform)
+
+        data = src.read(1, window=window)
+        mask_data = mask_src.read(1, window=window_mask)
+
+        data = np.where(np.isnan(data), 0, data)
+
+        mask_data = np.where(np.isnan(mask_data), 0, mask_data)
+
+        window_transform = src.window_transform(window)
+        return data, mask_data, window_transform, polygon_geom
+
+
+def get_two_raster_image(
+    raster_path: str,
+    mask_raster_path: str,
+    polygon: geometries.MultiPolygon,
+    class_value: int,
+    values: List[int],
+    colors: List[str],
+) -> str:
+    Image.MAX_IMAGE_PIXELS = None
+
+    colormap: Dict[int, Tuple[int, int, int, int]] = {
+        value: hex_to_rgba(color) for value, color in zip(values, colors)
+    }
+    if class_value not in colormap:
+        raise MetadataError(
+            code=501,
+            usr_msg="There was an internal error processing the request",
+            log_msg=f"Class {class_value} not found in the colors metadata.",
+        )
+
+    try:
+        data, mask_data, window_transform, polygon_geom = (
+            crop_two_rasters_by_polygon(
+                raster_path=raster_path,
+                mask_raster_path=mask_raster_path,
+                polygon=polygon,
+            )
+        )
+
+        polygon_mask = rasterize(
+            [polygon_geom],
+            out_shape=data.shape,
+            transform=window_transform,
+            fill=0,
+            default_value=1,
+            dtype=np.uint8,
+        )
+
+        mask_binary = mask_data > 0
+        combined_mask = (polygon_mask == 1) & mask_binary
+        masked_data = np.where(combined_mask, data, np.nan)
+
+        if len(masked_data) == 0 or np.all(masked_data != class_value):
+            raise NotFoundError(
+                usr_msg="No data available for the selected class.",
+                log_msg=(
+                    f"No data generated for class value {class_value} "
+                    "after applying polygon + mask raster intersection."
+                ),
+            )
+
+        h, w = masked_data.shape
+        rgba = np.zeros((h, w, 4), dtype=np.uint8)
+        rgba[masked_data == class_value] = colormap[class_value]
+
+        pil_image = Image.fromarray(rgba, mode="RGBA")
+        img_buffer = io.BytesIO()
+        pil_image.save(img_buffer, format="PNG")
+        img_buffer.seek(0)
+        img_base64 = base64.b64encode(img_buffer.getvalue()).decode("utf-8")
+
+        del data, mask_data, polygon_mask, mask_binary, combined_mask
+        del masked_data, rgba, img_buffer, pil_image
+    except NotFoundError:
+        raise
+    except Exception as e:
+        logger.error(
+            f"Unexpected error rendering class value {class_value}: {str(e)}"
+        )
+        raise ServerError(
+            code=500,
+            usr_msg="There was an error processing the requested class.",
+            e=e,
+        )
+    finally:
+        gc.collect()
+
+    return img_base64

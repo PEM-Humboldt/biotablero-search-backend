@@ -86,20 +86,20 @@ async def insert_polygons_from_geojson(area_type, file_path):
 
     if area_type == "states":
         polygon_name = "dpto_cnmbr"
-        area_name = "shape_Area"
+        area_name = "area_ha"
         code_field = "dpto_ccdgo"
     elif area_type == "ea":
         polygon_name = "nombre"
-        area_name = "st_area_sh"
+        area_name = "area_ha"
         code_field = "car"
     elif area_type == "basinSubzones":
         polygon_name = "nom_szh"
-        area_name = "SHAPE_Area"
+        area_name = "area_ha"
         code_field = "COD_SZH"
     elif area_type == "paramos":
-        polygon_name = "NM_UA"
-        area_name = "Area_Ha"
-        code_field = "COD_CMPLJ"
+        polygon_name = "Nombre"
+        area_name = "area_ha"
+        code_field = "Id"
 
     polygons = []
     for feature in data["features"]:

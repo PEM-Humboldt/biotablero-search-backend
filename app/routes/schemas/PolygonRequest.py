@@ -47,7 +47,7 @@ class PolygonGeometry(geometries.Polygon):
             )
             raise ValidationException([error_template])
 
-        if bbox is not None and len(bbox) not in [4, 6]:
+        if len(bbox) not in [4, 6]:
             error_template["msg"] = (
                 "Bounding box (bbox) must have 4 or 6 elements."
             )

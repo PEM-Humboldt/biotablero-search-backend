@@ -95,7 +95,6 @@ class Metric(Model):
     id = fields.IntField(pk=True)
     name = fields.CharField(max_length=100, unique=True)
     operation_type = fields.CharField(max_length=100)
-    has_layer = fields.BooleanField()
     updated_at = fields.DatetimeField(auto_now=True)
 
     collections: fields.ReverseRelation["MetricCollection"]
@@ -124,3 +123,50 @@ class MetricCollection(Model):
 
     class Meta(Model.Meta):
         table = "metric_collection"
+
+
+class MetricIndicator(Model):
+    id = fields.IntField(pk=True)
+    metric = fields.ForeignKeyField(
+        "bt_search_bk.Metric",
+        related_name="metric_indicator",
+        on_delete=fields.CASCADE,
+    )
+    indicator = fields.CharField(max_length=100, unique=True)
+    updated_at = fields.DatetimeField(auto_now=True)
+
+    class Meta(Model.Meta):
+        table = "metric_indicator"
+
+
+class ProtConn(Model):
+    id = fields.IntField(pk=True)
+    polygon = fields.ForeignKeyField(
+        "bt_search_bk.Polygon",
+        related_name="prot_conn",
+        on_delete=fields.CASCADE,
+    )
+    prot = fields.FloatField()
+    unprot = fields.FloatField()
+    prot_conn = fields.FloatField()
+    prot_unconn = fields.FloatField()
+    updated_at = fields.DatetimeField(auto_now=True)
+
+    class Meta(Model.Meta):
+        table = "prot_conn"
+
+
+class DPC(Model):
+    id = fields.IntField(pk=True)
+    polygon = fields.ForeignKeyField(
+        "bt_search_bk.Polygon",
+        related_name="dpc",
+        on_delete=fields.CASCADE,
+    )
+    dpc = fields.FloatField()
+    pa_id = fields.IntField()
+    pa_name = fields.CharField(max_length=100)
+    updated_at = fields.DatetimeField(auto_now=True)
+
+    class Meta(Model.Meta):
+        table = "dpc"

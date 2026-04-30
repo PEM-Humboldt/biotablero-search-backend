@@ -35,80 +35,67 @@ class MetricEnum(Enum):
     COVERAGE = (
         "coverage",
         OperationEnum.AREA_SINGLE_COLLECTION,
-        True,
         CollectionEnum.COBERTURA,
     )
     PARAMO = (
         "paramo",
         OperationEnum.AREA_SINGLE_COLLECTION,
-        True,
         CollectionEnum.PARAMO,
     )
     TROPICAL_DRY_FOREST = (
         "tropicalDryForest",
         OperationEnum.AREA_SINGLE_COLLECTION,
-        True,
         CollectionEnum.BOSQUE_SECO_TROPICAL,
     )
     WETLAND = (
         "wetland",
         OperationEnum.AREA_SINGLE_COLLECTION,
-        True,
         CollectionEnum.HUMEDAL,
     )
     CURRENTHF = (
         "currentHF",
         OperationEnum.AREA_SINGLE_COLLECTION,
-        True,
         CollectionEnum.HUELLA_HUMANA_CLASIFICADA,
     )
     PERSISTENCEHF = (
         "persistenceHF",
         OperationEnum.AREA_SINGLE_COLLECTION,
-        True,
     )
     SCIPERSISTENCEHF = (
         "sciPersistenceHF",
         OperationEnum.AREA_SINGLE_COLLECTION,
-        True,
     )
     LOSSPERSISTENCE = (
         "lossPersistence",
         OperationEnum.AREA_SINGLE_COLLECTION_ALL_ITEMS,
-        True,
         CollectionEnum.PERDIDA_PERSISTENCIA,
     )
     COVERAGE_PARAMO = (
         "coverage_paramo",
         OperationEnum.AREA_TWO_COLLECTIONS,
-        True,
         CollectionEnum.COBERTURA,
         [CollectionEnum.PARAMO],
     )
     COVERAGE_TROPICAL_DRY_FOREST = (
         "coverage_tropicalDryForest",
         OperationEnum.AREA_TWO_COLLECTIONS,
-        True,
         CollectionEnum.COBERTURA,
         [CollectionEnum.BOSQUE_SECO_TROPICAL],
     )
     COVERAGE_WETLAND = (
         "coverage_wetland",
         OperationEnum.AREA_TWO_COLLECTIONS,
-        True,
         CollectionEnum.COBERTURA,
         [CollectionEnum.HUMEDAL],
     )
     CURRENTHF_AVERAGE = (
         "currentHF_average",
         OperationEnum.AVERAGE_SINGLE_COLLECTION,
-        False,
         CollectionEnum.HUELLA_HUMANA_CONTINUA,
     )
     TIMELINEHF = (
         "timelineHF",
         OperationEnum.AVERAGE_MULTIPLE_COLLECTION_ALL_ITEMS,
-        False,
         CollectionEnum.HUELLA_HUMANA_CONTINUA,
         [
             CollectionEnum.PARAMO,
@@ -119,41 +106,34 @@ class MetricEnum(Enum):
     PROTECTED_AREAS = (
         "protectedAreas",
         OperationEnum.AREA_CATEGORIES_SINGLE_COLLECTION,
-        False,
         CollectionEnum.AREAS_PROTEGIDAS,
     )
     PROTECTED_AREAS_PARAMO = (
         "protectedAreas_paramo",
         OperationEnum.AREA_CATEGORIES_TWO_COLLECTIONS,
-        False,
     )
     PROTECTED_AREAS_TROPICAL_DRY_FOREST = (
         "protectedAreas_tropicalDryForest",
         OperationEnum.AREA_CATEGORIES_TWO_COLLECTIONS,
-        False,
     )
     PROTECTED_AREAS_WETLAND = (
         "protectedAreas_wetland",
         OperationEnum.AREA_CATEGORIES_TWO_COLLECTIONS,
-        False,
     )
     SCIPERSISTENCEHF_PROTECTED_AREAS = (
         "sciPersistenceHF_protectedAreas",
         OperationEnum.AREA_CATEGORIES_SINGLE_COLLECTION_FILTERED,
-        True,
     )
 
     def __init__(
         self,
         metric_name: str,
         operation: OperationEnum,
-        has_layer: bool,
         main_collection: Optional[CollectionEnum] = None,
         sec_collections: Optional[List[CollectionEnum]] = None,
     ):
         self.metric_name = metric_name
         self.operation_type = operation.value
-        self.has_layer = has_layer
         self.main_collection = main_collection
         self.sec_collections = sec_collections
 
@@ -183,7 +163,6 @@ async def seed_collections_and_metrics():
             new_metric = Metric(
                 name=metric.metric_name,
                 operation_type=metric.operation_type,
-                has_layer=metric.has_layer,
             )
             await new_metric.save()
 

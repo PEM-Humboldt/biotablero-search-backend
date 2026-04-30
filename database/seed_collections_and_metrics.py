@@ -1,4 +1,9 @@
-from app.models.models import Collection, Metric, MetricCollection
+from app.models.models import (
+    Collection,
+    Metric,
+    MetricCollection,
+    MetricIndicator,
+)
 from datetime import datetime
 from enum import Enum
 from typing import List, Optional
@@ -16,6 +21,11 @@ class CollectionEnum(Enum):
     AREAS_PROTEGIDAS = "AreasProtegidas"
 
 
+class IndicatorEnum(Enum):
+    PROT_CONN = "prot_conn"
+    DPC = "dpc"
+
+
 class OperationEnum(Enum):
     AREA_SINGLE_COLLECTION = "AREA_SINGLE-COLLECTION"
     AREA_SINGLE_COLLECTION_ALL_ITEMS = "AREA_SINGLE-COLLECTION_ALL-ITEMS"
@@ -29,6 +39,7 @@ class OperationEnum(Enum):
     AREA_CATEGORIES_SINGLE_COLLECTION_FILTERED = (
         "AREA_CATEGORIES_SINGLE-COLLECTION_FILTERED"
     )
+    TABLE_PRECALCULATED = "TABLE_PRECALCULATED"
 
 
 class MetricEnum(Enum):
@@ -124,6 +135,20 @@ class MetricEnum(Enum):
         "sciPersistenceHF_protectedAreas",
         OperationEnum.AREA_CATEGORIES_SINGLE_COLLECTION_FILTERED,
     )
+    PROT_CONN = (
+        "protConn",
+        OperationEnum.TABLE_PRECALCULATED,
+        None,
+        None,
+        IndicatorEnum.PROT_CONN,
+    )
+    DPC = (
+        "dpc",
+        OperationEnum.TABLE_PRECALCULATED,
+        None,
+        None,
+        IndicatorEnum.DPC,
+    )
 
     def __init__(
         self,
@@ -131,11 +156,13 @@ class MetricEnum(Enum):
         operation: OperationEnum,
         main_collection: Optional[CollectionEnum] = None,
         sec_collections: Optional[List[CollectionEnum]] = None,
+        indicator: Optional[IndicatorEnum] = None,
     ):
         self.metric_name = metric_name
         self.operation_type = operation.value
         self.main_collection = main_collection
         self.sec_collections = sec_collections
+        self.indicator = indicator
 
 
 collections_dict = {}
@@ -146,36 +173,36 @@ async def seed_collections_and_metrics():
     await Collection.all().delete()
     await Metric.all().delete()
     await MetricCollection.all().delete()
+    await MetricIndicator.all().delete()
 
-    if not await Collection.exists():
-        now = datetime.now()
-        for col in CollectionEnum:
-            new_collection = Collection(
-                name=col.value,
-                updated_at=now,
+    for col in CollectionEnum:
+        new_collection = Collection(name=col.value)
+        await new_collection.save()
+        collections_dict[col.value] = new_collection
+
+    for metric in MetricEnum:
+
+        new_metric = Metric(
+            name=metric.metric_name,
+            operation_type=metric.operation_type,
+        )
+        await new_metric.save()
+
+        if metric.indicator:
+            await MetricIndicator.create(
+                metric=new_metric, indicator=metric.indicator.value
             )
-            await new_collection.save()
-            collections_dict[col.value] = new_collection
 
-    if not await Metric.exists():
-        for metric in MetricEnum:
-
-            new_metric = Metric(
-                name=metric.metric_name,
-                operation_type=metric.operation_type,
+        if metric.main_collection:
+            await MetricCollection.create(
+                is_primary=True,
+                metric=new_metric,
+                collection=collections_dict[metric.main_collection.value],
             )
-            await new_metric.save()
-
-            if metric.main_collection:
+        if metric.sec_collections:
+            for sec_col in metric.sec_collections:
                 await MetricCollection.create(
-                    is_primary=True,
+                    is_primary=False,
                     metric=new_metric,
-                    collection=collections_dict[metric.main_collection.value],
+                    collection=collections_dict[sec_col.value],
                 )
-            if metric.sec_collections:
-                for sec_col in metric.sec_collections:
-                    await MetricCollection.create(
-                        is_primary=False,
-                        metric=new_metric,
-                        collection=collections_dict[sec_col.value],
-                    )

@@ -1,2 +1,5 @@
 *.geojson
 *.json
+*.csv
+*.tif
+*.zip

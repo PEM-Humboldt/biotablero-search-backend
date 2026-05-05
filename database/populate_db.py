@@ -25,8 +25,8 @@ async def populate_db(which_set="all"):
             case "all":
                 await seed_area_types()
                 await seed_polygons()
-                await seed_connectivity_indicators()
                 await seed_collections_and_metrics()
+                await seed_connectivity_indicators()
             case "areas":
                 await seed_area_types()
                 await seed_polygons()

@@ -18,7 +18,7 @@ from app.services.utils.stac import (
 )
 from app.services.utils.stac import fetch_collection_metadata
 
-from app.models.models import Metric, Collection
+from app.models.models import Metric, Collection, Polygon
 from app.persistence.polygon_metric_layer_persistence import (
     get_existing_layer,
     create_polygon_metric_layer,
@@ -61,23 +61,9 @@ async def get_or_create_polygon_metric(
     if polygon_metric:
         return polygon_metric.values
 
-    polygon = geometries.MultiPolygon(**polygon_obj.geometry)
-
-    primary_collection = next(
-        (mc for mc in metric_obj.collections if mc.is_primary), None
-    )
-    if primary_collection is None:
-        raise ServerError(
-            code=500,
-            usr_msg=f"There was an error calculating the metric {metric_name}.",
-            e=Exception("Primary collection not found"),
-        )
-
-    await primary_collection.fetch_related("collection")
-
     values = await OperationFunctions(
         metric_obj.operation_type
-    ).values_function(primary_collection.collection, metric_obj, polygon)
+    ).values_function(metric_obj, polygon_obj)
 
     await create_polygon_metric(polygon_obj, metric_obj, values)
     return values
@@ -155,16 +141,37 @@ async def get_or_create_polygon_metric_layer(
     return {"layer": image_url}
 
 
+"""
+SPECIFIC VALUES FUNCTIONS
+"""
+
+
 async def calculate_single_coll_values(
-    primary_collection: Collection, _, polygon: geometries.MultiPolygon
+    metric: Metric, polygon_obj: Polygon
 ) -> Dict[str, str | float]:
     """
     Calculate values for a metric that uses only the first item from one collection,
     grouped by the collection categories
     """
+
+    primary_collection = next(
+        (mc for mc in metric.collections if mc.is_primary), None
+    )
+
+    if primary_collection is None:
+        raise ServerError(
+            code=500,
+            usr_msg=f"There was an error calculating the metric {metric.name}.",
+            e=Exception("Primary collection not found"),
+        )
+
+    await primary_collection.fetch_related("collection")
+    primary_collection = primary_collection.collection
     classes, _, _, _ = await fetch_collection_metadata(primary_collection)
 
     id, raster_url = get_items_asset_url(primary_collection.name)[0]
+
+    polygon = geometries.MultiPolygon(**polygon_obj.geometry)
 
     raster_values = get_one_raster_areas_by_classes(
         raster_url, polygon, classes
@@ -174,16 +181,31 @@ async def calculate_single_coll_values(
 
 
 async def calculate_single_coll_all_items_values(
-    primary_collection: Collection, _, polygon: geometries.MultiPolygon
+    metric: Metric, polygon_obj: Polygon
 ) -> List[Dict[str, str | float]]:
     """
     Calculate values for a metric that uses all items from one collection,
     grouped by the collection categories
     """
+    primary_collection = next(
+        (mc for mc in metric.collections if mc.is_primary), None
+    )
+
+    if primary_collection is None:
+        raise ServerError(
+            code=500,
+            usr_msg=f"There was an error calculating the metric {metric.name}.",
+            e=Exception("Primary collection not found"),
+        )
+
+    await primary_collection.fetch_related("collection")
+    primary_collection = primary_collection.collection
 
     classes, _, _, _ = await fetch_collection_metadata(primary_collection)
 
     rasters_info = get_items_asset_url(primary_collection.name)
+    polygon = geometries.MultiPolygon(**polygon_obj.geometry)
+
     result = []
     for id, url in rasters_info:
         raster_values = get_one_raster_areas_by_classes(url, polygon, classes)
@@ -194,14 +216,26 @@ async def calculate_single_coll_all_items_values(
 
 
 async def calculate_two_colls_values(
-    primary_collection: Collection,
     metric: Metric,
-    polygon: geometries.MultiPolygon,
+    polygon_obj: Polygon,
 ) -> Dict[str, str | float]:
     """
     Calculate values for a metric that uses only the first item from two collections.
     The values are grouped by the categories of the primary collection.
     """
+    primary_collection = next(
+        (mc for mc in metric.collections if mc.is_primary), None
+    )
+
+    if primary_collection is None:
+        raise ServerError(
+            code=500,
+            usr_msg=f"There was an error calculating the metric {metric.name}.",
+            e=Exception("Primary collection not found"),
+        )
+
+    await primary_collection.fetch_related("collection")
+    primary_collection = primary_collection.collection
 
     secondary_collection = next(
         (mc for mc in metric.collections if not mc.is_primary), None
@@ -228,6 +262,7 @@ async def calculate_two_colls_values(
     _, raster_sec_url = get_items_asset_url(secondary_collection.name)[
         index_sec
     ]
+    polygon = geometries.MultiPolygon(**polygon_obj.geometry)
     raster_values = get_two_raster_areas_by_classes(
         raster_pri_url, raster_sec_url, polygon, classes
     )
@@ -236,12 +271,27 @@ async def calculate_two_colls_values(
 
 
 async def calculate_ave_coll_values(
-    primary_collection: Collection, _, polygon: geometries.MultiPolygon
+    metric: Metric, polygon_obj: Polygon
 ) -> Dict[str, str | float]:
     """
     calculates the average of the values from a collection within a polygon
     """
+    primary_collection = next(
+        (mc for mc in metric.collections if mc.is_primary), None
+    )
+
+    if primary_collection is None:
+        raise ServerError(
+            code=500,
+            usr_msg=f"There was an error calculating the metric {metric.name}.",
+            e=Exception("Primary collection not found"),
+        )
+
+    await primary_collection.fetch_related("collection")
+    primary_collection = primary_collection.collection
+
     id, raster_url = get_items_asset_url(primary_collection.name)[0]
+    polygon = geometries.MultiPolygon(**polygon_obj.geometry)
     average = get_one_raster_average(raster_url, polygon)
 
     return {"id": id, "average": average}
@@ -252,11 +302,25 @@ def calculate_ave_multiple_colls_values():
 
 
 async def calculate_cat_single_coll_values(
-    primary_collection: Collection, _, polygon: geometries.MultiPolygon
+    metric: Metric, polygon_obj: Polygon
 ) -> Dict[str, str | float]:
     """
     calculates the area of each category of a collection within a polygon
     """
+    primary_collection = next(
+        (mc for mc in metric.collections if mc.is_primary), None
+    )
+
+    if primary_collection is None:
+        raise ServerError(
+            code=500,
+            usr_msg=f"There was an error calculating the metric {metric.name}.",
+            e=Exception("Primary collection not found"),
+        )
+
+    await primary_collection.fetch_related("collection")
+    primary_collection = primary_collection.collection
+
     _, values, _, categories = await fetch_collection_metadata(
         primary_collection
     )
@@ -266,6 +330,7 @@ async def calculate_cat_single_coll_values(
     }
     id, raster_url = get_items_asset_url(primary_collection.name)[0]
 
+    polygon = geometries.MultiPolygon(**polygon_obj.geometry)
     raster_values = get_one_raster_areas_by_category(
         raster_url, polygon, values_by_category
     )
@@ -279,6 +344,11 @@ def calculate_cat_two_colls_values():
 
 def calculate_cat_single_coll_filtered_values():
     pass
+
+
+"""
+SPECIFIC LAYER FUNCTIONS
+"""
 
 
 async def calculate_single_coll_layer(

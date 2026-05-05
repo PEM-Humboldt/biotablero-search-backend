@@ -100,7 +100,12 @@ async def get_or_create_polygon_metric_layer(
         raise HTTPException(
             status_code=400, detail="Metric not found in database"
         )
-    if not metric_obj.has_layer:
+
+    calculate_layer_func = OperationFunctions(
+        metric_obj.operation_type
+    ).layer_function
+
+    if calculate_layer_func is None:
         raise HTTPException(
             status_code=501, detail="Metric doesn't have an associated layer"
         )
@@ -125,15 +130,6 @@ async def get_or_create_polygon_metric_layer(
     await primary_collection.fetch_related("collection")
 
     polygon = geometries.MultiPolygon(**polygon_obj.geometry)
-
-    calculate_layer_func = OperationFunctions(
-        metric_obj.operation_type
-    ).layer_function
-
-    if calculate_layer_func is None:
-        raise HTTPException(
-            status_code=501, detail="Metric doesn't have an associated layer"
-        )
 
     img_base64 = await calculate_layer_func(
         polygon,

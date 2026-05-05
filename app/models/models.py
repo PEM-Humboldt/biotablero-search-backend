@@ -165,7 +165,7 @@ class DPC(Model):
     )
     dpc = fields.FloatField()
     pa_id = fields.IntField()
-    pa_name = fields.CharField(max_length=100)
+    pa_name = fields.CharField(max_length=150)
     updated_at = fields.DatetimeField(auto_now=True)
 
     class Meta(Model.Meta):

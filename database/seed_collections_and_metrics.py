@@ -4,7 +4,6 @@ from app.models.models import (
     MetricCollection,
     MetricIndicator,
 )
-from datetime import datetime
 from enum import Enum
 from typing import List, Optional
 

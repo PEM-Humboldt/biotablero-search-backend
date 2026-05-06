@@ -31,6 +31,7 @@ from app.persistence.polygon_metric_persistence import (
 from app.persistence.metric_persistence import (
     get_metric_by_name,
 )
+from app.persistence.indicator_persistence import AbstractIndicator
 
 from app.utils.s3_utils import upload_to_s3
 from app.utils.errors import ServerError, MetadataError
@@ -346,6 +347,24 @@ def calculate_cat_single_coll_filtered_values():
     pass
 
 
+async def calculate_table_precalculated_values(
+    metric: Metric, polygon_obj: Polygon
+) -> Dict[str, str | float] | List[Dict[str, str | float]]:
+    """
+    Queries the results for the precalculated indicators
+    """
+    indicator = next(i for i in metric.indicator)
+    if indicator is None:
+        raise ServerError(
+            code=500,
+            usr_msg=f"There was an error calculating the metric {metric.name}.",
+            e=Exception("Indicator not found"),
+        )
+
+    query_obj = AbstractIndicator(indicator.indicator)
+    return await query_obj.get_values_by_polygon(polygon=polygon_obj)
+
+
 """
 SPECIFIC LAYER FUNCTIONS
 """
@@ -467,6 +486,7 @@ class OperationFunctions:
             "AREA_CATEGORIES_SINGLE-COLLECTION": calculate_cat_single_coll_values,
             "AREA_CATEGORIES_TWO-COLLECTIONS": calculate_cat_two_colls_values,
             "AREA_CATEGORIES_SINGLE-COLLECTION_FILTERED": calculate_cat_single_coll_filtered_values,
+            "TABLE_PRECALCULATED": calculate_table_precalculated_values,
         }
         layer_functions = {
             "AREA_SINGLE-COLLECTION": calculate_single_coll_layer,

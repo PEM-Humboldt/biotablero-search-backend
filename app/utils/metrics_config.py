@@ -11,6 +11,9 @@ from app.routes.schemas.MetricResponse import (
     TropicalDryForestResponse,
     WetlandResponse,
     ProtectedAreasTypesResponse,
+    ProtConnResponse,
+    DPCListResponse,
+    DPCSingleResponse,
 )
 
 MetricResponse = Union[
@@ -22,6 +25,9 @@ MetricResponse = Union[
     TropicalDryForestResponse,
     WetlandResponse,
     ProtectedAreasTypesResponse,
+    ProtConnResponse,
+    DPCListResponse,
+    DPCSingleResponse,
 ]
 
 
@@ -43,6 +49,8 @@ class MetricsConfigType(TypedDict):
     coverage_tropicalDryForest: MetricConfig
     coverage_wetland: MetricConfig
     protectedAreas: MetricConfig
+    protConn: MetricConfig
+    dpc: MetricConfig
 
 
 # This config contains everything related to FastAPI and Pydantic validations
@@ -187,11 +195,59 @@ METRICS_CONFIG: MetricsConfigType = {
         ),
         "description": "Protected areas types",
     },
-    # "timelineHF": {},
+    "protConn": {
+        "model": ProtConnResponse,
+        "example": ProtConnResponse(
+            id="protConn",
+            prot=26.3568,
+            unprot=73.6432,
+            prot_conn=20.8921,
+            prot_unconn=5.4647,
+        ),
+        "description": "Protected Areas connectivity index",
+    },
+    "dpc": {
+        "model": DPCListResponse,
+        "example": DPCListResponse(
+            [
+                DPCSingleResponse(
+                    id="5010",
+                    dpc=84.6393104,
+                    pa_id=473,
+                    pa_name="Serranía de los Yariguíes",
+                ),
+                DPCSingleResponse(
+                    id="5016",
+                    dpc=8.6459074,
+                    pa_id=540,
+                    pa_name="DRMI de los Páramos de Guantiva y La Rusia, Bosques de Roble y sus Zonas aledañas",
+                ),
+                DPCSingleResponse(
+                    id="5008",
+                    dpc=2.8891138,
+                    pa_id=464,
+                    pa_name="Del Humedal San Silvestre",
+                ),
+                DPCSingleResponse(
+                    id="5020",
+                    dpc=1.7596195,
+                    pa_id=757,
+                    pa_name="Pan de Azucar el Consuelo",
+                ),
+                DPCSingleResponse(
+                    id="5011",
+                    dpc=1.4764853,
+                    pa_id=475,
+                    pa_name="Del Rio Minero y sus Zonas Aledañas",
+                ),
+            ]
+        ),
+        "description": "Cconnectivity probability change index",
+    },
     # TODO: implementar estas:
+    # "timelineHF": {},
+    # "persistenceHF": {},
     # "sciPersistenceHF": {},
-    # "currentHF_average": {},
-    # "protectedAreas": {},
     # "protectedAreas_paramo": {},
     # "protectedAreas_tropicalDryForest": {},
     # "protectedAreas_wetland": {},

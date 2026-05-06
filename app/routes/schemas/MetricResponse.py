@@ -119,3 +119,20 @@ class ProtectedAreasTypesResponse(BaseMetricResult):
     Area_Natural_Unica: float = Field(default=0.0, alias="Área Natural Única")
     Areas_Recreacion: float = Field(default=0.0, alias="Áreas de Recreación")
     No_Protegida: float = Field(default=0.0, alias="No Protegida")
+
+
+class ProtConnResponse(BaseMetricResult):
+    prot: float
+    unprot: float
+    prot_conn: float
+    prot_unconn: float
+
+
+class DPCSingleResponse(BaseMetricResult):
+    dpc: float
+    pa_id: int
+    pa_name: str
+
+
+class DPCListResponse(RootModel[list[DPCSingleResponse]]):
+    pass

@@ -98,6 +98,7 @@ class Metric(Model):
     updated_at = fields.DatetimeField(auto_now=True)
 
     collections: fields.ReverseRelation["MetricCollection"]
+    indicator: fields.ReverseRelation["MetricIndicator"]
 
     class Meta(Model.Meta):
         table = "metric"
@@ -129,7 +130,7 @@ class MetricIndicator(Model):
     id = fields.IntField(pk=True)
     metric = fields.ForeignKeyField(
         "bt_search_bk.Metric",
-        related_name="metric_indicator",
+        related_name="indicator",
         on_delete=fields.CASCADE,
     )
     indicator = fields.CharField(max_length=100, unique=True)
@@ -152,6 +153,15 @@ class ProtConn(Model):
     prot_unconn = fields.FloatField()
     updated_at = fields.DatetimeField(auto_now=True)
 
+    def get_result_for_metric(self):
+        return {
+            "id": "protConn",
+            "prot": self.prot,
+            "unprot": self.unprot,
+            "prot_conn": self.prot_conn,
+            "prot_unconn": self.prot_unconn,
+        }
+
     class Meta(Model.Meta):
         table = "prot_conn"
 
@@ -167,6 +177,14 @@ class DPC(Model):
     pa_id = fields.IntField()
     pa_name = fields.CharField(max_length=150)
     updated_at = fields.DatetimeField(auto_now=True)
+
+    def get_result_for_metric(self):
+        return {
+            "id": str(self.id),
+            "dpc": self.dpc,
+            "pa_id": self.pa_id,
+            "pa_name": self.pa_name,
+        }
 
     class Meta(Model.Meta):
         table = "dpc"

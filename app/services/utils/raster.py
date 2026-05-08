@@ -299,6 +299,91 @@ def get_one_raster_average(
     return average_value
 
 
+def get_polygon_and_mask_averages(
+    raster_path: str,
+    polygon: geometries.MultiPolygon,
+    mask_rasters: Dict[str, str],
+) -> Dict[str, float]:
+    """
+    Calculate average in a polygon and, in the same base crop, calculate
+    averages intersected with additional mask rasters.
+    """
+    polygon_geom = shape(polygon)
+    source_crs = CRS.from_string("EPSG:4326")
+    averages: Dict[str, float] = {}
+
+    with rasterio.open(raster_path) as src:
+        raster_bounds = box(*src.bounds)
+        if not polygon_geom.intersects(raster_bounds):
+            raise UnprocessableError(
+                code=422,
+                usr_msg="Input polygon does not intersect with metric.",
+                e=Exception("Polygon does not intersect with raster bounds"),
+            )
+
+        if src.crs != source_crs:
+            transformer = Transformer.from_crs(
+                source_crs, src.crs, always_xy=True
+            )
+            polygon_geom = shapely_transform(
+                transformer.transform, polygon_geom
+            )
+
+        minx, miny, maxx, maxy = polygon_geom.bounds
+        window = from_bounds(minx, miny, maxx, maxy, src.transform)
+        window_transform = src.window_transform(window)
+
+        base_data = src.read(1, window=window).astype(np.float64)
+        polygon_mask = rasterize(
+            [polygon_geom],
+            out_shape=base_data.shape,
+            transform=window_transform,
+            fill=False,
+            default_value=True,
+            dtype=np.uint8,
+        ).astype(bool)
+
+        base_data = np.where(polygon_mask, base_data, np.nan)
+        if src.nodata is not None:
+            base_data = np.where(base_data == src.nodata, np.nan, base_data)
+
+        averages["average"] = float(np.nanmean(base_data))
+
+        for mask_key, mask_path in mask_rasters.items():
+            with rasterio.open(mask_path) as mask_src:
+                if src.crs != mask_src.crs:
+                    raise ValueError(
+                        "Raster coordinate reference systems do not match."
+                    )
+                if src.res != mask_src.res:
+                    raise ValueError("Raster resolutions do not match.")
+
+                mask_window = from_bounds(
+                    minx, miny, maxx, maxy, mask_src.transform
+                )
+                mask_data = mask_src.read(1, window=mask_window)
+                mask_nodata = mask_src.nodata
+
+                if mask_nodata is None:
+                    pass
+                elif np.isnan(mask_nodata):
+                    mask_data = np.where(np.isnan(mask_data), 0, mask_data)
+                else:
+                    mask_data = np.where(
+                        mask_data == mask_nodata, 0, mask_data
+                    )
+
+                combined_mask = polygon_mask & (mask_data > 0)
+                if not np.any(combined_mask):
+                    averages[mask_key] = 0.0
+                    continue
+
+                masked_values = np.where(combined_mask, base_data, np.nan)
+                averages[mask_key] = float(np.nanmean(masked_values))
+
+    return averages
+
+
 def get_one_raster_areas_by_category(
     raster_path: str,
     polygon: geometries.MultiPolygon,

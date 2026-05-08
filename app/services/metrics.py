@@ -9,6 +9,7 @@ from app.services.utils.raster import (
     get_one_raster_average,
     get_two_raster_areas_by_classes,
     get_two_raster_image,
+    get_polygon_and_mask_averages,
 )
 from app.services.utils.stac import (
     get_item_index_by_resolution,
@@ -37,6 +38,26 @@ from app.utils.s3_utils import upload_to_s3
 from app.utils.errors import ServerError, MetadataError
 
 
+def _normalize_timeline_hf_values(
+    values: List[Dict[str, str | float]] | Dict[str, str | float],
+) -> List[Dict[str, str | float]] | Dict[str, str | float]:
+    if isinstance(values, list):
+        normalized_values: List[Dict[str, str | float]] = []
+        for value in values:
+            if (
+                isinstance(value, dict)
+                and "poligono" not in value
+                and "average" in value
+            ):
+                normalized_value = dict(value)
+                normalized_value["poligono"] = normalized_value.pop("average")
+                normalized_values.append(normalized_value)
+            else:
+                normalized_values.append(value)
+        return normalized_values
+    return values
+
+
 async def get_or_create_polygon_metric(
     polygon_id: int, metric_name: str
 ) -> List[Dict[str, str | float]] | Dict[str, str | float]:
@@ -60,6 +81,14 @@ async def get_or_create_polygon_metric(
     polygon_metric = await get_polygon_metric(polygon_obj, metric_obj)
 
     if polygon_metric:
+        if metric_name == "timelineHF":
+            normalized_values = _normalize_timeline_hf_values(
+                polygon_metric.values
+            )
+            if normalized_values != polygon_metric.values:
+                polygon_metric.values = normalized_values
+                await polygon_metric.save(update_fields=["values"])
+            return normalized_values
         return polygon_metric.values
 
     values = await OperationFunctions(
@@ -298,8 +327,94 @@ async def calculate_ave_coll_values(
     return {"id": id, "average": average}
 
 
-def calculate_ave_multiple_colls_values():
-    pass
+async def calculate_ave_multiple_colls_values(
+    metric: Metric, polygon_obj: Polygon
+) -> List[Dict[str, str | float]]:
+    """
+    Calculates, for each year, Human Footprint average in the whole polygon and in
+    intersections with paramo, tropical dry forest and wetland masks.
+    """
+    primary_metric_collection = next(
+        (mc for mc in metric.collections if mc.is_primary), None
+    )
+    if primary_metric_collection is None:
+        raise ServerError(
+            code=500,
+            usr_msg=f"There was an error calculating the metric {metric.name}.",
+            e=Exception("Primary collection not found"),
+        )
+
+    await primary_metric_collection.fetch_related("collection")
+    primary_collection = primary_metric_collection.collection
+
+    secondary_metric_collections = [
+        mc for mc in metric.collections if not mc.is_primary
+    ]
+    if len(secondary_metric_collections) < 3:
+        raise ServerError(
+            code=500,
+            usr_msg=f"There was an error calculating the metric {metric.name}.",
+            e=Exception("Missing secondary collections for timelineHF"),
+        )
+
+    for sec_metric_collection in secondary_metric_collections:
+        await sec_metric_collection.fetch_related("collection")
+
+    secondary_collections = {
+        mc.collection.name: mc.collection
+        for mc in secondary_metric_collections
+    }
+    expected_masks = {
+        "paramo": "Paramos",
+        "bosqueSeco": "BosqueSeco",
+        "humedal": "Humedales",
+    }
+    if not all(
+        collection_name in secondary_collections
+        for collection_name in expected_masks.values()
+    ):
+        raise ServerError(
+            code=500,
+            usr_msg=f"There was an error calculating the metric {metric.name}.",
+            e=Exception("Expected ecosystem collections were not found"),
+        )
+
+    polygon = geometries.MultiPolygon(**polygon_obj.geometry)
+    results: List[Dict[str, str | float]] = []
+
+    for item_id, raster_url in get_items_asset_url(primary_collection.name):
+        item_res = get_item_resolution_by_item_id(
+            primary_collection.name, item_id
+        )
+        mask_rasters: Dict[str, str] = {}
+
+        for result_key, collection_name in expected_masks.items():
+            mask_collection = secondary_collections[collection_name]
+            mask_index = get_item_index_by_resolution(
+                mask_collection.name, item_res
+            )
+            _, mask_raster_url = get_items_asset_url(mask_collection.name)[
+                mask_index
+            ]
+            mask_rasters[result_key] = mask_raster_url
+
+        averages = get_polygon_and_mask_averages(
+            raster_path=raster_url,
+            polygon=polygon,
+            mask_rasters=mask_rasters,
+        )
+
+        results.append(
+            {
+                "id": item_id,
+                "poligono": averages["average"],
+                "paramo": averages["paramo"],
+                "bosqueSeco": averages["bosqueSeco"],
+                "humedal": averages["humedal"],
+            }
+        )
+
+    return results
 
 
 async def calculate_cat_single_coll_values(

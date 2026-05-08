@@ -333,15 +333,21 @@ def get_polygon_and_mask_averages(
         window = from_bounds(minx, miny, maxx, maxy, src.transform)
         window_transform = src.window_transform(window)
 
-        base_data = src.read(1, window=window).astype(np.float64)
-        polygon_mask = rasterize(
+        base_data_raw = src.read(1, window=window)
+        if base_data_raw is None:
+            raise ValueError("Could not read raster data")
+        base_data = base_data_raw.astype(np.float64)
+        polygon_mask_raw = rasterize(
             [polygon_geom],
             out_shape=base_data.shape,
             transform=window_transform,
             fill=False,
             default_value=True,
             dtype=np.uint8,
-        ).astype(bool)
+        )
+        if polygon_mask_raw is None:
+            raise ValueError("Failed to rasterize polygon")
+        polygon_mask = polygon_mask_raw.astype(bool)
 
         base_data = np.where(polygon_mask, base_data, np.nan)
         if src.nodata is not None:

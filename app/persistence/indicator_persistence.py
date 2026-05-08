@@ -21,6 +21,11 @@ class AbstractIndicator:
         Returns the values for the configurated indicator and given polygon
         """
         result = await self.indicator_obj.filter(polygon=polygon)
+        if len(result) == 0:
+            raise NotFoundError(
+                "data not found",
+                usr_msg=f"There are no values in the database for the given metric and polygon",
+            )
         if self.indicator_obj.describe()["table"] == "dpc":
             return list(map(lambda val: val.get_result_for_metric(), result))
         else:

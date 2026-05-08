@@ -11,7 +11,7 @@ class AbstractIndicator:
         if self.indicator_obj is None:
             raise NotFoundError(
                 "indicator not defined",
-                usr_msg=f"There was an error calculating thevalues.",
+                usr_msg=f"There was an error calculating the values.",
             )
 
     async def get_values_by_polygon(

@@ -56,6 +56,21 @@ class CurrentHFAverageResponse(BaseMetricResult):
     average: float
 
 
+class TimelineHFSingleResponse(BaseMetricResult):
+    """
+    Response model for Human Footprint time-series averages by ecosystem.
+    """
+
+    poligono: float
+    paramo: float
+    bosqueSeco: float
+    humedal: float
+
+
+class TimelineHFListResponse(RootModel[list[TimelineHFSingleResponse]]):
+    pass
+
+
 class ParamoResponse(BaseMetricResult):
     """
     Response model for paramos area in a given year.

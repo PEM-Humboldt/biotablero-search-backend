@@ -353,7 +353,7 @@ async def calculate_table_precalculated_values(
     """
     Queries the results for the precalculated indicators
     """
-    indicator = next(i for i in metric.indicator)
+    indicator = next(iter(metric.indicator), None)
     if indicator is None:
         raise ServerError(
             code=500,

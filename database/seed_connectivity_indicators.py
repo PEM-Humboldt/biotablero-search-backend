@@ -53,6 +53,10 @@ async def seed_connectivity_indicators():
                     print("id NA, %s" % (row["geofence_type"]))
                     errors += 1
                     continue
+                if float(row["dPC"]) <= 0:
+                    print("dpc <= 0, ignorando registro, %s" % (row))
+                    errors += 1
+                    continue
                 polygon = await Polygon.get_or_none(official_code=row["id"])
                 if not polygon:
                     print("id no encontrado, %s" % (row["id"]))

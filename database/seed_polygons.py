@@ -1,6 +1,5 @@
 import hashlib
 import json
-from app.utils.config import get_settings
 import logging
 from tortoise.exceptions import DoesNotExist
 
@@ -8,8 +7,6 @@ from app.models.models import Polygon, AreaType
 from shapely.geometry import shape
 
 from app.persistence.utils.polygon_utils import cast_to_multi_polygon
-
-settings = get_settings()
 
 logger = logging.getLogger(__name__)
 

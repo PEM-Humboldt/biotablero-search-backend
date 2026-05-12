@@ -5,6 +5,7 @@ from tortoise import Tortoise
 
 from database.seed_area_types import seed_area_types
 from database.seed_collections_and_metrics import seed_collections_and_metrics
+from database.seed_connectivity_indicators import seed_connectivity_indicators
 from database.seed_polygons import seed_polygons
 
 from app.utils.config import get_settings, TORTOISE_ORM
@@ -25,9 +26,12 @@ async def populate_db(which_set="all"):
                 await seed_area_types()
                 await seed_polygons()
                 await seed_collections_and_metrics()
+                await seed_connectivity_indicators()
             case "areas":
                 await seed_area_types()
                 await seed_polygons()
+            case "indicators":
+                await seed_connectivity_indicators()
             case "metrics":
                 await seed_collections_and_metrics()
     except Exception as e:
@@ -48,7 +52,7 @@ if __name__ == "__main__":
         "-s",
         "--sets",
         dest="which_set",
-        help="Especifica que conjunto de datos poblar, opciones: 'all', 'areas', 'metrics'",
+        help="Especifica que conjunto de datos poblar, opciones: 'all', 'areas', 'metrics', 'indicators",
         default="all",
         required=False,
     )

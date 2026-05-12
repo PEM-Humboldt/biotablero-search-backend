@@ -95,10 +95,10 @@ class Metric(Model):
     id = fields.IntField(pk=True)
     name = fields.CharField(max_length=100, unique=True)
     operation_type = fields.CharField(max_length=100)
-    has_layer = fields.BooleanField()
     updated_at = fields.DatetimeField(auto_now=True)
 
     collections: fields.ReverseRelation["MetricCollection"]
+    indicator: fields.ReverseRelation["MetricIndicator"]
 
     class Meta(Model.Meta):
         table = "metric"
@@ -124,3 +124,67 @@ class MetricCollection(Model):
 
     class Meta(Model.Meta):
         table = "metric_collection"
+
+
+class MetricIndicator(Model):
+    id = fields.IntField(pk=True)
+    metric = fields.ForeignKeyField(
+        "bt_search_bk.Metric",
+        related_name="indicator",
+        on_delete=fields.CASCADE,
+    )
+    indicator = fields.CharField(max_length=100, unique=True)
+    updated_at = fields.DatetimeField(auto_now=True)
+
+    class Meta(Model.Meta):
+        table = "metric_indicator"
+
+
+class ProtConn(Model):
+    id = fields.IntField(pk=True)
+    polygon = fields.ForeignKeyField(
+        "bt_search_bk.Polygon",
+        related_name="prot_conn",
+        on_delete=fields.CASCADE,
+    )
+    prot = fields.FloatField()
+    unprot = fields.FloatField()
+    prot_conn = fields.FloatField()
+    prot_unconn = fields.FloatField()
+    updated_at = fields.DatetimeField(auto_now=True)
+
+    def get_result_for_metric(self):
+        return {
+            "id": "protConn",
+            "prot": self.prot,
+            "unprot": self.unprot,
+            "prot_conn": self.prot_conn,
+            "prot_unconn": self.prot_unconn,
+        }
+
+    class Meta(Model.Meta):
+        table = "prot_conn"
+
+
+class DPC(Model):
+    id = fields.IntField(pk=True)
+    polygon = fields.ForeignKeyField(
+        "bt_search_bk.Polygon",
+        related_name="dpc",
+        on_delete=fields.CASCADE,
+    )
+    dpc = fields.FloatField()
+    pa_id = fields.IntField()
+    pa_name = fields.CharField(max_length=150)
+    updated_at = fields.DatetimeField(auto_now=True)
+
+    def get_result_for_metric(self):
+        return {
+            "id": str(self.id),
+            "dpc": self.dpc,
+            "pa_id": self.pa_id,
+            "pa_name": self.pa_name,
+        }
+
+    class Meta(Model.Meta):
+        table = "dpc"

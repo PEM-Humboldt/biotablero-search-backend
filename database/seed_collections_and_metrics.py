@@ -121,14 +121,21 @@ class MetricEnum(Enum):
     PROTECTED_AREAS_PARAMO = (
         "protectedAreas_paramo",
         OperationEnum.AREA_CATEGORIES_TWO_COLLECTIONS,
+        CollectionEnum.AREAS_PROTEGIDAS,
+        [CollectionEnum.PARAMO]
     )
+    
     PROTECTED_AREAS_TROPICAL_DRY_FOREST = (
         "protectedAreas_tropicalDryForest",
         OperationEnum.AREA_CATEGORIES_TWO_COLLECTIONS,
+        CollectionEnum.AREAS_PROTEGIDAS,
+        [CollectionEnum.BOSQUE_SECO_TROPICAL]
     )
     PROTECTED_AREAS_WETLAND = (
         "protectedAreas_wetland",
         OperationEnum.AREA_CATEGORIES_TWO_COLLECTIONS,
+        CollectionEnum.AREAS_PROTEGIDAS,
+        [CollectionEnum.HUMEDAL]
     )
     SCIPERSISTENCEHF_PROTECTED_AREAS = (
         "sciPersistenceHF_protectedAreas",

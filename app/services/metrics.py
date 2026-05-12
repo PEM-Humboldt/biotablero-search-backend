@@ -4,6 +4,7 @@ from fastapi import HTTPException
 
 from app.services.utils.raster import (
     get_one_raster_areas_by_category,
+    get_two_raster_areas_by_category,
     get_one_raster_image,
     get_one_raster_areas_by_classes,
     get_one_raster_average,
@@ -339,8 +340,64 @@ async def calculate_cat_single_coll_values(
     return {"id": id, **raster_values}
 
 
-def calculate_cat_two_colls_values():
-    pass
+async def calculate_cat_two_colls_values(
+    metric: Metric, polygon_obj: Polygon
+) -> Dict[str, str | float]:
+    """
+    calculates the area of each category of a collection within a polygon
+    """
+    primary_collection = next(
+        (mc for mc in metric.collections if mc.is_primary), None
+    )
+
+    if primary_collection is None:
+        raise ServerError(
+            code=500,
+            usr_msg=f"There was an error calculating the metric {metric.name}.",
+            e=Exception("Primary collection not found"),
+        )
+
+    await primary_collection.fetch_related("collection")
+    primary_collection = primary_collection.collection
+
+    secondary_collection = next(
+        (mc for mc in metric.collections if not mc.is_primary), None
+    )
+    if secondary_collection is None:
+        raise ServerError(
+            code=500,
+            usr_msg=f"There was an error calculating the metric {metric.name}.",
+            e=Exception("Secondary collection not found"),
+        )
+
+    await secondary_collection.fetch_related("collection")
+
+    _, values, _, categories = await fetch_collection_metadata(
+        primary_collection
+    )
+
+    values_by_category = {
+        value: category for value, category in zip(values, categories)
+    }
+
+    secondary_collection = secondary_collection.collection
+
+    id_pri, raster_pri_url = get_items_asset_url(primary_collection.name)[0]
+    resol_pri = get_item_resolution_by_item_id(primary_collection.name, id_pri)
+
+    index_sec = get_item_index_by_resolution(
+        secondary_collection.name, resol_pri
+    )
+    _, raster_sec_url = get_items_asset_url(secondary_collection.name)[
+        index_sec
+    ]
+    polygon = geometries.MultiPolygon(**polygon_obj.geometry)
+    raster_values = get_two_raster_areas_by_category(
+        raster_pri_url, raster_sec_url, polygon, values_by_category
+    )
+
+    return {"id": id_pri, **raster_values}
+
 
 
 def calculate_cat_single_coll_filtered_values():

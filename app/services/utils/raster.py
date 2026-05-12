@@ -331,8 +331,8 @@ def get_one_raster_areas_by_category(
 
 
 def get_two_raster_areas_by_category(
-    raster_1: str,
-    raster_2: str,
+    raster1_path: str,
+    raster2_path: str,
     polygon: geometries.MultiPolygon,
     categories: Dict[int, str],
 ) -> Dict[str, float]:
@@ -342,8 +342,8 @@ def get_two_raster_areas_by_category(
     """
     data, mask_data, window_transform, polygon_geom = (
             crop_two_rasters_by_polygon(
-                raster_path=raster_1,
-                mask_raster_path=raster_2,
+                raster1_path=raster1_path,
+                raster2_path=raster2_path,
                 polygon=polygon,
             )
         )
@@ -362,7 +362,7 @@ def get_two_raster_areas_by_category(
     combined_mask = (polygon_mask == 1) & mask_binary
     masked_data = np.where(combined_mask, data, np.nan)
     
-    with rasterio.open(raster_1) as src:
+    with rasterio.open(raster1_path) as src:
         nodata = src.nodata
         
     if nodata is not None:

@@ -345,6 +345,7 @@ async def calculate_cat_two_colls_values(
 ) -> Dict[str, str | float]:
     """
     calculates the area of each category of a collection within a polygon
+    croped by a second collection
     """
     primary_collection = next(
         (mc for mc in metric.collections if mc.is_primary), None

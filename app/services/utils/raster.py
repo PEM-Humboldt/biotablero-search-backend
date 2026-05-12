@@ -330,6 +330,60 @@ def get_one_raster_areas_by_category(
     return areas_by_category
 
 
+def get_two_raster_areas_by_category(
+    raster_1: str,
+    raster_2: str,
+    polygon: geometries.MultiPolygon,
+    categories: Dict[int, str],
+) -> Dict[str, float]:
+    """
+    Calculate the area in hectares of raster values within a given polygon,
+    grouped by user-defined categories.
+    """
+    data, mask_data, window_transform, polygon_geom = (
+            crop_two_rasters_by_polygon(
+                raster_path=raster_1,
+                mask_raster_path=raster_2,
+                polygon=polygon,
+            )
+        )
+    
+    
+    polygon_mask = rasterize(
+            [polygon_geom],
+            out_shape=data.shape,
+            transform=window_transform,
+            fill=0,
+            default_value=1,
+            dtype=np.uint8,
+        )
+
+    mask_binary = mask_data > 0
+    combined_mask = (polygon_mask == 1) & mask_binary
+    masked_data = np.where(combined_mask, data, np.nan)
+    
+    with rasterio.open(raster_1) as src:
+        nodata = src.nodata
+        
+    if nodata is not None:
+        masked_data = np.where(masked_data == nodata, 0, masked_data)
+
+    categories[0] = "No Protegida"
+    pixel_area_ha = _get_raster_pixel_area_ha(window_transform, "EPSG:4326")
+    unique_values, counts = np.unique(masked_data, return_counts=True)
+    areas_by_category = {
+        category_key: 0.0 for category_key in categories.values()
+    }
+    for value, pixel_count in zip(unique_values, counts):
+        area_ha = float(pixel_count * pixel_area_ha)
+        cat = categories.get(value)
+
+        if cat is not None:
+            areas_by_category[cat] = areas_by_category[cat] + area_ha
+
+    return areas_by_category
+
+
 def hex_to_rgba(hex_color: str) -> Tuple[int, int, int, int]:
     if hex_color.startswith("#"):
         hex_color = hex_color.lstrip("#")

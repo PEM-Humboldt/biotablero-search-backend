@@ -342,8 +342,8 @@ def get_two_raster_areas_by_category(
     """
     data, mask_data, window_transform, polygon_geom = (
             crop_two_rasters_by_polygon(
-                raster1_path=raster1_path,
-                raster2_path=raster2_path,
+                raster_path=raster1_path,
+                mask_raster_path=raster2_path,
                 polygon=polygon,
             )
         )

@@ -341,30 +341,29 @@ def get_two_raster_areas_by_category(
     grouped by user-defined categories.
     """
     data, mask_data, window_transform, polygon_geom = (
-            crop_two_rasters_by_polygon(
-                raster_path=raster1_path,
-                mask_raster_path=raster2_path,
-                polygon=polygon,
-            )
+        crop_two_rasters_by_polygon(
+            raster_path=raster1_path,
+            mask_raster_path=raster2_path,
+            polygon=polygon,
         )
-    
-    
+    )
+
     polygon_mask = rasterize(
-            [polygon_geom],
-            out_shape=data.shape,
-            transform=window_transform,
-            fill=0,
-            default_value=1,
-            dtype=np.uint8,
-        )
+        [polygon_geom],
+        out_shape=data.shape,
+        transform=window_transform,
+        fill=0,
+        default_value=1,
+        dtype=np.uint8,
+    )
 
     mask_binary = mask_data > 0
     combined_mask = (polygon_mask == 1) & mask_binary
     masked_data = np.where(combined_mask, data, np.nan)
-    
+
     with rasterio.open(raster1_path) as src:
         nodata = src.nodata
-        
+
     if nodata is not None:
         masked_data = np.where(masked_data == nodata, 0, masked_data)
 

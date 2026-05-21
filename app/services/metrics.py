@@ -407,17 +407,19 @@ async def calculate_frequency_values(
     """
     calculates the frequency of values from a collection within a polygon
     """
-    
+
     id, raster_url = get_items_asset_url(primary_collection.name)[0]
-    
+
     hist, bin_edges = get_frequency_histogram(
-        raster_path=raster_url,
-        polygon=polygon,
-        bins=20,
-        data_range=(0, 1)
+        raster_path=raster_url, polygon=polygon, bins=20, data_range=(0, 1)
     )
 
-    return {"id": id, "frequency": hist.tolist(), "bin_edges": bin_edges.tolist()} 
+    return {
+        "id": id,
+        "frequency": hist.tolist(),
+        "bin_edges": bin_edges.tolist(),
+    }
+
 
 def calculate_cat_two_colls_values():
     pass

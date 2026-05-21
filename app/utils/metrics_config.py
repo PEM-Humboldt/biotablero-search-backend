@@ -62,6 +62,7 @@ class MetricsConfigType(TypedDict):
     recordGaps: MetricConfig
 >>>>>>> 278417b (config for the new metric recordGaps)
 
+
 # This config contains everything related to FastAPI and Pydantic validations
 # Anything related to processing logic must be stored in database
 METRICS_CONFIG: MetricsConfigType = {

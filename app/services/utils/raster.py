@@ -392,11 +392,11 @@ def get_frequency_histogram(
     """
     Calculate the frequency histogram of raster values within a given polygon.
     """
-    
+
     masked_data, _, nodata = _crop_raster_by_polygon(raster_path, polygon)
     if nodata is not None:
         masked_data = np.where(masked_data == nodata, np.nan, masked_data)
-        
+
     valid_data = masked_data[~np.isnan(masked_data)]
     if valid_data.size == 0:
         raise ValueError("No valid data found in the polygon region.")

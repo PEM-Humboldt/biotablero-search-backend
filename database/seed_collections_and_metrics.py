@@ -41,6 +41,7 @@ class OperationEnum(Enum):
     TABLE_PRECALCULATED = "TABLE_PRECALCULATED"
     FREQUENCY_SINGLE_COLLECTION = "FREQUENCY_SINGLE-COLLECTION"
 
+
 class MetricEnum(Enum):
     COVERAGE = (
         "coverage",

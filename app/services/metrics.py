@@ -1,3 +1,5 @@
+import re
+import unicodedata
 from typing import Dict, List
 from geojson_pydantic import geometries
 from fastapi import HTTPException
@@ -36,6 +38,13 @@ from app.persistence.indicator_persistence import AbstractIndicator
 
 from app.utils.s3_utils import upload_to_s3
 from app.utils.errors import ServerError, MetadataError
+
+
+def _normalize_collection_key(name: str) -> str:
+    normalized = unicodedata.normalize("NFKD", name)
+    ascii_name = normalized.encode("ascii", "ignore").decode("ascii")
+    key = re.sub(r"[^a-zA-Z0-9]+", "_", ascii_name).strip("_").lower()
+    return key or "mask"
 
 
 async def get_or_create_polygon_metric(
@@ -303,8 +312,8 @@ async def calculate_ave_multiple_colls_values(
     metric: Metric, polygon_obj: Polygon
 ) -> List[Dict[str, str | float]]:
     """
-    Calculates, for each year, Human Footprint average in the whole polygon and in
-    intersections with paramo, tropical dry forest and wetland masks.
+    Calculates, for each primary item, the average in the full polygon and
+    intersections with all configured secondary collections.
     """
     primary_metric_collection = next(
         (mc for mc in metric.collections if mc.is_primary), None
@@ -322,25 +331,21 @@ async def calculate_ave_multiple_colls_values(
     secondary_metric_collections = [
         mc for mc in metric.collections if not mc.is_primary
     ]
-    if len(secondary_metric_collections) < 3:
-        raise ServerError(
-            code=500,
-            usr_msg=f"There was an error calculating the metric {metric.name}.",
-            e=Exception("Missing secondary collections for timelineHF"),
-        )
 
     for sec_metric_collection in secondary_metric_collections:
         await sec_metric_collection.fetch_related("collection")
 
-    secondary_collections = {
-        mc.collection.name: mc.collection
-        for mc in secondary_metric_collections
-    }
-    expected_masks = {
-        "paramo": "Paramos",
-        "bosqueSeco": "BosqueSeco",
-        "humedal": "Humedales",
-    }
+    secondary_collections = [
+        mc.collection for mc in secondary_metric_collections
+    ]
+    secondary_keys: List[str] = []
+    used_keys: Dict[str, int] = {}
+    for collection in secondary_collections:
+        base_key = _normalize_collection_key(collection.name)
+        key_count = used_keys.get(base_key, 0)
+        used_keys[base_key] = key_count + 1
+        key = base_key if key_count == 0 else f"{base_key}_{key_count + 1}"
+        secondary_keys.append(key)
 
     polygon = geometries.MultiPolygon(**polygon_obj.geometry)
     results: List[Dict[str, str | float]] = []
@@ -351,8 +356,9 @@ async def calculate_ave_multiple_colls_values(
         )
         mask_rasters: Dict[str, str] = {}
 
-        for result_key, collection_name in expected_masks.items():
-            mask_collection = secondary_collections[collection_name]
+        for result_key, mask_collection in zip(
+            secondary_keys, secondary_collections
+        ):
             mask_index = get_item_index_by_resolution(
                 mask_collection.name, item_res
             )
@@ -371,7 +377,7 @@ async def calculate_ave_multiple_colls_values(
             "id": item_id,
             "poligono": averages["average"],
         }
-        for result_key in expected_masks:
+        for result_key in secondary_keys:
             result[result_key] = averages[result_key]
         results.append(result)
 

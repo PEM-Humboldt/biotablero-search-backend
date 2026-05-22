@@ -341,15 +341,6 @@ async def calculate_ave_multiple_colls_values(
         "bosqueSeco": "BosqueSeco",
         "humedal": "Humedales",
     }
-    if not all(
-        collection_name in secondary_collections
-        for collection_name in expected_masks.values()
-    ):
-        raise ServerError(
-            code=500,
-            usr_msg=f"There was an error calculating the metric {metric.name}.",
-            e=Exception("Expected ecosystem collections were not found"),
-        )
 
     polygon = geometries.MultiPolygon(**polygon_obj.geometry)
     results: List[Dict[str, str | float]] = []
@@ -376,15 +367,13 @@ async def calculate_ave_multiple_colls_values(
             mask_rasters=mask_rasters,
         )
 
-        results.append(
-            {
-                "id": item_id,
-                "poligono": averages["average"],
-                "paramo": averages["paramo"],
-                "bosqueSeco": averages["bosqueSeco"],
-                "humedal": averages["humedal"],
-            }
-        )
+        result: Dict[str, str | float] = {
+            "id": item_id,
+            "poligono": averages["average"],
+        }
+        for result_key in expected_masks:
+            result[result_key] = averages[result_key]
+        results.append(result)
 
     return results
 

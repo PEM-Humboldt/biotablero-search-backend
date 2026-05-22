@@ -38,26 +38,6 @@ from app.utils.s3_utils import upload_to_s3
 from app.utils.errors import ServerError, MetadataError
 
 
-def _normalize_timeline_hf_values(
-    values: List[Dict[str, str | float]] | Dict[str, str | float],
-) -> List[Dict[str, str | float]] | Dict[str, str | float]:
-    if isinstance(values, list):
-        normalized_values: List[Dict[str, str | float]] = []
-        for value in values:
-            if (
-                isinstance(value, dict)
-                and "poligono" not in value
-                and "average" in value
-            ):
-                normalized_value = dict(value)
-                normalized_value["poligono"] = normalized_value.pop("average")
-                normalized_values.append(normalized_value)
-            else:
-                normalized_values.append(value)
-        return normalized_values
-    return values
-
-
 async def get_or_create_polygon_metric(
     polygon_id: int, metric_name: str
 ) -> List[Dict[str, str | float]] | Dict[str, str | float]:
@@ -81,14 +61,6 @@ async def get_or_create_polygon_metric(
     polygon_metric = await get_polygon_metric(polygon_obj, metric_obj)
 
     if polygon_metric:
-        if metric_name == "timelineHF":
-            normalized_values = _normalize_timeline_hf_values(
-                polygon_metric.values
-            )
-            if normalized_values != polygon_metric.values:
-                polygon_metric.values = normalized_values
-                await polygon_metric.save(update_fields=["values"])
-            return normalized_values
         return polygon_metric.values
 
     values = await OperationFunctions(

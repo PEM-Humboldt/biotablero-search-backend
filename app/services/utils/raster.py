@@ -10,6 +10,7 @@ from shapely.geometry import shape, Polygon as ShapelyPolygon, MultiPolygon
 
 import rasterio
 from rasterio.crs import CRS
+from rasterio.transform import array_bounds
 from rasterio.windows import from_bounds
 from rasterio.features import rasterize
 import gc
@@ -308,53 +309,19 @@ def get_polygon_and_mask_averages(
     Calculate average in a polygon and, in the same base crop, calculate
     averages intersected with additional mask rasters.
     """
-    polygon_geom = shape(polygon)
-    source_crs = CRS.from_string("EPSG:4326")
     averages: Dict[str, float] = {}
+    base_data, window_transform, nodata = _crop_raster_by_polygon(
+        raster_path, polygon
+    )
+    polygon_mask = ~np.isnan(base_data)
+    if nodata is not None:
+        base_data = np.where(base_data == nodata, np.nan, base_data)
 
+    averages["average"] = float(np.nanmean(base_data))
+
+    height, width = base_data.shape
+    minx, miny, maxx, maxy = array_bounds(height, width, window_transform)
     with rasterio.open(raster_path) as src:
-        raster_bounds = box(*src.bounds)
-        if not polygon_geom.intersects(raster_bounds):
-            raise UnprocessableError(
-                code=422,
-                usr_msg="Input polygon does not intersect with metric.",
-                e=Exception("Polygon does not intersect with raster bounds"),
-            )
-
-        if src.crs != source_crs:
-            transformer = Transformer.from_crs(
-                source_crs, src.crs, always_xy=True
-            )
-            polygon_geom = shapely_transform(
-                transformer.transform, polygon_geom
-            )
-
-        minx, miny, maxx, maxy = polygon_geom.bounds
-        window = from_bounds(minx, miny, maxx, maxy, src.transform)
-        window_transform = src.window_transform(window)
-
-        base_data_raw = src.read(1, window=window)
-        if base_data_raw is None:
-            raise ValueError("Could not read raster data")
-        base_data = base_data_raw.astype(np.float64)
-        polygon_mask_raw = rasterize(
-            [polygon_geom],
-            out_shape=base_data.shape,
-            transform=window_transform,
-            fill=False,
-            default_value=True,
-            dtype=np.uint8,
-        )
-        if polygon_mask_raw is None:
-            raise ValueError("Failed to rasterize polygon")
-        polygon_mask = polygon_mask_raw.astype(bool)
-
-        base_data = np.where(polygon_mask, base_data, np.nan)
-        if src.nodata is not None:
-            base_data = np.where(base_data == src.nodata, np.nan, base_data)
-
-        averages["average"] = float(np.nanmean(base_data))
-
         for mask_key, mask_path in mask_rasters.items():
             with rasterio.open(mask_path) as mask_src:
                 if src.crs != mask_src.crs:
@@ -373,13 +340,17 @@ def get_polygon_and_mask_averages(
                 if mask_nodata is None:
                     pass
                 elif np.isnan(mask_nodata):
-                    mask_data = np.where(np.isnan(mask_data), 0, mask_data)
+                    mask_data = np.where(
+                        np.isnan(mask_data), np.nan, mask_data
+                    )
                 else:
                     mask_data = np.where(
-                        mask_data == mask_nodata, 0, mask_data
+                        mask_data == mask_nodata, np.nan, mask_data
                     )
 
-                combined_mask = polygon_mask & (mask_data > 0)
+                combined_mask = (
+                    polygon_mask & ~np.isnan(mask_data) & (mask_data > 0)
+                )
                 if not np.any(combined_mask):
                     averages[mask_key] = 0.0
                     continue

@@ -10,6 +10,7 @@ from app.services.utils.raster import (
     get_one_raster_average,
     get_two_raster_areas_by_classes,
     get_two_raster_image,
+    get_frequency_histogram,
 )
 from app.services.utils.stac import (
     get_item_index_by_resolution,
@@ -340,6 +341,7 @@ async def calculate_cat_single_coll_values(
     return {"id": id, **raster_values}
 
 
+<<<<<<< HEAD
 async def calculate_cat_two_colls_values(
     metric: Metric, polygon_obj: Polygon
 ) -> Dict[str, str | float]:
@@ -398,6 +400,28 @@ async def calculate_cat_two_colls_values(
     )
 
     return {"id": id_pri, **raster_values}
+=======
+async def calculate_frequency_values(
+    primary_collection: Collection, _, polygon: geometries.MultiPolygon
+) -> Dict[str, str | float]:
+    """
+    calculates the frequency of values from a collection within a polygon
+    """
+    
+    id, raster_url = get_items_asset_url(primary_collection.name)[0]
+    
+    hist, bin_edges = get_frequency_histogram(
+        raster_path=raster_url,
+        polygon=polygon,
+        bins=20,
+        data_range=(0, 1)
+    )
+
+    return {"id": id, "frequency": hist.tolist(), "bin_edges": bin_edges.tolist()} 
+
+def calculate_cat_two_colls_values():
+    pass
+>>>>>>> 278417b (config for the new metric recordGaps)
 
 
 def calculate_cat_single_coll_filtered_values():
@@ -543,7 +567,11 @@ class OperationFunctions:
             "AREA_CATEGORIES_SINGLE-COLLECTION": calculate_cat_single_coll_values,
             "AREA_CATEGORIES_TWO-COLLECTIONS": calculate_cat_two_colls_values,
             "AREA_CATEGORIES_SINGLE-COLLECTION_FILTERED": calculate_cat_single_coll_filtered_values,
+<<<<<<< HEAD
             "TABLE_PRECALCULATED": calculate_table_precalculated_values,
+=======
+            "FREQUENCY_SINGLE-COLLECTION": calculate_frequency_values,
+>>>>>>> 278417b (config for the new metric recordGaps)
         }
         layer_functions = {
             "AREA_SINGLE-COLLECTION": calculate_single_coll_layer,

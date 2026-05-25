@@ -136,3 +136,10 @@ class DPCSingleResponse(BaseMetricResult):
 
 class DPCListResponse(RootModel[list[DPCSingleResponse]]):
     pass
+class RecordGapsResponse(BaseMetricResult):
+    """
+    Response model for record gaps frequency metric in a given year.
+    """
+
+    frequency: list[int]
+    bin_edges: list[float]

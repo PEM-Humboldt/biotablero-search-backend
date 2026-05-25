@@ -421,10 +421,6 @@ async def calculate_frequency_values(
     }
 
 
-def calculate_cat_two_colls_values():
-    pass
-
-
 def calculate_cat_single_coll_filtered_values():
     pass
 

@@ -39,7 +39,7 @@ class OperationEnum(Enum):
         "AREA_CATEGORIES_SINGLE-COLLECTION_FILTERED"
     )
     TABLE_PRECALCULATED = "TABLE_PRECALCULATED"
-
+    FREQUENCY_SINGLE_COLLECTION = "FREQUENCY_SINGLE-COLLECTION"
 
 class MetricEnum(Enum):
     COVERAGE = (
@@ -154,6 +154,12 @@ class MetricEnum(Enum):
         None,
         None,
         IndicatorEnum.DPC,
+    )
+    REECORDGAPS = (
+        "recordGaps",
+        OperationEnum.FREQUENCY_SINGLE_COLLECTION,
+        True,
+        CollectionEnum.INDICE_VACIOS_INFORMACION,
     )
 
     def __init__(

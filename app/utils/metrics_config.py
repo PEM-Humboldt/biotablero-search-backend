@@ -51,6 +51,9 @@ class MetricsConfigType(TypedDict):
     protectedAreas: MetricConfig
     protConn: MetricConfig
     dpc: MetricConfig
+    protectedAreas_paramo: MetricConfig
+    protectedAreas_tropicalDryForest: MetricConfig
+    protectedAreas_wetland: MetricConfig
 
 
 # This config contains everything related to FastAPI and Pydantic validations
@@ -244,13 +247,79 @@ METRICS_CONFIG: MetricsConfigType = {
         ),
         "description": "Cconnectivity probability change index",
     },
+    "protectedAreas_paramo": {
+        "model": ProtectedAreasTypesResponse,
+        "example": ProtectedAreasTypesResponse(
+            id="2021",
+            **{"Distritos Nacionales de Manejo Integrado": 5000.0},
+            **{"Distritos Regionales de Manejo Integrado": 10000.0},
+            **{"Distritos de Conservación de Suelos": 15000.0},
+            **{"Parque Nacional Natural": 20000.0},
+            **{"Parques Naturales Regionales": 25000.0},
+            **{"Reserva Natural": 30000.0},
+            **{"Reserva Natural de la Sociedad Civil": 35000.0},
+            **{"Reservas Forestales Protectoras Nacionales": 500.0},
+            **{"Reservas Forestales Protectoras Regionales": 3000.0},
+            **{"Santuario de Fauna": 40000.0},
+            **{"Santuario de Fauna y Flora": 1000.0},
+            **{"Santuario de Flora": 2000.0},
+            **{"Vía Parque": 1000.0},
+            **{"Área Natural Única": 2000.0},
+            **{"Áreas de Recreación": 45000.0},
+            **{"No Protegida": 100000.0},
+        ),
+        "description": "Protected areas types",
+    },
+    "protectedAreas_tropicalDryForest": {
+        "model": ProtectedAreasTypesResponse,
+        "example": ProtectedAreasTypesResponse(
+            id="2021",
+            **{"Distritos Nacionales de Manejo Integrado": 5000.0},
+            **{"Distritos Regionales de Manejo Integrado": 10000.0},
+            **{"Distritos de Conservación de Suelos": 15000.0},
+            **{"Parque Nacional Natural": 20000.0},
+            **{"Parques Naturales Regionales": 25000.0},
+            **{"Reserva Natural": 30000.0},
+            **{"Reserva Natural de la Sociedad Civil": 35000.0},
+            **{"Reservas Forestales Protectoras Nacionales": 500.0},
+            **{"Reservas Forestales Protectoras Regionales": 3000.0},
+            **{"Santuario de Fauna": 40000.0},
+            **{"Santuario de Fauna y Flora": 1000.0},
+            **{"Santuario de Flora": 2000.0},
+            **{"Vía Parque": 1000.0},
+            **{"Área Natural Única": 2000.0},
+            **{"Áreas de Recreación": 45000.0},
+            **{"No Protegida": 100000.0},
+        ),
+        "description": "Protected areas types",
+    },
+    "protectedAreas_wetland": {
+        "model": ProtectedAreasTypesResponse,
+        "example": ProtectedAreasTypesResponse(
+            id="2021",
+            **{"Distritos Nacionales de Manejo Integrado": 5000.0},
+            **{"Distritos Regionales de Manejo Integrado": 10000.0},
+            **{"Distritos de Conservación de Suelos": 15000.0},
+            **{"Parque Nacional Natural": 20000.0},
+            **{"Parques Naturales Regionales": 25000.0},
+            **{"Reserva Natural": 30000.0},
+            **{"Reserva Natural de la Sociedad Civil": 35000.0},
+            **{"Reservas Forestales Protectoras Nacionales": 500.0},
+            **{"Reservas Forestales Protectoras Regionales": 3000.0},
+            **{"Santuario de Fauna": 40000.0},
+            **{"Santuario de Fauna y Flora": 1000.0},
+            **{"Santuario de Flora": 2000.0},
+            **{"Vía Parque": 1000.0},
+            **{"Área Natural Única": 2000.0},
+            **{"Áreas de Recreación": 45000.0},
+            **{"No Protegida": 100000.0},
+        ),
+        "description": "Protected areas types",
+    },
     # TODO: implementar estas:
     # "timelineHF": {},
     # "persistenceHF": {},
     # "sciPersistenceHF": {},
-    # "protectedAreas_paramo": {},
-    # "protectedAreas_tropicalDryForest": {},
-    # "protectedAreas_wetland": {},
     # "sciPersistenceHF_protectedAreas": {}
 }
 

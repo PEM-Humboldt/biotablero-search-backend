@@ -568,11 +568,8 @@ class OperationFunctions:
             "AREA_CATEGORIES_SINGLE-COLLECTION": calculate_cat_single_coll_values,
             "AREA_CATEGORIES_TWO-COLLECTIONS": calculate_cat_two_colls_values,
             "AREA_CATEGORIES_SINGLE-COLLECTION_FILTERED": calculate_cat_single_coll_filtered_values,
-<<<<<<< HEAD
             "TABLE_PRECALCULATED": calculate_table_precalculated_values,
-=======
             "FREQUENCY_SINGLE-COLLECTION": calculate_frequency_values,
->>>>>>> 278417b (config for the new metric recordGaps)
         }
         layer_functions = {
             "AREA_SINGLE-COLLECTION": calculate_single_coll_layer,

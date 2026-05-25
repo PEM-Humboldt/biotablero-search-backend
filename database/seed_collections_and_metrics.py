@@ -159,7 +159,8 @@ class MetricEnum(Enum):
     REECORDGAPS = (
         "recordGaps",
         OperationEnum.FREQUENCY_SINGLE_COLLECTION,
-        True,
+        None,
+        None,
         CollectionEnum.INDICE_VACIOS_INFORMACION,
     )
 

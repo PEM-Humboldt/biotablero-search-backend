@@ -51,16 +51,12 @@ class MetricsConfigType(TypedDict):
     coverage_tropicalDryForest: MetricConfig
     coverage_wetland: MetricConfig
     protectedAreas: MetricConfig
-<<<<<<< HEAD
     protConn: MetricConfig
     dpc: MetricConfig
     protectedAreas_paramo: MetricConfig
     protectedAreas_tropicalDryForest: MetricConfig
     protectedAreas_wetland: MetricConfig
-
-=======
     recordGaps: MetricConfig
->>>>>>> 278417b (config for the new metric recordGaps)
 
 
 # This config contains everything related to FastAPI and Pydantic validations
@@ -205,7 +201,6 @@ METRICS_CONFIG: MetricsConfigType = {
         ),
         "description": "Protected areas types",
     },
-<<<<<<< HEAD
     "protConn": {
         "model": ProtConnResponse,
         "example": ProtConnResponse(
@@ -324,7 +319,6 @@ METRICS_CONFIG: MetricsConfigType = {
         ),
         "description": "Protected areas types",
     },
-=======
     "recordGaps": {
         "model": RecordGapsResponse,
         "example": RecordGapsResponse(
@@ -335,7 +329,6 @@ METRICS_CONFIG: MetricsConfigType = {
         "description": "Record gaps frequency",
     },
     # "timelineHF": {},
->>>>>>> 278417b (config for the new metric recordGaps)
     # TODO: implementar estas:
     # "timelineHF": {},
     # "persistenceHF": {},

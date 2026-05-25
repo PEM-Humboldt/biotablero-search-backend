@@ -166,7 +166,6 @@ class MetricEnum(Enum):
         OperationEnum.AVERAGE_SINGLE_COLLECTION,
         CollectionEnum.INDICE_VACIOS_INFORMACION,
     )
-    
 
     def __init__(
         self,

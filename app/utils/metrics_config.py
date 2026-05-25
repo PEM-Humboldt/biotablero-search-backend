@@ -57,6 +57,7 @@ class MetricsConfigType(TypedDict):
     protectedAreas_tropicalDryForest: MetricConfig
     protectedAreas_wetland: MetricConfig
     recordGaps: MetricConfig
+    currentRecordsGaps_average: MetricConfig
 
 
 # This config contains everything related to FastAPI and Pydantic validations

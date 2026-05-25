@@ -383,6 +383,28 @@ def get_two_raster_areas_by_category(
     return areas_by_category
 
 
+def get_frequency_histogram(
+    raster_path: str,
+    polygon: geometries.MultiPolygon,
+    bins: int = 20,
+    data_range: Tuple[float, float] = (0, 1),
+) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Calculate the frequency histogram of raster values within a given polygon.
+    """
+    
+    masked_data, _, nodata = _crop_raster_by_polygon(raster_path, polygon)
+    if nodata is not None:
+        masked_data = np.where(masked_data == nodata, np.nan, masked_data)
+        
+    valid_data = masked_data[~np.isnan(masked_data)]
+    if valid_data.size == 0:
+        raise ValueError("No valid data found in the polygon region.")
+
+    hist, bin_edges = np.histogram(valid_data, bins=bins, range=data_range)
+    return hist, bin_edges
+
+
 def hex_to_rgba(hex_color: str) -> Tuple[int, int, int, int]:
     if hex_color.startswith("#"):
         hex_color = hex_color.lstrip("#")

@@ -328,6 +328,14 @@ METRICS_CONFIG: MetricsConfigType = {
         ),
         "description": "Record gaps frequency",
     },
+    "currentRecordsGaps_average": {
+        "model": CurrentHFAverageResponse,
+        "example": CurrentHFAverageResponse(
+            id="2018",
+            average=0.87,
+        ),
+        "description": "Average human footprint index",
+    },
     # "timelineHF": {},
     # TODO: implementar estas:
     # "timelineHF": {},

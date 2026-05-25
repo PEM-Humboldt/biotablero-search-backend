@@ -341,7 +341,6 @@ async def calculate_cat_single_coll_values(
     return {"id": id, **raster_values}
 
 
-<<<<<<< HEAD
 async def calculate_cat_two_colls_values(
     metric: Metric, polygon_obj: Polygon
 ) -> Dict[str, str | float]:
@@ -400,7 +399,8 @@ async def calculate_cat_two_colls_values(
     )
 
     return {"id": id_pri, **raster_values}
-=======
+
+
 async def calculate_frequency_values(
     primary_collection: Collection, _, polygon: geometries.MultiPolygon
 ) -> Dict[str, str | float]:
@@ -423,7 +423,6 @@ async def calculate_frequency_values(
 
 def calculate_cat_two_colls_values():
     pass
->>>>>>> 278417b (config for the new metric recordGaps)
 
 
 def calculate_cat_single_coll_filtered_values():

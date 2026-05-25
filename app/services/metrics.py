@@ -41,6 +41,11 @@ from app.utils.errors import ServerError, MetadataError
 
 
 def _normalize_collection_key(name: str) -> str:
+    """
+    Normalizes the collection name for use as a key:
+    Removes accents/symbols, replaces separators with "_",
+    Converts to lowercase, and returns "mask" if the result is empty.
+    """
     normalized = unicodedata.normalize("NFKD", name)
     ascii_name = normalized.encode("ascii", "ignore").decode("ascii")
     key = re.sub(r"[^a-zA-Z0-9]+", "_", ascii_name).strip("_").lower()

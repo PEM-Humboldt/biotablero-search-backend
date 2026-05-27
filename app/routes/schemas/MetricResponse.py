@@ -62,9 +62,9 @@ class TimelineHFSingleResponse(BaseMetricResult):
     """
 
     poligono: float
-    paramo: float
-    bosqueSeco: float
-    humedal: float
+    paramo: float = Field(validation_alias="Paramos")
+    bosqueSeco: float = Field(validation_alias="BosqueSeco")
+    humedal: float = Field(validation_alias="Humedales")
 
 
 class TimelineHFListResponse(RootModel[list[TimelineHFSingleResponse]]):

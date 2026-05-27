@@ -40,18 +40,6 @@ from app.utils.s3_utils import upload_to_s3
 from app.utils.errors import ServerError, MetadataError
 
 
-def _normalize_collection_key(name: str) -> str:
-    """
-    Normalizes the collection name for use as a key:
-    Removes accents/symbols, replaces separators with "_",
-    Converts to lowercase, and returns "mask" if the result is empty.
-    """
-    normalized = unicodedata.normalize("NFKD", name)
-    ascii_name = normalized.encode("ascii", "ignore").decode("ascii")
-    key = re.sub(r"[^a-zA-Z0-9]+", "_", ascii_name).strip("_").lower()
-    return key or "mask"
-
-
 async def get_or_create_polygon_metric(
     polygon_id: int, metric_name: str
 ) -> List[Dict[str, str | float]] | Dict[str, str | float]:
@@ -343,14 +331,7 @@ async def calculate_ave_multiple_colls_values(
     secondary_collections = [
         mc.collection for mc in secondary_metric_collections
     ]
-    secondary_keys: List[str] = []
-    used_keys: Dict[str, int] = {}
-    for collection in secondary_collections:
-        base_key = _normalize_collection_key(collection.name)
-        key_count = used_keys.get(base_key, 0)
-        used_keys[base_key] = key_count + 1
-        key = base_key if key_count == 0 else f"{base_key}_{key_count + 1}"
-        secondary_keys.append(key)
+    secondary_keys = [collection.name for collection in secondary_collections]
 
     polygon = geometries.MultiPolygon(**polygon_obj.geometry)
     results: List[Dict[str, str | float]] = []

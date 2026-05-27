@@ -407,7 +407,7 @@ async def calculate_frequency_values(
     """
     calculates the frequency of values from a collection within a polygon
     """
-        
+
     primary_collection = next(
         (mc for mc in metric.collections if mc.is_primary), None
     )
@@ -421,7 +421,7 @@ async def calculate_frequency_values(
 
     await primary_collection.fetch_related("collection")
     primary_collection = primary_collection.collection
-    
+
     id, raster_url = get_items_asset_url(primary_collection.name)[0]
     polygon = geometries.MultiPolygon(**polygon_obj.geometry)
 

@@ -403,7 +403,7 @@ async def calculate_cat_two_colls_values(
 
 async def calculate_frequency_values(
     metric: Metric, polygon_obj: Polygon
-) -> Dict[str, Any]:
+) -> Dict[str, str | list[float] | list[int]]:
     """
     calculates the frequency of values from a collection within a polygon
     """

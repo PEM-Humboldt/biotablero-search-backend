@@ -48,9 +48,9 @@ class CurrentHFResponse(BaseMetricResult):
     Muy_Alta: float = Field(alias="Muy Alta")
 
 
-class CurrentHFAverageResponse(BaseMetricResult):
+class CurrentAverageResponse(BaseMetricResult):
     """
-    Response model for Human Footprint average in a given year.
+    Response model the average of a cropped collection in a given year.
     """
 
     average: float

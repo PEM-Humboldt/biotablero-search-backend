@@ -6,6 +6,8 @@ from app.routes.schemas.MetricResponse import (
     CoverageResponse,
     CurrentHFResponse,
     CurrentHFAverageResponse,
+    TimelineHFListResponse,
+    TimelineHFSingleResponse,
     LossPersistenceSingleResponse,
     ParamoResponse,
     TropicalDryForestResponse,
@@ -21,6 +23,7 @@ MetricResponse = Union[
     CoverageResponse,
     CurrentHFResponse,
     CurrentHFAverageResponse,
+    TimelineHFListResponse,
     ParamoResponse,
     TropicalDryForestResponse,
     WetlandResponse,
@@ -42,6 +45,7 @@ class MetricsConfigType(TypedDict):
     coverage: MetricConfig
     currentHF: MetricConfig
     currentHF_average: MetricConfig
+    timelineHF: MetricConfig
     paramo: MetricConfig
     tropicalDryForest: MetricConfig
     wetland: MetricConfig
@@ -120,6 +124,28 @@ METRICS_CONFIG: MetricsConfigType = {
             average=12.34,
         ),
         "description": "Average human footprint index",
+    },
+    "timelineHF": {
+        "model": TimelineHFListResponse,
+        "example": TimelineHFListResponse(
+            [
+                TimelineHFSingleResponse(
+                    id="2018",
+                    poligono=23.8,
+                    paramo=18.4,
+                    bosqueSeco=26.1,
+                    humedal=21.2,
+                ),
+                TimelineHFSingleResponse(
+                    id="2022",
+                    poligono=24.5,
+                    paramo=19.0,
+                    bosqueSeco=26.9,
+                    humedal=21.6,
+                ),
+            ]
+        ),
+        "description": "Human footprint trend by year for whole polygon and ecosystems",
     },
     "paramo": {
         "model": ParamoResponse,
@@ -317,7 +343,6 @@ METRICS_CONFIG: MetricsConfigType = {
         "description": "Protected areas types",
     },
     # TODO: implementar estas:
-    # "timelineHF": {},
     # "persistenceHF": {},
     # "sciPersistenceHF": {},
     # "sciPersistenceHF_protectedAreas": {}

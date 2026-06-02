@@ -1,6 +1,7 @@
 from typing import Dict, List
 from geojson_pydantic import geometries
 from fastapi import HTTPException
+from tortoise.transactions import in_transaction
 
 from app.services.utils.raster import (
     get_one_raster_areas_by_category,
@@ -36,6 +37,7 @@ from app.persistence.indicator_persistence import AbstractIndicator
 
 from app.utils.s3_utils import upload_to_s3
 from app.utils.errors import ServerError, MetadataError
+from app.persistence.utils.lock_utils import acquire_advisory_xact_lock
 
 
 async def get_or_create_polygon_metric(
@@ -58,17 +60,28 @@ async def get_or_create_polygon_metric(
             status_code=400, detail="Metric not found in database"
         )
 
-    polygon_metric = await get_polygon_metric(polygon_obj, metric_obj)
+    async with in_transaction() as connection:
+        await acquire_advisory_xact_lock(
+            connection,
+            "polygon_metric",
+            str(polygon_obj.id),
+            str(metric_obj.id),
+        )
+        polygon_metric = await get_polygon_metric(
+            polygon_obj, metric_obj, db=connection
+        )
 
-    if polygon_metric:
-        return polygon_metric.values
+        if polygon_metric:
+            return polygon_metric.values
 
-    values = await OperationFunctions(
-        metric_obj.operation_type
-    ).values_function(metric_obj, polygon_obj)
+        values = await OperationFunctions(
+            metric_obj.operation_type
+        ).values_function(metric_obj, polygon_obj)
 
-    await create_polygon_metric(polygon_obj, metric_obj, values)
-    return values
+        await create_polygon_metric(
+            polygon_obj, metric_obj, values, db=connection
+        )
+        return values
 
 
 async def get_or_create_polygon_metric_layer(
@@ -98,49 +111,60 @@ async def get_or_create_polygon_metric_layer(
             status_code=501, detail="Metric doesn't have an associated layer"
         )
 
-    existing_layer = await get_existing_layer(
-        metric_obj, polygon_obj, class_id, item_id
-    )
-
-    if existing_layer:
-        return {"layer": existing_layer.layer_url}
-
-    primary_collection = next(
-        (mc for mc in metric_obj.collections if mc.is_primary), None
-    )
-    if primary_collection is None:
-        raise ServerError(
-            code=500,
-            usr_msg=f"There was an error calculating the metric {metric_obj.name}.",
-            e=Exception("Primary collection not found"),
+    async with in_transaction() as connection:
+        await acquire_advisory_xact_lock(
+            connection,
+            "polygon_metric_layer",
+            str(metric_obj.id),
+            str(polygon_obj.id),
+            item_id,
+            class_id,
         )
 
-    await primary_collection.fetch_related("collection")
+        existing_layer = await get_existing_layer(
+            metric_obj, polygon_obj, class_id, item_id, db=connection
+        )
 
-    polygon = geometries.MultiPolygon(**polygon_obj.geometry)
+        if existing_layer:
+            return {"layer": existing_layer.layer_url}
 
-    img_base64 = await calculate_layer_func(
-        polygon,
-        primary_collection.collection,
-        item_id,
-        class_id,
-        metric_obj,
-    )
-    image_url = await upload_to_s3(
-        image_data=img_base64,
-        filename=f"{metric_name}_{polygon_id}_{item_id}_{class_id}.png",
-        content_type="image/png",
-    )
+        primary_collection = next(
+            (mc for mc in metric_obj.collections if mc.is_primary), None
+        )
+        if primary_collection is None:
+            raise ServerError(
+                code=500,
+                usr_msg=f"There was an error calculating the metric {metric_obj.name}.",
+                e=Exception("Primary collection not found"),
+            )
 
-    await create_polygon_metric_layer(
-        metric_obj=metric_obj,
-        polygon_obj=polygon_obj,
-        class_id=class_id,
-        item_id=item_id,
-        image_url=image_url,
-    )
+        await primary_collection.fetch_related("collection")
 
-    return {"layer": image_url}
+        polygon = geometries.MultiPolygon(**polygon_obj.geometry)
+
+        img_base64 = await calculate_layer_func(
+            polygon,
+            primary_collection.collection,
+            item_id,
+            class_id,
+            metric_obj,
+        )
+        image_url = await upload_to_s3(
+            image_data=img_base64,
+            filename=f"{metric_name}_{polygon_id}_{item_id}_{class_id}.png",
+            content_type="image/png",
+        )
+
+        await create_polygon_metric_layer(
+            metric_obj=metric_obj,
+            polygon_obj=polygon_obj,
+            class_id=class_id,
+            item_id=item_id,
+            image_url=image_url,
+            db=connection,
+        )
+
+        return {"layer": image_url}
 
 
 """

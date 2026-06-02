@@ -1,38 +1,56 @@
-from tortoise.transactions import in_transaction
+from tortoise.backends.base.client import BaseDBAsyncClient
+from tortoise.exceptions import IntegrityError
 from logging import getLogger
 
 from app.models.models import Metric, PolygonMetric, Polygon
 from app.utils import context_vars
+from app.utils.errors import ServerError
 
 logger = getLogger(__name__)
 request_id_context = context_vars.request_id_context
 
 
 async def create_polygon_metric(
-    polygon: Polygon, metric: Metric, values: list | dict
+    polygon: Polygon,
+    metric: Metric,
+    values: list | dict,
+    db: BaseDBAsyncClient | None = None,
 ):
     """
     Store the computed metric values associated with a polygon.
     """
-    async with in_transaction():
+    create_kwargs = {}
+    if db is not None:
+        create_kwargs["using_db"] = db
+    try:
         await PolygonMetric.create(
             polygon=polygon,
             metric=metric,
             values=values,
+            **create_kwargs,
         )
+    except IntegrityError as e:
+        raise ServerError(
+            code=500,
+            usr_msg="There was an error saving the metric values.",
+            e=e,
+        ) from e
 
-        logger.info(
-            f"PolygonMetric created for metric '{metric.name}' and polygon ID {polygon.id}",
-            extra={"request_id": request_id_context.get()},
-        )
+    logger.info(
+        f"PolygonMetric created for metric '{metric.name}' and polygon ID {polygon.id}",
+        extra={"request_id": request_id_context.get()},
+    )
 
 
 async def get_polygon_metric(
-    polygon_obj: Polygon, metric_obj: Metric
+    polygon_obj: Polygon,
+    metric_obj: Metric,
+    db: BaseDBAsyncClient | None = None,
 ) -> PolygonMetric | None:
     """
-    Get Polygon metric object by polygon and metric
+    Get Polygon metric object by polygon and metric.
     """
-    return await PolygonMetric.get_or_none(
-        polygon=polygon_obj, metric=metric_obj
-    )
+    query = PolygonMetric.filter(polygon=polygon_obj, metric=metric_obj)
+    if db is not None:
+        query = query.using_db(db)
+    return await query.first()

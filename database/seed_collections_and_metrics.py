@@ -161,7 +161,7 @@ class MetricEnum(Enum):
         OperationEnum.FREQUENCY_SINGLE_COLLECTION,
         CollectionEnum.INDICE_VACIOS_INFORMACION,
     )
-    CURRENRECORDSGAPS_AVERAGE = (
+    CURRENTRECORDSGAPS_AVERAGE = (
         "currentRecordsGaps_average",
         OperationEnum.AVERAGE_SINGLE_COLLECTION,
         CollectionEnum.INDICE_VACIOS_INFORMACION,

@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Dict, List
 from geojson_pydantic import geometries
 from fastapi import HTTPException
 

@@ -1,3 +1,5 @@
+import re
+import unicodedata
 from typing import Dict, List
 from geojson_pydantic import geometries
 from fastapi import HTTPException
@@ -11,6 +13,7 @@ from app.services.utils.raster import (
     get_two_raster_areas_by_classes,
     get_two_raster_image,
     get_frequency_histogram,
+    get_polygon_and_mask_averages,
 )
 from app.services.utils.stac import (
     get_item_index_by_resolution,
@@ -300,8 +303,73 @@ async def calculate_ave_coll_values(
     return {"id": id, "average": average}
 
 
-def calculate_ave_multiple_colls_values():
-    pass
+async def calculate_ave_multiple_colls_values(
+    metric: Metric, polygon_obj: Polygon
+) -> List[Dict[str, str | float]]:
+    """
+    Calculates, for each primary item, the average in the full polygon and
+    intersections with all configured secondary collections.
+    """
+    primary_metric_collection = next(
+        (mc for mc in metric.collections if mc.is_primary), None
+    )
+    if primary_metric_collection is None:
+        raise ServerError(
+            code=500,
+            usr_msg=f"There was an error calculating the metric {metric.name}.",
+            e=Exception("Primary collection not found"),
+        )
+
+    await primary_metric_collection.fetch_related("collection")
+    primary_collection = primary_metric_collection.collection
+
+    secondary_metric_collections = [
+        mc for mc in metric.collections if not mc.is_primary
+    ]
+
+    for sec_metric_collection in secondary_metric_collections:
+        await sec_metric_collection.fetch_related("collection")
+
+    secondary_collections = [
+        mc.collection for mc in secondary_metric_collections
+    ]
+    secondary_keys = [collection.name for collection in secondary_collections]
+
+    polygon = geometries.MultiPolygon(**polygon_obj.geometry)
+    results: List[Dict[str, str | float]] = []
+
+    for item_id, raster_url in get_items_asset_url(primary_collection.name):
+        item_res = get_item_resolution_by_item_id(
+            primary_collection.name, item_id
+        )
+        mask_rasters: Dict[str, str] = {}
+
+        for result_key, mask_collection in zip(
+            secondary_keys, secondary_collections
+        ):
+            mask_index = get_item_index_by_resolution(
+                mask_collection.name, item_res
+            )
+            _, mask_raster_url = get_items_asset_url(mask_collection.name)[
+                mask_index
+            ]
+            mask_rasters[result_key] = mask_raster_url
+
+        averages = get_polygon_and_mask_averages(
+            raster_path=raster_url,
+            polygon=polygon,
+            mask_rasters=mask_rasters,
+        )
+
+        result: Dict[str, str | float] = {
+            "id": item_id,
+            "poligono": averages["average"],
+        }
+        for result_key in secondary_keys:
+            result[result_key] = averages[result_key]
+        results.append(result)
+
+    return results
 
 
 async def calculate_cat_single_coll_values(

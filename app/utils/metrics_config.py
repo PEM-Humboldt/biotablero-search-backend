@@ -5,7 +5,7 @@ from app.routes.schemas.MetricResponse import (
     LossPersistenceListResponse,
     CoverageResponse,
     CurrentHFResponse,
-    CurrentAverageResponse,
+    AverageResponse,
     LossPersistenceSingleResponse,
     ParamoResponse,
     TropicalDryForestResponse,
@@ -21,7 +21,7 @@ MetricResponse = Union[
     LossPersistenceListResponse,
     CoverageResponse,
     CurrentHFResponse,
-    CurrentAverageResponse,
+    AverageResponse,
     ParamoResponse,
     TropicalDryForestResponse,
     WetlandResponse,
@@ -118,8 +118,8 @@ METRICS_CONFIG: MetricsConfigType = {
         "description": "Categorized human footprint index",
     },
     "currentHF_average": {
-        "model": CurrentAverageResponse,
-        "example": CurrentAverageResponse(
+        "model": AverageResponse,
+        "example": AverageResponse(
             id="2018",
             average=12.34,
         ),
@@ -330,8 +330,8 @@ METRICS_CONFIG: MetricsConfigType = {
         "description": "Record gaps frequency",
     },
     "currentRecordsGaps_average": {
-        "model": CurrentAverageResponse,
-        "example": CurrentAverageResponse(
+        "model": AverageResponse,
+        "example": AverageResponse(
             id="2018",
             average=0.87,
         ),

@@ -48,7 +48,7 @@ class CurrentHFResponse(BaseMetricResult):
     Muy_Alta: float = Field(alias="Muy Alta")
 
 
-class CurrentAverageResponse(BaseMetricResult):
+class AverageResponse(BaseMetricResult):
     """
     Response model the average of a cropped collection in a given year.
     """

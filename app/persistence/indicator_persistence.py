@@ -27,6 +27,10 @@ class AbstractIndicator:
                 usr_msg=f"There are no values in the database for the given metric and polygon",
             )
         if self.indicator_obj.describe()["table"] == "dpc":
-            return list(map(lambda val: val.get_result_for_metric(), result))
+            return sorted(
+                (val.get_result_for_metric() for val in result),
+                key=lambda item: item["dpc"],
+                reverse=True,
+            )
         else:
             return self.indicator_obj.get_result_for_metric(result[0])

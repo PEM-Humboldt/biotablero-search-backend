@@ -1,7 +1,6 @@
 from typing import Dict, List
 from geojson_pydantic import geometries
 from fastapi import HTTPException
-from tortoise.transactions import in_transaction
 
 from app.services.utils.raster import (
     get_one_raster_areas_by_category,
@@ -37,7 +36,7 @@ from app.persistence.indicator_persistence import AbstractIndicator
 
 from app.utils.s3_utils import upload_to_s3
 from app.utils.errors import ServerError, MetadataError
-from app.persistence.utils.lock_utils import acquire_advisory_xact_lock
+from app.persistence.utils.lock_utils import advisory_xact_lock
 
 
 async def get_or_create_polygon_metric(
@@ -60,13 +59,9 @@ async def get_or_create_polygon_metric(
             status_code=400, detail="Metric not found in database"
         )
 
-    async with in_transaction() as connection:
-        await acquire_advisory_xact_lock(
-            connection,
-            "polygon_metric",
-            str(polygon_obj.id),
-            str(metric_obj.id),
-        )
+    async with advisory_xact_lock(
+        "polygon_metric", str(polygon_obj.id), str(metric_obj.id)
+    ) as connection:
         polygon_metric = await get_polygon_metric(
             polygon_obj, metric_obj, db=connection
         )
@@ -111,16 +106,13 @@ async def get_or_create_polygon_metric_layer(
             status_code=501, detail="Metric doesn't have an associated layer"
         )
 
-    async with in_transaction() as connection:
-        await acquire_advisory_xact_lock(
-            connection,
-            "polygon_metric_layer",
-            str(metric_obj.id),
-            str(polygon_obj.id),
-            item_id,
-            class_id,
-        )
-
+    async with advisory_xact_lock(
+        "polygon_metric_layer",
+        str(metric_obj.id),
+        str(polygon_obj.id),
+        item_id,
+        class_id,
+    ) as connection:
         existing_layer = await get_existing_layer(
             metric_obj, polygon_obj, class_id, item_id, db=connection
         )

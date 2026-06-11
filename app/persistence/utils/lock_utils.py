@@ -1,4 +1,6 @@
 import hashlib
+from contextlib import asynccontextmanager
+from tortoise.transactions import in_transaction
 
 
 def build_advisory_lock_key(*parts: str) -> int:
@@ -12,3 +14,10 @@ async def acquire_advisory_xact_lock(connection, *parts: str) -> None:
     await connection.execute_query(
         f"SELECT pg_advisory_xact_lock({lock_key});"
     )
+
+
+@asynccontextmanager
+async def advisory_xact_lock(*parts: str):
+    async with in_transaction() as connection:
+        await acquire_advisory_xact_lock(connection, *parts)
+        yield connection

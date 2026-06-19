@@ -217,9 +217,6 @@ async def calculate_single_coll_all_items_values(
 
         result.append({"id": id, **raster_values})
 
-    if metric.name == "dpc":
-        return sorted(result, key=lambda item: item["dpc"], reverse=True)
-
     return result
 
 

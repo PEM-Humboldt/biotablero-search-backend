@@ -5,7 +5,7 @@ from app.routes.schemas.MetricResponse import (
     LossPersistenceListResponse,
     CoverageResponse,
     CurrentHFResponse,
-    CurrentHFAverageResponse,
+    AverageResponse,
     TimelineHFListResponse,
     TimelineHFSingleResponse,
     LossPersistenceSingleResponse,
@@ -16,14 +16,16 @@ from app.routes.schemas.MetricResponse import (
     ProtConnResponse,
     DPCListResponse,
     DPCSingleResponse,
+    RecordGapsResponse,
 )
 
 MetricResponse = Union[
     LossPersistenceListResponse,
     CoverageResponse,
     CurrentHFResponse,
-    CurrentHFAverageResponse,
+    AverageResponse,
     TimelineHFListResponse,
+    TimelineHFSingleResponse,
     ParamoResponse,
     TropicalDryForestResponse,
     WetlandResponse,
@@ -31,6 +33,7 @@ MetricResponse = Union[
     ProtConnResponse,
     DPCListResponse,
     DPCSingleResponse,
+    RecordGapsResponse,
 ]
 
 
@@ -58,6 +61,8 @@ class MetricsConfigType(TypedDict):
     protectedAreas_paramo: MetricConfig
     protectedAreas_tropicalDryForest: MetricConfig
     protectedAreas_wetland: MetricConfig
+    recordGaps: MetricConfig
+    currentRecordsGaps_average: MetricConfig
 
 
 # This config contains everything related to FastAPI and Pydantic validations
@@ -118,8 +123,8 @@ METRICS_CONFIG: MetricsConfigType = {
         "description": "Categorized human footprint index",
     },
     "currentHF_average": {
-        "model": CurrentHFAverageResponse,
-        "example": CurrentHFAverageResponse(
+        "model": AverageResponse,
+        "example": AverageResponse(
             id="2018",
             average=12.34,
         ),
@@ -342,6 +347,24 @@ METRICS_CONFIG: MetricsConfigType = {
         ),
         "description": "Protected areas types",
     },
+    "recordGaps": {
+        "model": RecordGapsResponse,
+        "example": RecordGapsResponse(
+            id="2021",
+            frequency=[10, 20, 30],
+            bin_edges=[0.0, 1.0, 2.0, 3.0],
+        ),
+        "description": "Record gaps frequency",
+    },
+    "currentRecordsGaps_average": {
+        "model": AverageResponse,
+        "example": AverageResponse(
+            id="2018",
+            average=0.87,
+        ),
+        "description": "Average human footprint index",
+    },
+    # "timelineHF": {},
     # TODO: implementar estas:
     # "persistenceHF": {},
     # "sciPersistenceHF": {},

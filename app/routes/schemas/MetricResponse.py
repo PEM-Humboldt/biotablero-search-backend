@@ -48,9 +48,9 @@ class CurrentHFResponse(BaseMetricResult):
     Muy_Alta: float = Field(alias="Muy Alta")
 
 
-class CurrentHFAverageResponse(BaseMetricResult):
+class AverageResponse(BaseMetricResult):
     """
-    Response model for Human Footprint average in a given year.
+    Response model the average of a cropped collection in a given year.
     """
 
     average: float
@@ -151,3 +151,12 @@ class DPCSingleResponse(BaseMetricResult):
 
 class DPCListResponse(RootModel[list[DPCSingleResponse]]):
     pass
+
+
+class RecordGapsResponse(BaseMetricResult):
+    """
+    Response model for record gaps frequency metric in a given year.
+    """
+
+    frequency: list[int]
+    bin_edges: list[float]

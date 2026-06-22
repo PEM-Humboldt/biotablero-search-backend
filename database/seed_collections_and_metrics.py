@@ -39,6 +39,7 @@ class OperationEnum(Enum):
         "AREA_CATEGORIES_SINGLE-COLLECTION_FILTERED"
     )
     TABLE_PRECALCULATED = "TABLE_PRECALCULATED"
+    FREQUENCY_SINGLE_COLLECTION = "FREQUENCY_SINGLE-COLLECTION"
 
 
 class MetricEnum(Enum):
@@ -154,6 +155,16 @@ class MetricEnum(Enum):
         None,
         None,
         IndicatorEnum.DPC,
+    )
+    RECORDGAPS = (
+        "recordGaps",
+        OperationEnum.FREQUENCY_SINGLE_COLLECTION,
+        CollectionEnum.INDICE_VACIOS_INFORMACION,
+    )
+    CURRENTRECORDSGAPS_AVERAGE = (
+        "currentRecordsGaps_average",
+        OperationEnum.AVERAGE_SINGLE_COLLECTION,
+        CollectionEnum.INDICE_VACIOS_INFORMACION,
     )
 
     def __init__(

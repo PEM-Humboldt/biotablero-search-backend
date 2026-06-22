@@ -12,6 +12,7 @@ from app.services.utils.raster import (
     get_one_raster_average,
     get_two_raster_areas_by_classes,
     get_two_raster_image,
+    get_frequency_histogram,
     get_polygon_and_mask_averages,
 )
 from app.services.utils.stac import (
@@ -468,6 +469,41 @@ async def calculate_cat_two_colls_values(
     return {"id": id_pri, **raster_values}
 
 
+async def calculate_frequency_values(
+    metric: Metric, polygon_obj: Polygon
+) -> Dict[str, str | list[float] | list[int]]:
+    """
+    calculates the frequency of values from a collection within a polygon
+    """
+
+    primary_collection = next(
+        (mc for mc in metric.collections if mc.is_primary), None
+    )
+
+    if primary_collection is None:
+        raise ServerError(
+            code=500,
+            usr_msg=f"There was an error calculating the metric {metric.name}.",
+            e=Exception("Primary collection not found"),
+        )
+
+    await primary_collection.fetch_related("collection")
+    primary_collection = primary_collection.collection
+
+    id, raster_url = get_items_asset_url(primary_collection.name)[0]
+    polygon = geometries.MultiPolygon(**polygon_obj.geometry)
+
+    hist, bin_edges = get_frequency_histogram(
+        raster_path=raster_url, polygon=polygon, bins=20, data_range=(0, 1)
+    )
+
+    return {
+        "id": id,
+        "frequency": hist.tolist(),
+        "bin_edges": bin_edges.tolist(),
+    }
+
+
 def calculate_cat_single_coll_filtered_values():
     pass
 
@@ -612,6 +648,7 @@ class OperationFunctions:
             "AREA_CATEGORIES_TWO-COLLECTIONS": calculate_cat_two_colls_values,
             "AREA_CATEGORIES_SINGLE-COLLECTION_FILTERED": calculate_cat_single_coll_filtered_values,
             "TABLE_PRECALCULATED": calculate_table_precalculated_values,
+            "FREQUENCY_SINGLE-COLLECTION": calculate_frequency_values,
         }
         layer_functions = {
             "AREA_SINGLE-COLLECTION": calculate_single_coll_layer,

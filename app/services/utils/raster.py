@@ -432,7 +432,9 @@ def get_polygon_and_mask_averages(
                     averages[mask_key] = 0.0
                     continue
 
-                averages[mask_key] = float(np.nanmean(base_data[combined_mask]))
+                averages[mask_key] = float(
+                    np.nanmean(base_data[combined_mask])
+                )
 
     return averages
 

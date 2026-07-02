@@ -309,15 +309,17 @@ def get_polygon_and_mask_averages(
     Calculate average in a polygon and, in the same base crop, calculate
     averages intersected with additional mask rasters.
     """
-    averages: Dict[str, float] = {}
     base_data, window_transform, nodata = _crop_raster_by_polygon(
         raster_path, polygon
     )
-    polygon_mask = ~np.isnan(base_data)
     if nodata is not None:
         base_data = np.where(base_data == nodata, np.nan, base_data)
+    polygon_mask = ~np.isnan(base_data)
 
-    averages["average"] = float(np.nanmean(base_data))
+    averages: Dict[str, float] = {"average": float(np.nanmean(base_data))}
+
+    if not mask_rasters:
+        return averages
 
     height, width = base_data.shape
     minx, miny, maxx, maxy = array_bounds(height, width, window_transform)
@@ -337,26 +339,19 @@ def get_polygon_and_mask_averages(
                 mask_data = mask_src.read(1, window=mask_window)
                 mask_nodata = mask_src.nodata
 
-                if mask_nodata is None:
-                    pass
-                elif np.isnan(mask_nodata):
-                    mask_data = np.where(
-                        np.isnan(mask_data), np.nan, mask_data
-                    )
-                else:
+                if mask_nodata is not None and not np.isnan(mask_nodata):
                     mask_data = np.where(
                         mask_data == mask_nodata, np.nan, mask_data
                     )
 
-                combined_mask = (
-                    polygon_mask & ~np.isnan(mask_data) & (mask_data > 0)
-                )
+                combined_mask = polygon_mask & (mask_data > 0)
                 if not np.any(combined_mask):
                     averages[mask_key] = 0.0
                     continue
 
-                masked_values = np.where(combined_mask, base_data, np.nan)
-                averages[mask_key] = float(np.nanmean(masked_values))
+                averages[mask_key] = float(
+                    np.nanmean(base_data[combined_mask])
+                )
 
     return averages
 

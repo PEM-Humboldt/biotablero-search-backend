@@ -47,6 +47,9 @@ class MetricEnum(Enum):
         "coverage",
         OperationEnum.AREA_SINGLE_COLLECTION,
         CollectionEnum.COBERTURA,
+        None,
+        None,
+        "coberturas-variacion-superficie",
     )
     PARAMO = (
         "paramo",
@@ -148,6 +151,7 @@ class MetricEnum(Enum):
         None,
         None,
         IndicatorEnum.PROT_CONN,
+        None,
     )
     DPC = (
         "dpc",
@@ -155,11 +159,15 @@ class MetricEnum(Enum):
         None,
         None,
         IndicatorEnum.DPC,
+        None,
     )
     RECORDGAPS = (
         "recordGaps",
         OperationEnum.FREQUENCY_SINGLE_COLLECTION,
         CollectionEnum.INDICE_VACIOS_INFORMACION,
+        None,
+        None,
+        "indice-de-vacios",
     )
     CURRENTRECORDSGAPS_AVERAGE = (
         "currentRecordsGaps_average",
@@ -174,12 +182,14 @@ class MetricEnum(Enum):
         main_collection: Optional[CollectionEnum] = None,
         sec_collections: Optional[List[CollectionEnum]] = None,
         indicator: Optional[IndicatorEnum] = None,
+        indicator_card_id: Optional[str] = None,
     ):
         self.metric_name = metric_name
         self.operation_type = operation.value
         self.main_collection = main_collection
         self.sec_collections = sec_collections
         self.indicator = indicator
+        self.indicator_card_id = indicator_card_id
 
 
 collections_dict = {}
@@ -202,6 +212,7 @@ async def seed_collections_and_metrics():
         new_metric = Metric(
             name=metric.metric_name,
             operation_type=metric.operation_type,
+            indicator_card_id=metric.indicator_card_id,
         )
         await new_metric.save()
 

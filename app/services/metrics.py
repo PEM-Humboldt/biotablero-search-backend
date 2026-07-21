@@ -14,9 +14,9 @@ from app.services.utils.raster import (
     get_two_raster_image,
     get_frequency_histogram,
     get_polygon_and_mask_averages,
-    #------
+    # ------
     get_one_raster_gradient_image,
-    #---------
+    # ---------
 )
 from app.services.utils.stac import (
     get_item_index_by_resolution,
@@ -651,7 +651,6 @@ async def calculate_two_colls_layer(
     return image_base64
 
 
-#------
 async def calculate_frequency_layer(
     polygon: geometries.MultiPolygon,
     primary_collection: Collection,
@@ -677,7 +676,6 @@ async def calculate_frequency_layer(
     )
 
     return image_base64
-#---------
 
 
 def calculate_cat_single_coll_filtered_layer():

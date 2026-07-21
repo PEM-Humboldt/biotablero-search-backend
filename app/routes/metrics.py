@@ -152,7 +152,6 @@ async def get_layer_by_polygon(
             description=(
                 "Class value associated to the layer requested, corresponds to one of the keys in a values object (except 'id') "
                 "For example: Natural. "
-
                 "For continuous metrics (operation type FREQUENCY_SINGLE-COLLECTION, e.g. recordGaps or richness), "
                 "there is no discrete class: the rendered layer is a heatmap over the whole polygon, "
                 "so any stable value (e.g. 'heatmap') can be sent here, used only as a cache key."

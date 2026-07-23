@@ -78,6 +78,7 @@ async def seed_connectivity_indicators():
                     dpc=row["dPC"],
                     pa_id=row["ap_id"],
                     pa_name=pa_name,
+                    category=row["dpc_cat"],
                 )
                 await dpc_obj.save()
                 counter += 1

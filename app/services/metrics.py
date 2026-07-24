@@ -14,9 +14,7 @@ from app.services.utils.raster import (
     get_two_raster_image,
     get_frequency_histogram,
     get_polygon_and_mask_averages,
-    # ------
     get_one_raster_gradient_image,
-    # ---------
 )
 from app.services.utils.stac import (
     get_item_index_by_resolution,

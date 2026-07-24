@@ -3,11 +3,8 @@ import io
 
 from PIL import Image
 import numpy as np
-
-# ------
 from matplotlib.colors import LinearSegmentedColormap, Normalize
 
-# ---------
 from typing import Dict, List, Optional, Tuple
 from shapely import box
 from shapely.ops import transform as shapely_transform
@@ -159,7 +156,6 @@ def get_one_raster_image(
     return img_base64
 
 
-# ------
 def get_one_raster_gradient_image(
     raster_path: str,
     polygon: geometries.MultiPolygon,
@@ -221,8 +217,6 @@ def get_one_raster_gradient_image(
     gc.collect()
     return img_base64
 
-
-# ---------
 
 
 def get_one_raster_areas_by_classes(

@@ -218,7 +218,6 @@ def get_one_raster_gradient_image(
     return img_base64
 
 
-
 def get_one_raster_areas_by_classes(
     raster_path: str,
     polygon: geometries.MultiPolygon,

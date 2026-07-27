@@ -213,9 +213,9 @@ def get_one_raster_gradient_image(
         lut = _build_gradient_lut(colors)
         normalized = np.clip((masked_data - vmin) / (vmax - vmin), 0.0, 1.0)
         nan_mask = np.isnan(normalized)
-        lut_indices = np.round(
-            np.where(nan_mask, 0, normalized) * 255
-        ).astype(np.uint8)
+        lut_indices = np.round(np.where(nan_mask, 0, normalized) * 255).astype(
+            np.uint8
+        )
 
         rgba = lut[lut_indices]
         rgba[nan_mask] = (0, 0, 0, 0)

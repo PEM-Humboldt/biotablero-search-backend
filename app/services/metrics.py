@@ -658,9 +658,25 @@ async def calculate_frequency_layer(
 ) -> str:
     """
     Get the heatmap layer for a metric over a continuous raster.
-    class_id is accepted for signature/cache-key compatibility but not
-    used to filter pixels: there is no discrete class in this operation.
+    There is no discrete class in this operation, so class_id must be the
+    metric's own name instead of a class key from /values.
     """
+    if metric is None:
+        raise ServerError(
+            code=500,
+            usr_msg="There was an internal error processing the request.",
+            e=Exception(
+                "Missing metric context for FREQUENCY_SINGLE-COLLECTION"
+            ),
+        )
+
+    if class_id != metric.name:
+        raise MetadataError(
+            code=404,
+            log_msg=f"class_id {class_id} doesn't match metric name {metric.name}",
+            usr_msg=f"class_id {class_id} doesn't exist in metric",
+        )
+
     _classes, _values, colors, _categories = await fetch_collection_metadata(
         primary_collection
     )

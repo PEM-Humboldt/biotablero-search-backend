@@ -3,7 +3,6 @@ import io
 
 from PIL import Image
 import numpy as np
-from matplotlib.colors import LinearSegmentedColormap, Normalize
 
 from typing import Dict, List, Optional, Tuple
 from shapely import box
@@ -156,6 +155,22 @@ def get_one_raster_image(
     return img_base64
 
 
+def _build_gradient_lut(colors: List[str], n: int = 256) -> np.ndarray:
+    """
+    Build an (n, 4) uint8 lookup table, linearly interpolating RGBA between
+    the given stop colors (evenly spaced).
+    """
+    stops = np.array([hex_to_rgba(c) for c in colors], dtype=np.float64)
+    positions = np.linspace(0, 1, len(stops))
+    samples = np.linspace(0, 1, n)
+
+    lut = np.empty((n, 4), dtype=np.float64)
+    for channel in range(4):
+        lut[:, channel] = np.interp(samples, positions, stops[:, channel])
+
+    return np.clip(lut, 0, 255).astype(np.uint8)
+
+
 def get_one_raster_gradient_image(
     raster_path: str,
     polygon: geometries.MultiPolygon,
@@ -195,11 +210,15 @@ def get_one_raster_gradient_image(
         if vmin == vmax:
             vmax = vmin + 1e-9
 
-        cmap = LinearSegmentedColormap.from_list("gradient", colors, N=256)
-        cmap.set_bad(color=(0, 0, 0, 0))
-        norm = Normalize(vmin=vmin, vmax=vmax, clip=True)
+        lut = _build_gradient_lut(colors)
+        normalized = np.clip((masked_data - vmin) / (vmax - vmin), 0.0, 1.0)
+        nan_mask = np.isnan(normalized)
+        lut_indices = np.round(
+            np.where(nan_mask, 0, normalized) * 255
+        ).astype(np.uint8)
 
-        rgba = (cmap(norm(masked_data)) * 255).astype(np.uint8)
+        rgba = lut[lut_indices]
+        rgba[nan_mask] = (0, 0, 0, 0)
 
         pil_image = Image.fromarray(rgba, mode="RGBA")
         img_buffer = io.BytesIO()

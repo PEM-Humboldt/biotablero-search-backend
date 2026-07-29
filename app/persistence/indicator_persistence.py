@@ -24,7 +24,7 @@ class AbstractIndicator:
         """
         Returns the values for the configurated indicator and given polygon
         """
-        filters = {"polygon": polygon}
+        filters: Dict[str, Polygon | str] = {"polygon": polygon}
         if (
             slug_grupo is not None
             and self.indicator_obj.describe()["table"] == "species_stats"

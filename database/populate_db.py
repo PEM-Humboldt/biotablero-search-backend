@@ -7,6 +7,7 @@ from database.seed_area_types import seed_area_types
 from database.seed_collections_and_metrics import seed_collections_and_metrics
 from database.seed_connectivity_indicators import seed_connectivity_indicators
 from database.seed_polygons import seed_polygons
+from database.seed_species_stats import seed_species_stats
 
 from app.utils.config import get_settings, TORTOISE_ORM
 
@@ -27,11 +28,13 @@ async def populate_db(which_set="all"):
                 await seed_polygons()
                 await seed_collections_and_metrics()
                 await seed_connectivity_indicators()
+                await seed_species_stats()
             case "areas":
                 await seed_area_types()
                 await seed_polygons()
             case "indicators":
                 await seed_connectivity_indicators()
+                await seed_species_stats()
             case "metrics":
                 await seed_collections_and_metrics()
     except Exception as e:

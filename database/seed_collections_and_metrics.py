@@ -23,6 +23,7 @@ class CollectionEnum(Enum):
 class IndicatorEnum(Enum):
     PROT_CONN = "prot_conn"
     DPC = "dpc"
+    SPECIES = "species"
 
 
 class OperationEnum(Enum):
@@ -173,6 +174,13 @@ class MetricEnum(Enum):
         "currentRecordsGaps_average",
         OperationEnum.AVERAGE_SINGLE_COLLECTION,
         CollectionEnum.INDICE_VACIOS_INFORMACION,
+    )
+    STATS_ON_SPECIES = (
+        "statsOnSpecies",
+        OperationEnum.TABLE_PRECALCULATED,
+        None,
+        None,
+        IndicatorEnum.SPECIES,
     )
     RICHNESS = (
         "richness",

@@ -17,6 +17,7 @@ from app.routes.schemas.MetricResponse import (
     DPCListResponse,
     DPCSingleResponse,
     RecordGapsResponse,
+    SpeciesStatsResponse,
 )
 
 MetricResponse = Union[
@@ -34,6 +35,7 @@ MetricResponse = Union[
     DPCListResponse,
     DPCSingleResponse,
     RecordGapsResponse,
+    SpeciesStatsResponse,
 ]
 
 
@@ -63,6 +65,7 @@ class MetricsConfigType(TypedDict):
     protectedAreas_wetland: MetricConfig
     recordGaps: MetricConfig
     currentRecordsGaps_average: MetricConfig
+    statsOnSpecies: MetricConfig
 
 
 # This config contains everything related to FastAPI and Pydantic validations
@@ -368,6 +371,20 @@ METRICS_CONFIG: MetricsConfigType = {
             average=0.87,
         ),
         "description": "Average human footprint index",
+    },
+    "statsOnSpecies": {
+        "model": SpeciesStatsResponse,
+        "example": SpeciesStatsResponse(
+            total=203,
+            threatened_total=2,
+            threatened_cr=0,
+            threatened_en=1,
+            threatened_vu=1,
+            invasive=0,
+            endemic=9,
+            endemic_threatened=1,
+        ),
+        "description": "Species statistics by group",
     },
     # "timelineHF": {},
     # TODO: implementar estas:

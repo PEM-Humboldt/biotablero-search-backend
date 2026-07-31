@@ -186,6 +186,7 @@ class DPC(Model):
             "dpc": self.dpc,
             "pa_id": self.pa_id,
             "pa_name": self.pa_name,
+            "category": self.category,
         }
 
     class Meta(Model.Meta):

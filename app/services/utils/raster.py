@@ -168,7 +168,7 @@ def get_one_raster_areas_by_classes(
     )
 
     pixel_area_ha = _get_raster_pixel_area_ha(raster_transform, "EPSG:4326")
-    
+
     if nodata is not None:
         masked_data = np.where(masked_data == nodata, np.nan, masked_data)
     clean_data = masked_data[~np.isnan(masked_data)].astype(int)

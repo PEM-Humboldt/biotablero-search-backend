@@ -177,6 +177,7 @@ class DPC(Model):
     dpc = fields.FloatField()
     pa_id = fields.IntField()
     pa_name = fields.CharField(max_length=150)
+    category = fields.CharField(max_length=150)
     updated_at = fields.DatetimeField(auto_now=True)
 
     def get_result_for_metric(self):
@@ -185,6 +186,7 @@ class DPC(Model):
             "dpc": self.dpc,
             "pa_id": self.pa_id,
             "pa_name": self.pa_name,
+            "category": self.category,
         }
 
     class Meta(Model.Meta):

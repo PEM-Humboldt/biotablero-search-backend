@@ -45,7 +45,9 @@ async def seed_connectivity_indicators():
     else:
         errors = 0
         counter = 0
-        pa_map, _, _, _ = await fetch_collection_metadata(pa_collection)
+        _, values, classes, _, _ = await fetch_collection_metadata(
+            pa_collection
+        )
         with open("data/dpc.csv", "r", encoding="utf-8", newline="") as file:
             dpc_reader = csv.DictReader(file)
             for row in dpc_reader:
@@ -53,42 +55,40 @@ async def seed_connectivity_indicators():
                     print("id NA, %s" % (row["geofence_type"]))
                     errors += 1
                     continue
-                if float(row["dPC"]) <= 0:
-                    print("dpc <= 0, ignorando registro, %s" % (row))
+                if float(row["dPC"]) < 0:
+                    print("dpc < 0, ignorando registro, %s" % (row))
                     errors += 1
                     continue
                 polygon = await Polygon.get_or_none(official_code=row["id"])
                 if not polygon:
-                    print("id no encontrado, %s" % (row["id"]))
+                    print("polígono no encontrado, %s" % (row["id"]))
                     errors += 1
                     continue
-                pa_name = [
-                    name
-                    for name, id in pa_map.items()
-                    if id == int(row["ap_id"])
-                ]
-                if len(pa_name) == 0:
+                pa_index = None
+                try:
+                    pa_index = values.index(int(row["ap_id"]))
+                except ValueError as e:
                     print(
-                        "AP no encontrada, %s, geofence: %s"
-                        % (row["ap_id"], row["id"])
+                        "AP id no encontrada en el STAC, %s" % (row["ap_id"])
                     )
-                    errors += 1
                     continue
+                pa_name = classes[pa_index]
                 dpc_obj = DPC(
                     polygon=polygon,
                     dpc=row["dPC"],
                     pa_id=row["ap_id"],
-                    pa_name=pa_name[0],
+                    pa_name=pa_name,
+                    category=row["dpc_cat"],
                 )
                 await dpc_obj.save()
                 counter += 1
 
-            print("errores: %s" % errors)
             if counter > 0:
                 logger.info(
                     f"✔ {counter} registros insertados de dpc",
                 )
             else:
+                print("errores: %s" % errors)
                 logger.info(
                     "⚠ No se insertaron registros de dpc. Verifica el archivo dpc.csv",
                 )

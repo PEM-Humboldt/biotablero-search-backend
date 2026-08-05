@@ -163,11 +163,14 @@ def get_one_raster_areas_by_classes(
     Calculate areas for every category from the raster in a given polygon.
     """
 
-    masked_data, raster_transform, _ = _crop_raster_by_polygon(
+    masked_data, raster_transform, nodata = _crop_raster_by_polygon(
         raster_path, polygon
     )
 
     pixel_area_ha = _get_raster_pixel_area_ha(raster_transform, "EPSG:4326")
+
+    if nodata is not None:
+        masked_data = np.where(masked_data == nodata, np.nan, masked_data)
     clean_data = masked_data[~np.isnan(masked_data)].astype(int)
 
     value_to_class = {val: name for name, val in classes.items()}

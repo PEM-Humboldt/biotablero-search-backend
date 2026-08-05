@@ -151,8 +151,8 @@ async def get_layer_by_polygon(
         Query(
             description=(
                 "Class value associated to the layer requested, corresponds to one of the keys in a values object (except 'id') "
-                "For example: Natural. "
-                "For metrics based on cotinous collections (e.g. recordGaps, richness), "
+                "For example: Natural"
+                "For metrics based on continous collections (e.g. recordGaps, richness), "
                 "class_id must be the metric's own name instead of a class key"
             ),
             examples=["Natural"],

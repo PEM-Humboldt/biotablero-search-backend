@@ -685,9 +685,7 @@ async def calculate_frequency_layer(
             usr_msg=f"class_id {class_id} doesn't exist in metric",
         )
 
-    _classes, _values, colors, _categories = await fetch_collection_metadata(
-        primary_collection
-    )
+    _, _, _, colors, _ = await fetch_collection_metadata(primary_collection)
 
     raster_href = get_asset_href_by_item_id(primary_collection.name, item_id)
 

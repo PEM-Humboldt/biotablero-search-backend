@@ -147,6 +147,7 @@ class DPCSingleResponse(BaseMetricResult):
     dpc: float
     pa_id: int
     pa_name: str
+    category: str
 
 
 class DPCListResponse(RootModel[list[DPCSingleResponse]]):

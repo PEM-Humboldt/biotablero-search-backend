@@ -190,14 +190,16 @@ async def calculate_single_coll_values(
 
     await primary_collection.fetch_related("collection")
     primary_collection = primary_collection.collection
-    classes, _, _, _ = await fetch_collection_metadata(primary_collection)
+    classes_map, _, _, _, _ = await fetch_collection_metadata(
+        primary_collection
+    )
 
     id, raster_url = get_items_asset_url(primary_collection.name)[0]
 
     polygon = geometries.MultiPolygon(**polygon_obj.geometry)
 
     raster_values = get_one_raster_areas_by_classes(
-        raster_url, polygon, classes
+        raster_url, polygon, classes_map
     )
 
     return {"id": id, **raster_values}
@@ -224,14 +226,18 @@ async def calculate_single_coll_all_items_values(
     await primary_collection.fetch_related("collection")
     primary_collection = primary_collection.collection
 
-    classes, _, _, _ = await fetch_collection_metadata(primary_collection)
+    classes_map, _, _, _, _ = await fetch_collection_metadata(
+        primary_collection
+    )
 
     rasters_info = get_items_asset_url(primary_collection.name)
     polygon = geometries.MultiPolygon(**polygon_obj.geometry)
 
     result = []
     for id, url in rasters_info:
-        raster_values = get_one_raster_areas_by_classes(url, polygon, classes)
+        raster_values = get_one_raster_areas_by_classes(
+            url, polygon, classes_map
+        )
 
         result.append({"id": id, **raster_values})
 
@@ -272,7 +278,9 @@ async def calculate_two_colls_values(
 
     await secondary_collection.fetch_related("collection")
 
-    classes, _, _, _ = await fetch_collection_metadata(primary_collection)
+    classes_map, _, _, _, _ = await fetch_collection_metadata(
+        primary_collection
+    )
 
     secondary_collection = secondary_collection.collection
 
@@ -287,7 +295,7 @@ async def calculate_two_colls_values(
     ]
     polygon = geometries.MultiPolygon(**polygon_obj.geometry)
     raster_values = get_two_raster_areas_by_classes(
-        raster_pri_url, raster_sec_url, polygon, classes
+        raster_pri_url, raster_sec_url, polygon, classes_map
     )
 
     return {"id": id_pri, **raster_values}
@@ -409,7 +417,7 @@ async def calculate_cat_single_coll_values(
     await primary_collection.fetch_related("collection")
     primary_collection = primary_collection.collection
 
-    _, values, _, categories = await fetch_collection_metadata(
+    _, values, _, _, categories = await fetch_collection_metadata(
         primary_collection
     )
 
@@ -459,7 +467,7 @@ async def calculate_cat_two_colls_values(
 
     await secondary_collection.fetch_related("collection")
 
-    _, values, _, categories = await fetch_collection_metadata(
+    _, values, _, _, categories = await fetch_collection_metadata(
         primary_collection
     )
 
@@ -558,11 +566,11 @@ async def calculate_single_coll_layer(
     """
     Get the layer for a metric that uses only one collection
     """
-    classes, values, colors, _categories = await fetch_collection_metadata(
+    classes_map, values, _, colors, _ = await fetch_collection_metadata(
         primary_collection
     )
 
-    if class_id not in classes:
+    if class_id not in classes_map:
         raise MetadataError(
             code=404,
             log_msg=f"class_id {class_id} doesn't exist in metric",
@@ -574,7 +582,7 @@ async def calculate_single_coll_layer(
     image_base64 = get_one_raster_image(
         raster_path=raster_href,
         polygon=polygon,
-        class_value=classes[class_id],
+        class_value=classes_map[class_id],
         values=values,
         colors=colors,
     )
@@ -592,7 +600,7 @@ async def calculate_two_colls_layer(
     """
     Get the layer for a metric that uses two collections.
     """
-    classes_map, values, colors, _categories = await fetch_collection_metadata(
+    classes_map, values, _, colors, _ = await fetch_collection_metadata(
         primary_collection
     )
 

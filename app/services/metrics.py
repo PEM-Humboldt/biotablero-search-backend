@@ -14,6 +14,7 @@ from app.services.utils.raster import (
     get_two_raster_image,
     get_frequency_histogram,
     get_polygon_and_mask_averages,
+    get_one_raster_gradient_image,
 )
 from app.services.utils.stac import (
     get_item_index_by_resolution,
@@ -656,6 +657,47 @@ async def calculate_two_colls_layer(
     return image_base64
 
 
+async def calculate_frequency_layer(
+    polygon: geometries.MultiPolygon,
+    primary_collection: Collection,
+    item_id: str,
+    class_id: str,
+    metric: Metric | None = None,
+) -> str:
+    """
+    Get the heatmap layer for a metric over a continuous raster.
+    There is no discrete class in this operation, so class_id must be the
+    metric's own name instead of a class key from /values.
+    """
+    if metric is None:
+        raise ServerError(
+            code=500,
+            usr_msg="There was an internal error processing the request.",
+            e=Exception(
+                "Missing metric context for FREQUENCY_SINGLE-COLLECTION"
+            ),
+        )
+
+    if class_id != metric.name:
+        raise MetadataError(
+            code=404,
+            log_msg=f"class_id {class_id} doesn't match metric name {metric.name}",
+            usr_msg=f"class_id {class_id} doesn't exist in metric",
+        )
+
+    _, _, _, colors, _ = await fetch_collection_metadata(primary_collection)
+
+    raster_href = get_asset_href_by_item_id(primary_collection.name, item_id)
+
+    image_base64 = get_one_raster_gradient_image(
+        raster_path=raster_href,
+        polygon=polygon,
+        colors=colors,
+    )
+
+    return image_base64
+
+
 def calculate_cat_single_coll_filtered_layer():
     pass
 
@@ -679,6 +721,7 @@ class OperationFunctions:
             "AREA_SINGLE-COLLECTION_ALL-ITEMS": calculate_single_coll_layer,
             "AREA_TWO-COLLECTIONS": calculate_two_colls_layer,
             "AREA_CATEGORIES_SINGLE-COLLECTION_FILTERED": calculate_cat_single_coll_filtered_layer,
+            "FREQUENCY_SINGLE-COLLECTION": calculate_frequency_layer,
         }
         self.values_function = values_functions[operation]
         self.layer_function = (

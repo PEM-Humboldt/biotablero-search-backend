@@ -174,6 +174,11 @@ class MetricEnum(Enum):
         OperationEnum.AVERAGE_SINGLE_COLLECTION,
         CollectionEnum.INDICE_VACIOS_INFORMACION,
     )
+    RICHNESS = (
+        "richness",
+        OperationEnum.FREQUENCY_SINGLE_COLLECTION,
+        CollectionEnum.INDICE_VACIOS_INFORMACION,  # TODO poner luego la coleccion de riqueza
+    )
 
     def __init__(
         self,

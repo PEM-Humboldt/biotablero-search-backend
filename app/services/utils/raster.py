@@ -3,6 +3,7 @@ import io
 
 from PIL import Image
 import numpy as np
+
 from typing import Dict, List, Optional, Tuple
 from shapely import box
 from shapely.ops import transform as shapely_transform
@@ -148,6 +149,88 @@ def get_one_raster_image(
         raise ServerError(
             code=500,
             usr_msg=f"There was an error processing the requested class.",
+            e=e,
+        )
+    gc.collect()
+    return img_base64
+
+
+def _build_gradient_lut(colors: List[str], n: int = 256) -> np.ndarray:
+    """
+    Build an (n, 4) uint8 lookup table, linearly interpolating RGBA between
+    the given stop colors (evenly spaced).
+    """
+    stops = np.array([hex_to_rgba(c) for c in colors], dtype=np.float64)
+    positions = np.linspace(0, 1, len(stops))
+    samples = np.linspace(0, 1, n)
+
+    lut = np.empty((n, 4), dtype=np.float64)
+    for channel in range(4):
+        lut[:, channel] = np.interp(samples, positions, stops[:, channel])
+
+    return np.clip(lut, 0, 255).astype(np.uint8)
+
+
+def get_one_raster_gradient_image(
+    raster_path: str,
+    polygon: geometries.MultiPolygon,
+    colors: List[str],
+) -> str:
+    """
+    Render a continuous raster within a polygon as a heatmap, interpolating
+    the pixel values between 3 gradient stop colors (initial-middle-final).
+    """
+    Image.MAX_IMAGE_PIXELS = None
+
+    if len(colors) != 3:
+        raise MetadataError(
+            code=501,
+            usr_msg="There was an internal error processing the request",
+            log_msg=(
+                f"Expected 3 gradient colors in the collection metadata, "
+                f"got {len(colors)}."
+            ),
+        )
+
+    masked_data, _, nodata = _crop_raster_by_polygon(raster_path, polygon)
+    if nodata is not None:
+        masked_data = np.where(masked_data == nodata, np.nan, masked_data)
+
+    valid_data = masked_data[~np.isnan(masked_data)]
+    if valid_data.size == 0:
+        raise NotFoundError(
+            usr_msg="No data available for the selected polygon.",
+            log_msg="No valid raster data found in the polygon region.",
+        )
+
+    try:
+        vmin, vmax = float(np.nanmin(masked_data)), float(
+            np.nanmax(masked_data)
+        )
+        if vmin == vmax:
+            vmax = vmin + 1e-9
+
+        lut = _build_gradient_lut(colors)
+        normalized = np.clip((masked_data - vmin) / (vmax - vmin), 0.0, 1.0)
+        nan_mask = np.isnan(normalized)
+        lut_indices = np.round(np.where(nan_mask, 0, normalized) * 255).astype(
+            np.uint8
+        )
+
+        rgba = lut[lut_indices]
+        rgba[nan_mask] = (0, 0, 0, 0)
+
+        pil_image = Image.fromarray(rgba, mode="RGBA")
+        img_buffer = io.BytesIO()
+        pil_image.save(img_buffer, format="PNG")
+        img_buffer.seek(0)
+        img_base64 = base64.b64encode(img_buffer.getvalue()).decode("utf-8")
+        del masked_data, rgba, img_buffer, pil_image
+    except Exception as e:
+        logger.error(f"Unexpected error rendering gradient layer: {str(e)}")
+        raise ServerError(
+            code=500,
+            usr_msg="There was an error processing the requested layer.",
             e=e,
         )
     gc.collect()

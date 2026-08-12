@@ -200,7 +200,6 @@ class SpeciesStats(Model):
         related_name="species_stats",
         on_delete=fields.CASCADE,
     )
-    geofence_type = fields.CharField(max_length=50)
     date = fields.DateField()
     region_slug = fields.CharField(max_length=100)
     region_code = fields.CharField(max_length=20, null=True)

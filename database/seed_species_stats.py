@@ -53,7 +53,6 @@ async def seed_species_stats():
 
                 await SpeciesStats.create(
                     polygon=polygon,
-                    geofence_type=row["unidad_consulta"],
                     date=date.fromisoformat(row["fecha_corte"]),
                     region_slug=row["slug_region"].strip(),
                     region_code=cod_region,

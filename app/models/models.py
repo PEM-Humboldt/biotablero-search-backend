@@ -201,8 +201,6 @@ class SpeciesStats(Model):
         on_delete=fields.CASCADE,
     )
     date = fields.DateField()
-    region_slug = fields.CharField(max_length=100)
-    region_code = fields.CharField(max_length=20, null=True)
     group_slug = fields.CharField(max_length=100)
     total = fields.IntField()
     threatened_total = fields.IntField()

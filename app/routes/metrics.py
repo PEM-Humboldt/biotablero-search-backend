@@ -105,7 +105,7 @@ async def get_values_by_polygon(
         tuple[str, MetricConfig], fastapi.Depends(metric_id_param)
     ],
     polygon_id: int,
-    slug_grupo: Annotated[
+    group: Annotated[
         str | None,
         Query(
             description="Optional species group slug to filter species stats",
@@ -116,14 +116,14 @@ async def get_values_by_polygon(
     metric_id, metric_config = metric
     model_response = metric_config["model"]
 
-    if metric_id == "statsOnSpecies" and slug_grupo is None:
+    if metric_id == "statsOnSpecies" and group is None:
         raise HTTPException(
             status_code=422,
-            detail="slug_grupo is required for statsOnSpecies",
+            detail="group is required for statsOnSpecies",
         )
 
     values = await metrics_service.get_or_create_polygon_metric(
-        polygon_id, metric_id, slug_grupo=slug_grupo
+        polygon_id, metric_id, group=group
     )
 
     return model_response.model_validate(values, by_alias=True)

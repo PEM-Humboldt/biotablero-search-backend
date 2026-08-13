@@ -181,6 +181,8 @@ class MetricEnum(Enum):
         None,
         None,
         IndicatorEnum.SPECIES,
+        None,
+        True,
     )
     RICHNESS = (
         "richness",
@@ -196,6 +198,7 @@ class MetricEnum(Enum):
         sec_collections: Optional[List[CollectionEnum]] = None,
         indicator: Optional[IndicatorEnum] = None,
         indicator_card_id: Optional[str] = None,
+        has_group: bool = False,
     ):
         self.metric_name = metric_name
         self.operation_type = operation.value
@@ -203,6 +206,7 @@ class MetricEnum(Enum):
         self.sec_collections = sec_collections
         self.indicator = indicator
         self.indicator_card_id = indicator_card_id
+        self.has_group = has_group
 
 
 collections_dict = {}
@@ -226,6 +230,7 @@ async def seed_collections_and_metrics():
             name=metric.metric_name,
             operation_type=metric.operation_type,
             indicator_card_id=metric.indicator_card_id,
+            has_group=metric.has_group,
         )
         await new_metric.save()
 

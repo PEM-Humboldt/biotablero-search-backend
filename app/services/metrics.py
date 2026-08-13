@@ -66,25 +66,6 @@ async def get_or_create_polygon_metric(
             status_code=400, detail="Metric not found in database"
         )
 
-    if metric_name == "statsOnSpecies":
-        if group is None:
-            raise HTTPException(
-                status_code=422,
-                detail="group is required for statsOnSpecies",
-            )
-        values_function = OperationFunctions(
-            metric_obj.operation_type
-        ).values_function
-        values = await values_function(metric_obj, polygon_obj, group)
-        if isinstance(values, list):
-            if len(values) == 0:
-                raise HTTPException(
-                    status_code=404,
-                    detail="Species stats not found for the given group",
-                )
-            return values[0]
-        return values
-
     async with advisory_xact_lock(
         "polygon_metric", str(polygon_obj.id), str(metric_obj.id)
     ) as connection:

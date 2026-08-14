@@ -766,12 +766,7 @@ def generate_image_for_value(
         )
 
     row_min, row_max, col_min, col_max = bbox
-    window = Window(
-        col_off=col_min,
-        row_off=row_min,
-        width=col_max - col_min + 1,
-        height=row_max - row_min + 1,
-    )
+    window = Window.from_slices((row_min, row_max + 1), (col_min, col_max + 1))
 
     with rasterio.open(raster_path) as src:
         block = src.read(1, window=window)

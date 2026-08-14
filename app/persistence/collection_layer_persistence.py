@@ -19,6 +19,7 @@ async def create_collection_layer(
     collection: Collection,
     value: int,
     image_url: str,
+    bbox: tuple[float, float, float, float],
     db: BaseDBAsyncClient | None = None,
 ):
     create_kwargs = {}
@@ -29,6 +30,7 @@ async def create_collection_layer(
             collection=collection,
             value=value,
             layer_url=image_url,
+            bbox=tuple(map(float, bbox)),
             **create_kwargs,
         )
     except IntegrityError as e:

@@ -101,6 +101,7 @@ class CollectionLayer(Model):
     )
     value = fields.IntField()
     layer_url = fields.CharField(max_length=255)
+    bbox = fields.JSONField(default=list)
     updated_at = fields.DatetimeField(auto_now=True)
 
     class Meta(Model.Meta):

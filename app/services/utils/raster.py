@@ -687,3 +687,77 @@ def get_two_raster_image(
         gc.collect()
 
     return img_base64
+
+
+def get_one_raster_full_image(
+    raster_path: str,
+    class_value: int,
+    values: List[int],
+    colors: List[str],
+) -> str:
+    Image.MAX_IMAGE_PIXELS = None
+
+    value_idx = None
+    try:
+        value_idx = values.index(class_value)
+    except ValueError:
+        raise NotFoundError(
+            usr_msg=f"Value {class_value} not found in collection",
+            log_msg=f"{class_value} not found in the values metadata.",
+        )
+
+    color = None
+    try:
+        color = colors[value_idx]
+    except IndexError:
+        raise MetadataError(
+            code=501,
+            usr_msg="There was an internal error processing the request",
+            log_msg=f"Value {class_value} doesn't have ab associated color in metadata.",
+        )
+
+    with rasterio.open(raster_path) as src:
+        data = src.read(1)
+        if data is None:
+            raise ValueError("Could not read raster data")
+
+    mask = data == class_value
+    if not np.any(mask):
+        raise NotFoundError(
+            usr_msg="No data available for the selected class.",
+            log_msg=f"No data generated for class value {class_value}.",
+        )
+
+    try:
+        h, w = data.shape
+        rgba = np.zeros((h, w, 4), dtype=np.uint8)
+
+        rgba[mask] = hex_to_rgba(color)
+
+        pil_image = Image.fromarray(rgba, mode="RGBA")
+
+        # Reducción de tamaño propuesto por Gemini
+        if max(h, w) > 2048:
+            scale = 2048 / float(max(h, w))
+            new_w = max(1, int(w * scale))
+            new_h = max(1, int(h * scale))
+            pil_image = pil_image.resize(
+                (new_w, new_h), resample=Image.NEAREST
+            )
+
+        img_buffer = io.BytesIO()
+        pil_image.save(img_buffer, format="PNG")
+        img_buffer.seek(0)
+        img_base64 = base64.b64encode(img_buffer.getvalue()).decode("utf-8")
+        del data, rgba, img_buffer, pil_image
+    except Exception as e:
+        logger.error(
+            f"Unexpected error rendering class value {class_value}: {str(e)}"
+        )
+        raise ServerError(
+            code=500,
+            usr_msg=f"There was an error processing the requested class.",
+            e=e,
+        )
+    gc.collect()
+    return img_base64

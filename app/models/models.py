@@ -92,6 +92,21 @@ class Collection(Model):
         table = "collection"
 
 
+class CollectionLayer(Model):
+    id = fields.IntField(pk=True)
+    collection = fields.ForeignKeyField(
+        "bt_search_bk.Collection",
+        related_name="layer_items",
+        on_delete=fields.CASCADE,
+    )
+    value = fields.IntField()
+    layer_url = fields.CharField(max_length=255)
+    updated_at = fields.DatetimeField(auto_now=True)
+
+    class Meta(Model.Meta):
+        table = "collection_layer"
+
+
 class Metric(Model):
     id = fields.IntField(pk=True)
     name = fields.CharField(max_length=100, unique=True)

@@ -1,10 +1,10 @@
-from typing import List
-
-from fastapi import APIRouter
-
-import app.services.collections as collection_service
+from typing import List, Annotated
+from fastapi import APIRouter, Query, Path
 
 from app.routes.schemas.CollectionResponse import CollectionResponse
+from app.routes.schemas.LayerResponse import LayerResponse
+
+import app.services.collections as collection_service
 
 router = APIRouter(
     prefix="/collections",
@@ -31,3 +31,30 @@ async def get_collections():
     Returns the list of available collections.
     """
     return await collection_service.get_collections()
+
+
+@router.get("/{collection_id}/layer", response_model=LayerResponse)
+async def get_area_details(
+    collection_id: Annotated[
+        int,
+        Path(
+            description=("Collection id to query"),
+            examples=[1],
+        ),
+    ],
+    value: Annotated[
+        int,
+        Query(
+            description=("Value associated to the desired layer"),
+            examples=[1130],
+        ),
+    ],
+) -> LayerResponse:
+    """
+    Returns the url of rendered image layer for a given collection, polygon ID, and value.
+    """
+    response = await collection_service.get_or_create_collection_layer(
+        collection_id, value
+    )
+
+    return LayerResponse(**response)

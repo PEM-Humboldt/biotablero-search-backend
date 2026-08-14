@@ -42,12 +42,12 @@ async def get_or_create_collection_layer(
         str(collection_id),
         str(value),
     ) as connection:
-        # existing_layer = await get_existing_layer(
-        #     collection_obj, value, db=connection
-        # )
+        existing_layer = await get_existing_layer(
+            collection_obj, value, db=connection
+        )
 
-        # if existing_layer:
-        #     return {"layer": existing_layer.layer_url}
+        if existing_layer:
+            return existing_layer.layer_url, existing_layer.bbox
 
         _, values, _, colors, _ = await fetch_collection_metadata(
             collection_obj
@@ -68,11 +68,12 @@ async def get_or_create_collection_layer(
             content_type="image/png",
         )
 
-        # await create_collection_layer(
-        #     collection=collection_obj,
-        #     value=value,
-        #     image_url=image_url,
-        #     db=connection,
-        # )
+        await create_collection_layer(
+            collection=collection_obj,
+            value=value,
+            image_url=image_url,
+            bbox=bbox,
+            db=connection,
+        )
 
         return image_url, bbox

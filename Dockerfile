@@ -1,31 +1,70 @@
-# Use Python 3.10 slim image
-FROM public.ecr.aws/docker/library/python:3.10-slim
+# Build stage
+FROM public.ecr.aws/docker/library/python:3.10-slim AS builder
 
-# Set working directory
-WORKDIR /app
+## Configure environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
 
-# Install system dependencies for GDAL, GEOS, PROJ (needed for rasterio, geopandas)
-RUN apt-get update && apt-get install -y \
+## Install minimal build dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
-    libgdal-dev \
-    gdal-bin \
-    libgeos-dev \
-    libproj-dev \
-    netcat-openbsd \
+    libpq-dev \
+    gcc \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements and install Python dependencies
+## Create and enable virtual environment
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
+## Install Python dependencies
+WORKDIR /build
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy the application code
-COPY . .
+# Runtime stage
+FROM public.ecr.aws/docker/library/python:3.10-slim AS runner
 
-# Make start script executable
-RUN chmod +x start.sh
+## Configure environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PATH="/opt/venv/bin:$PATH" \
+    PORT=8000 \
+    HOST=0.0.0.0
 
-# Expose port
+## Install runtime system libraries
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libexpat1 \
+    libpq5 \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+## User setup
+RUN groupadd -g 10001 app && \
+    useradd -u 10001 -g app -s /bin/bash -m app
+
+## Copy built virtual environment
+COPY --from=builder /opt/venv /opt/venv
+
+WORKDIR /app
+
+## Make logs directory and set permissions
+RUN mkdir -p /app/logs && \
+    chown -R app:app /app
+
+## Copy application code
+COPY --chown=app:app . /app
+
+# Switch to non-root user
+USER app
+
+## Open port
 EXPOSE 8000
 
-# Set entrypoint
-ENTRYPOINT ["./start.sh"]
+## Docker health check setup
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+    CMD curl -fsS http://localhost:${PORT}/docs > /dev/null || curl -fsS http://localhost:${PORT}/areas/types > /dev/null || exit 1
+
+## Execute program
+CMD ["sh", "-c", "uvicorn app.main:app --host ${HOST} --port ${PORT}"]

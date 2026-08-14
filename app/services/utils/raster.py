@@ -12,7 +12,7 @@ from shapely.geometry import shape, Polygon as ShapelyPolygon, MultiPolygon
 import rasterio
 from rasterio.crs import CRS
 from rasterio.transform import array_bounds
-from rasterio.windows import Window, bounds as window_bounds, from_bounds
+from rasterio.windows import Window, from_bounds
 from rasterio.features import rasterize
 import gc
 
@@ -689,7 +689,7 @@ def get_two_raster_image(
     return img_base64
 
 
-def get_value_bbox(
+def _get_value_bbox(
     raster_path: str,
     class_value: float,
 ) -> Optional[Tuple[int, int, int, int]]:
@@ -733,7 +733,7 @@ def generate_image_for_value(
     class_value: int,
     values: List[int],
     colors: List[str],
-) -> str:
+) -> Tuple[str, Tuple[int, int, int, int]]:
     """
     Generate a single PNG for class_value in its bounding box
     """
@@ -758,7 +758,7 @@ def generate_image_for_value(
             log_msg=f"Value {class_value} doesn't have ab associated color in metadata.",
         )
 
-    bbox = get_value_bbox(raster_path, class_value)
+    bbox = _get_value_bbox(raster_path, class_value)
     if bbox is None:
         raise NotFoundError(
             usr_msg="No data available for the selected class.",
@@ -800,4 +800,5 @@ def generate_image_for_value(
             e=e,
         )
     gc.collect()
-    return img_base64
+
+    return img_base64, bbox

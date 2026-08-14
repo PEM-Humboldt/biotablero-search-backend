@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import List, Dict, Tuple
 from fastapi import HTTPException
 
 import app.persistence.collection_persistence as collection_persistence
@@ -8,7 +8,7 @@ from app.persistence.collection_layer_persistence import (
 )
 from app.persistence.utils.lock_utils import advisory_xact_lock
 from app.routes.schemas.CollectionResponse import CollectionResponse
-from app.services.utils.raster import get_one_raster_full_image
+from app.services.utils.raster import generate_image_for_value
 from app.services.utils.stac import (
     fetch_collection_metadata,
     get_items_asset_url,
@@ -25,7 +25,7 @@ async def get_collections() -> List[CollectionResponse]:
 
 async def get_or_create_collection_layer(
     collection_id: int, value: int
-) -> Dict[str, str]:
+) -> Tuple[str, Tuple[int, int, int, int]]:
     """
     Checks if the layer already exists. If not, generates it, save it and returns the URL.
     """
@@ -55,7 +55,7 @@ async def get_or_create_collection_layer(
 
         items_raster_href = get_items_asset_url(collection_obj.name)
 
-        image_base64 = get_one_raster_full_image(
+        image_base64, bbox = generate_image_for_value(
             raster_path=items_raster_href[0][1],
             class_value=value,
             values=values,
@@ -75,4 +75,4 @@ async def get_or_create_collection_layer(
         #     db=connection,
         # )
 
-        return {"layer": image_url}
+        return image_url, bbox

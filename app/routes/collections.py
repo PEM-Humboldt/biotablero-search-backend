@@ -2,7 +2,7 @@ from typing import List, Annotated
 from fastapi import APIRouter, Query, Path
 
 from app.routes.schemas.CollectionResponse import CollectionResponse
-from app.routes.schemas.LayerResponse import LayerResponse
+from app.routes.schemas.LayerResponse import LayerWithBboxResponse
 
 import app.services.collections as collection_service
 
@@ -33,7 +33,7 @@ async def get_collections():
     return await collection_service.get_collections()
 
 
-@router.get("/{collection_id}/layer", response_model=LayerResponse)
+@router.get("/{collection_id}/layer", response_model=LayerWithBboxResponse)
 async def get_area_details(
     collection_id: Annotated[
         int,
@@ -49,12 +49,12 @@ async def get_area_details(
             examples=[1130],
         ),
     ],
-) -> LayerResponse:
+) -> LayerWithBboxResponse:
     """
     Returns the url of rendered image layer for a given collection, polygon ID, and value.
     """
-    response = await collection_service.get_or_create_collection_layer(
+    img_url, bbox = await collection_service.get_or_create_collection_layer(
         collection_id, value
     )
 
-    return LayerResponse(**response)
+    return LayerWithBboxResponse(layer=img_url, bbox=bbox)

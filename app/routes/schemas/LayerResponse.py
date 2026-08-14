@@ -20,7 +20,7 @@ class LayerWithBboxResponse(BaseModel):
     """
 
     layer: str
-    bbox: tuple[int, int, int, int]
+    bbox: tuple[float, float, float, float]
 
     class Config:
         json_schema_extra = {

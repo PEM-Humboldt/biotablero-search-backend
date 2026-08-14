@@ -4,7 +4,7 @@ import io
 from PIL import Image
 import numpy as np
 
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, cast
 from shapely import box
 from shapely.ops import transform as shapely_transform
 from shapely.geometry import shape, Polygon as ShapelyPolygon, MultiPolygon
@@ -733,7 +733,7 @@ def generate_image_for_value(
     class_value: int,
     values: List[int],
     colors: List[str],
-) -> Tuple[str, Tuple[int, int, int, int]]:
+) -> Tuple[str, Tuple[float, float, float, float]]:
     """
     Generate a single PNG for class_value in its bounding box
     """
@@ -776,6 +776,10 @@ def generate_image_for_value(
     with rasterio.open(raster_path) as src:
         block = src.read(1, window=window)
 
+        lon_min, lat_max = src.xy(row_min, col_min)
+        lon_max, lat_min = src.xy(row_max, col_max)
+        bbox_geo = [lon_min, lat_min, lon_max, lat_max]
+
     mask = block == class_value
     try:
 
@@ -801,4 +805,4 @@ def generate_image_for_value(
         )
     gc.collect()
 
-    return img_base64, bbox
+    return img_base64, cast(tuple[float, float, float, float], bbox_geo)

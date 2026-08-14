@@ -25,7 +25,7 @@ async def get_collections() -> List[CollectionResponse]:
 
 async def get_or_create_collection_layer(
     collection_id: int, value: int
-) -> Tuple[str, Tuple[int, int, int, int]]:
+) -> Tuple[str, Tuple[float, float, float, float]]:
     """
     Checks if the layer already exists. If not, generates it, save it and returns the URL.
     """

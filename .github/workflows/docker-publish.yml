@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - 'develop'
-      - 'cgalvis/lib-825'
   release:
     types: 
       - published
@@ -43,7 +42,6 @@ jobs:
             type=raw,value=latest-dev,enable=${{ github.ref == 'refs/heads/develop' }}
             type=raw,value=latest,enable=${{ github.event_name == 'release' }}
             type=semver,pattern={{version}},enable=${{ github.event_name == 'release' }}
-            type=ref,event=branch,enable=${{ github.ref == 'refs/heads/cgalvis/lib-825' }}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v6

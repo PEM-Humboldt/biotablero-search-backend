@@ -689,7 +689,9 @@ def get_two_raster_image(
     return img_base64
 
 
-def get_one_raster_full_image(
+
+## Eliminar esta función 
+def get_one_raster_full_image_2(
     raster_path: str,
     class_value: int,
     values: List[int],
@@ -800,16 +802,35 @@ def get_value_bbox(
     return bbox
 
 
-# Esta viene siendo el remplazo de get_one_raster_full_image
-def generate_image_for_value(
+def get_one_raster_full_image(
     raster_path: str,
     class_value: float,
-    color: str,
-) -> str:
+    values: List[int],
+    colors: List[str],) -> str:
     """
     Generate a single PNG for class_value in its bounding box
     """
     Image.MAX_IMAGE_PIXELS = None
+    
+    value_idx = None
+    try:
+        value_idx = values.index(class_value)
+    except ValueError:
+        raise NotFoundError(
+            usr_msg=f"Value {class_value} not found in collection",
+            log_msg=f"{class_value} not found in the values metadata.",
+        )
+
+    color = None
+    try:
+        color = colors[value_idx]
+    except IndexError:
+        raise MetadataError(
+            code=501,
+            usr_msg="There was an internal error processing the request",
+            log_msg=f"Value {class_value} doesn't have ab associated color in metadata.",
+        )
+    
     bbox = get_value_bbox(raster_path, class_value)
     if bbox is None:
         raise NotFoundError(
@@ -829,16 +850,27 @@ def generate_image_for_value(
         block = src.read(1, window=window)
 
     mask = block == class_value
-    h, w = mask.shape
-    rgba = np.zeros((h, w, 4), dtype=np.uint8)
-    rgba[mask] = hex_to_rgba(color)
-   
-    pil_image = Image.fromarray(rgba, mode="RGBA")
+    try:
+        
+        h, w = mask.shape
+        rgba = np.zeros((h, w, 4), dtype=np.uint8)
+        rgba[mask] = hex_to_rgba(color)
     
-    img_buffer = io.BytesIO()
-    pil_image.save(img_buffer, format="PNG")
-    img_buffer.seek(0)
-    img_base64 = base64.b64encode(img_buffer.getvalue()).decode("utf-8")
-    del block, mask, rgba, img_buffer, pil_image
+        pil_image = Image.fromarray(rgba, mode="RGBA")
+        
+        img_buffer = io.BytesIO()
+        pil_image.save(img_buffer, format="PNG")
+        img_buffer.seek(0)
+        img_base64 = base64.b64encode(img_buffer.getvalue()).decode("utf-8")
+        del block, mask, rgba, img_buffer, pil_image
+    except Exception as e:
+            logger.error(
+                f"Unexpected error rendering class value {class_value}: {str(e)}"
+            )
+            raise ServerError(
+                code=500,
+                usr_msg=f"There was an error processing the requested class.",
+                e=e,
+            )
     gc.collect()
     return img_base64

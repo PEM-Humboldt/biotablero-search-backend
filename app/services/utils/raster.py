@@ -12,7 +12,7 @@ from shapely.geometry import shape, Polygon as ShapelyPolygon, MultiPolygon
 import rasterio
 from rasterio.crs import CRS
 from rasterio.transform import array_bounds
-from rasterio.windows import from_bounds
+from rasterio.windows import Window, bounds as window_bounds, from_bounds
 from rasterio.features import rasterize
 import gc
 
@@ -759,5 +759,86 @@ def get_one_raster_full_image(
             usr_msg=f"There was an error processing the requested class.",
             e=e,
         )
+    gc.collect()
+    return img_base64
+
+
+def get_value_bbox(
+    raster_path: str,
+    class_value: float,
+) -> Optional[Tuple[int, int, int, int]]:
+    """
+    return the row/col bounding box (row_min, row_max, col_min, col_max)
+    in full-raster pixel coordinates where class_value occurs
+    """
+    bbox: Optional[Tuple[int, int, int, int]] = None
+
+    with rasterio.open(raster_path) as src:
+        for _, window in src.block_windows(1):
+            block = src.read(1, window=window)
+            mask = block == class_value
+            if not np.any(mask):
+                continue
+
+            row_off, col_off = int(window.row_off), int(window.col_off)
+            rows = np.any(mask, axis=1)
+            cols = np.any(mask, axis=0)
+            r0, r1 = np.where(rows)[0][[0, -1]]
+            c0, c1 = np.where(cols)[0][[0, -1]]
+            r0, r1 = r0 + row_off, r1 + row_off
+            c0, c1 = c0 + col_off, c1 + col_off
+
+            if bbox is None:
+                bbox = (r0, r1, c0, c1)
+            else:
+                pr0, pr1, pc0, pc1 = bbox
+                bbox = (
+                    min(pr0, r0), max(pr1, r1),
+                    min(pc0, c0), max(pc1, c1),
+                )
+
+    return bbox
+
+
+# Esta viene siendo el remplazo de get_one_raster_full_image
+def generate_image_for_value(
+    raster_path: str,
+    class_value: float,
+    color: str,
+) -> str:
+    """
+    Generate a single PNG for class_value in its bounding box
+    """
+    Image.MAX_IMAGE_PIXELS = None
+    bbox = get_value_bbox(raster_path, class_value)
+    if bbox is None:
+        raise NotFoundError(
+            usr_msg="No data available for the selected class.",
+            log_msg=f"No data generated for class value {class_value}.",
+        )
+
+    row_min, row_max, col_min, col_max = bbox
+    window = Window(
+        col_off=col_min,
+        row_off=row_min,
+        width=col_max - col_min + 1,
+        height=row_max - row_min + 1,
+    )
+
+    with rasterio.open(raster_path) as src:
+        block = src.read(1, window=window)
+
+    mask = block == class_value
+    h, w = mask.shape
+    rgba = np.zeros((h, w, 4), dtype=np.uint8)
+    rgba[mask] = hex_to_rgba(color)
+   
+    pil_image = Image.fromarray(rgba, mode="RGBA")
+    
+    img_buffer = io.BytesIO()
+    pil_image.save(img_buffer, format="PNG")
+    img_buffer.seek(0)
+    img_base64 = base64.b64encode(img_buffer.getvalue()).decode("utf-8")
+    del block, mask, rgba, img_buffer, pil_image
     gc.collect()
     return img_base64

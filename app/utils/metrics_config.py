@@ -1,4 +1,5 @@
-from typing import Any, Callable, NotRequired, Required, Type, TypedDict, Union
+from typing import Any, Callable, Type, TypedDict, Union
+from typing_extensions import NotRequired, Required
 
 
 from app.routes.schemas.MetricResponse import (
@@ -48,8 +49,11 @@ class MetricConfig(TypedDict):
     response_parser: NotRequired[Callable[[Any, str | None], Any]]
 
 
-class GroupedMetricConfig(MetricConfig):
-    response_parser: Required[Callable[[Any, str | None], Any]]
+class GroupedMetricConfig(TypedDict):
+    model: Type[MetricResponse]
+    example: MetricResponse
+    description: str
+    response_parser: Callable[[Any, str | None], Any]
 
 
 class MetricsConfigType(TypedDict):

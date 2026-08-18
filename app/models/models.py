@@ -102,6 +102,7 @@ class Metric(Model):
 
     collections: fields.ReverseRelation["MetricCollection"]
     indicator: fields.ReverseRelation["MetricIndicator"]
+    info: fields.ReverseRelation["MetricInfo"]
 
     class Meta(Model.Meta):
         table = "metric"
@@ -143,6 +144,21 @@ class MetricIndicator(Model):
 
     class Meta(Model.Meta):
         table = "metric_indicator"
+
+
+class MetricInfo(Model):
+    id = fields.IntField(pk=True)
+    metric = fields.ForeignKeyField(
+        "bt_search_bk.Metric",
+        related_name="info",
+        on_delete=fields.CASCADE,
+    )
+    type = fields.CharField(max_length=100)
+    description = fields.TextField()
+    updated_at = fields.DatetimeField(auto_now=True)
+
+    class Meta(Model.Meta):
+        table = "metric_info"
 
 
 class ProtConn(Model):

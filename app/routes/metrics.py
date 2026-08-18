@@ -1,7 +1,7 @@
 import fastapi
 
 from typing import Annotated, cast
-from fastapi import Path, Query, HTTPException
+from fastapi import Path, Query
 
 from app.middleware.exceptions import UnsupportedMetricException
 from app.routes.schemas.LayerResponse import LayerResponse

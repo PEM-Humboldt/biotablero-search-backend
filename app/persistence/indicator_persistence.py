@@ -19,16 +19,16 @@ class AbstractIndicator:
             )
 
     async def get_values_by_polygon(
-        self, polygon: Polygon, group: str | None = None
+        self,
+        polygon: Polygon,
+        group: str | None = None,
+        has_group: bool = False,
     ) -> Dict[str, str | float] | List[Dict[str, str | float]]:
         """
         Returns the values for the configurated indicator and given polygon
         """
         filters: Dict[str, Polygon | str] = {"polygon": polygon}
-        if (
-            group is not None
-            and self.indicator_obj.describe()["table"] == "species_stats"
-        ):
+        if has_group and group is not None:
             filters["group"] = group
 
         result = await self.indicator_obj.filter(**filters)

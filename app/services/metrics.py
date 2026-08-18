@@ -66,6 +66,12 @@ async def get_or_create_polygon_metric(
             status_code=400, detail="Metric not found in database"
         )
 
+    if metric_obj.has_group and group is None:
+        raise HTTPException(
+            status_code=422,
+            detail="group is required for this metric",
+        )
+
     async with advisory_xact_lock(
         "polygon_metric", str(polygon_obj.id), str(metric_obj.id)
     ) as connection:
@@ -74,39 +80,22 @@ async def get_or_create_polygon_metric(
         )
 
         if polygon_metric:
-            return _filter_polygon_metric_values(
-                polygon_metric.values, metric_name, group
-            )
+            return polygon_metric.values
 
         values_function = OperationFunctions(
             metric_obj.operation_type
         ).values_function
         if metric_obj.operation_type == "TABLE_PRECALCULATED":
-            values = await values_function(metric_obj, polygon_obj, group)
+            values = await values_function(
+                metric_obj, polygon_obj, group, metric_obj.has_group
+            )
         else:
             values = await values_function(metric_obj, polygon_obj)
 
         await create_polygon_metric(
             polygon_obj, metric_obj, values, db=connection
         )
-        return _filter_polygon_metric_values(values, metric_name, group)
-
-
-def _filter_polygon_metric_values(
-    values: List[Dict[str, str | float]] | Dict[str, str | float],
-    metric_name: str,
-    group: str | None = None,
-) -> List[Dict[str, str | float]] | Dict[str, str | float]:
-    if metric_name != "statsOnSpecies":
         return values
-    if isinstance(values, list):
-        if group is None:
-            return values
-        filtered_values = [
-            value for value in values if value.get("group") == group
-        ]
-        return filtered_values
-    return values
 
 
 async def get_or_create_polygon_metric_layer(
@@ -559,7 +548,10 @@ def calculate_cat_single_coll_filtered_values():
 
 
 async def calculate_table_precalculated_values(
-    metric: Metric, polygon_obj: Polygon, group: str | None = None
+    metric: Metric,
+    polygon_obj: Polygon,
+    group: str | None = None,
+    has_group: bool = False,
 ) -> Dict[str, str | float] | List[Dict[str, str | float]]:
     """
     Queries the results for the precalculated indicators
@@ -574,7 +566,7 @@ async def calculate_table_precalculated_values(
 
     query_obj = AbstractIndicator(indicator.indicator)
     return await query_obj.get_values_by_polygon(
-        polygon=polygon_obj, group=group
+        polygon=polygon_obj, group=group, has_group=has_group
     )
 
 

@@ -116,12 +116,6 @@ async def get_values_by_polygon(
     metric_id, metric_config = metric
     model_response = metric_config["model"]
 
-    if metric_id == "statsOnSpecies" and group is None:
-        raise HTTPException(
-            status_code=422,
-            detail="group is required for statsOnSpecies",
-        )
-
     values = await metrics_service.get_or_create_polygon_metric(
         polygon_id, metric_id, group=group
     )

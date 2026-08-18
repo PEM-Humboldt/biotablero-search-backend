@@ -180,7 +180,7 @@ class MetricEnum(Enum):
         OperationEnum.TABLE_PRECALCULATED,
         None,
         None,
-        IndicatorEnum.SPECIES,
+        IndicatorEnum.STATSONSPECIES,
         None,
         True,
     )

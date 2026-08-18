@@ -384,7 +384,7 @@ METRICS_CONFIG: MetricsConfigType = {
             endemic=9,
             endemic_threatened=1,
         ),
-        "description": "Species statistics by group",
+        "description": "Species statistics by category (threatened, invasive, endemic, etc.)",
     },
     # "timelineHF": {},
     # TODO: implementar estas:

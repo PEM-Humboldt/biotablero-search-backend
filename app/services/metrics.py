@@ -82,15 +82,10 @@ async def get_or_create_polygon_metric(
         if polygon_metric:
             return polygon_metric.values
 
-        values_function = OperationFunctions(
-            metric_obj.operation_type
-        ).values_function
-        if metric_obj.operation_type == "TABLE_PRECALCULATED":
-            values = await values_function(
-                metric_obj, polygon_obj, group, metric_obj.has_group
-            )
-        else:
-            values = await values_function(metric_obj, polygon_obj)
+        operation_functions = OperationFunctions(metric_obj.operation_type)
+        values = await operation_functions.calculate_values(
+            metric_obj, polygon_obj, group
+        )
 
         await create_polygon_metric(
             polygon_obj, metric_obj, values, db=connection
@@ -748,3 +743,16 @@ class OperationFunctions:
             if operation in layer_functions
             else None
         )
+
+    async def calculate_values(
+        self,
+        metric: Metric,
+        polygon_obj: Polygon,
+        group: str | None = None,
+    ):
+        if self.values_function == calculate_table_precalculated_values:
+            return await self.values_function(
+                metric, polygon_obj, group, metric.has_group
+            )
+
+        return await self.values_function(metric, polygon_obj)

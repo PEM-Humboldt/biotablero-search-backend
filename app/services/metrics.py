@@ -34,9 +34,12 @@ from app.persistence.polygon_metric_persistence import (
 )
 from app.persistence.metric_persistence import (
     get_metric_by_name,
+    get_metric_by_id,
 )
 from app.persistence.indicator_persistence import AbstractIndicator
-
+from app.persistence.metric_info_persistence import (
+    get_metric_info_by_metric_id,
+)
 from app.utils.s3_utils import upload_to_s3
 from app.utils.errors import ServerError, MetadataError, NotFoundError
 from app.persistence.utils.lock_utils import advisory_xact_lock
@@ -208,6 +211,15 @@ async def get_or_create_polygon_metric_layer(
         )
 
         return {"layer": image_url}
+
+
+async def get_metric_info(metric_id: int):
+    metric = await get_metric_by_id(metric_id)
+
+    if not metric:
+        raise HTTPException(status_code=404, detail="Metric not found")
+
+    return await get_metric_info_by_metric_id(metric_id)
 
 
 """

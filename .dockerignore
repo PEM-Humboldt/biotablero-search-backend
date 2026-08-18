@@ -1,0 +1,50 @@
+# Ignore GIT folder and files
+.git
+.github
+.gitignore
+.gitattributes
+
+# Ignore virtual environment and local dependencies
+.venv
+venv/
+env/
+ENV/
+*.egg-info/
+dist/
+build/
+
+# Ignore some project files
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.pytype/
+.env
+.env.*
+*.env
+logs/*
+!logs/.gitkeep
+*.log
+README.md
+LICENSE
+
+# Ignore folders with external data
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# Ignore docker files
+Dockerfile*
+.dockerignore
+docker-compose*.yml
+docker/
+
+# Ignore base data files
+data/*.geojson
+data/*.csv
+data/*.tif
+data/*.zip

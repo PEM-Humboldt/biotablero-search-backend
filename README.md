@@ -272,6 +272,17 @@ This project uses `aerich` for database migrations. Below are the necessary comm
    ```
    Reverts the last migration applied to the database.
 
+## Docker
+
+### Build image
+
+```sh
+# Build image
+docker build -t biotablero-search-backend:latest .
+# Run temporal container
+docker run -it --rm --env-file .env --name bt-search-backend -p 8000:8000 --network=biotablero-search-backend_bt-search-network biotablero-search-backend:latest
+```
+
 
 ## Authors
 

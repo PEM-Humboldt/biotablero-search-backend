@@ -23,7 +23,7 @@ class CollectionEnum(Enum):
 class IndicatorEnum(Enum):
     PROT_CONN = "prot_conn"
     DPC = "dpc"
-    SPECIES = "species"
+    STATSONSPECIES = "statsOnSpecies"
 
 
 class OperationEnum(Enum):

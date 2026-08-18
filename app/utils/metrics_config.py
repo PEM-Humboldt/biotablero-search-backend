@@ -48,6 +48,10 @@ class MetricConfig(TypedDict):
     response_parser: NotRequired[Callable[[Any, str | None], Any]]
 
 
+class GroupedMetricConfig(MetricConfig):
+    response_parser: Required[Callable[[Any, str | None], Any]]
+
+
 class MetricsConfigType(TypedDict):
     lossPersistence: MetricConfig
     coverage: MetricConfig
@@ -68,7 +72,7 @@ class MetricsConfigType(TypedDict):
     protectedAreas_wetland: MetricConfig
     recordGaps: MetricConfig
     currentRecordsGaps_average: MetricConfig
-    statsOnSpecies: MetricConfig
+    statsOnSpecies: GroupedMetricConfig
 
 
 def parse_species_stats_response(values: Any, group: str | None):

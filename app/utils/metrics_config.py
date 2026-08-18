@@ -1,4 +1,4 @@
-from typing import Type, TypedDict, Union
+from typing import Any, Callable, NotRequired, Required, Type, TypedDict, Union
 
 
 from app.routes.schemas.MetricResponse import (
@@ -18,6 +18,7 @@ from app.routes.schemas.MetricResponse import (
     DPCSingleResponse,
     RecordGapsResponse,
     SpeciesStatsResponse,
+    SpeciesStatsGroupedResponse,
 )
 
 MetricResponse = Union[
@@ -36,13 +37,15 @@ MetricResponse = Union[
     DPCSingleResponse,
     RecordGapsResponse,
     SpeciesStatsResponse,
+    SpeciesStatsGroupedResponse,
 ]
 
 
 class MetricConfig(TypedDict):
-    model: Type[MetricResponse]
-    example: MetricResponse
-    description: str
+    model: Required[Type[MetricResponse]]
+    example: Required[MetricResponse]
+    description: Required[str]
+    response_parser: NotRequired[Callable[[Any, str | None], Any]]
 
 
 class MetricsConfigType(TypedDict):
@@ -66,6 +69,17 @@ class MetricsConfigType(TypedDict):
     recordGaps: MetricConfig
     currentRecordsGaps_average: MetricConfig
     statsOnSpecies: MetricConfig
+
+
+def parse_species_stats_response(values: Any, group: str | None):
+    if group is None:
+        return SpeciesStatsGroupedResponse.model_validate(
+            values, by_alias=True
+        )
+
+    if isinstance(values, dict) and group in values:
+        values = values[group]
+    return SpeciesStatsResponse.model_validate(values, by_alias=True)
 
 
 # This config contains everything related to FastAPI and Pydantic validations
@@ -374,6 +388,7 @@ METRICS_CONFIG: MetricsConfigType = {
     },
     "statsOnSpecies": {
         "model": SpeciesStatsResponse,
+        "response_parser": parse_species_stats_response,
         "example": SpeciesStatsResponse(
             total=203,
             threatened_total=2,

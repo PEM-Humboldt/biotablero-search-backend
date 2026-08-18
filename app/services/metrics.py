@@ -75,14 +75,14 @@ async def get_or_create_polygon_metric(
     async with advisory_xact_lock(
         "polygon_metric", str(polygon_obj.id), str(metric_obj.id)
     ) as connection:
+        operation_functions = OperationFunctions(metric_obj.operation_type)
         polygon_metric = await get_polygon_metric(
             polygon_obj, metric_obj, db=connection
         )
 
-        if polygon_metric:
+        if polygon_metric is not None:
             return polygon_metric.values
 
-        operation_functions = OperationFunctions(metric_obj.operation_type)
         values = await operation_functions.calculate_values(
             metric_obj, polygon_obj, group
         )
@@ -560,6 +560,10 @@ async def calculate_table_precalculated_values(
         )
 
     query_obj = AbstractIndicator(indicator.indicator)
+    if has_group:
+        return await query_obj.get_values_by_polygon(
+            polygon=polygon_obj, has_group=has_group
+        )
     return await query_obj.get_values_by_polygon(
         polygon=polygon_obj, group=group, has_group=has_group
     )
@@ -718,17 +722,48 @@ def calculate_cat_single_coll_filtered_layer():
 
 class OperationFunctions:
     def __init__(self, operation):
+        self.operation = operation
         values_functions = {
-            "AREA_SINGLE-COLLECTION": calculate_single_coll_values,
-            "AREA_SINGLE-COLLECTION_ALL-ITEMS": calculate_single_coll_all_items_values,
-            "AREA_TWO-COLLECTIONS": calculate_two_colls_values,
-            "AVERAGE_SINGLE-COLLECTION": calculate_ave_coll_values,
-            "AVERAGE_MULTIPLE-COLLECTION_ALL-ITEMS": calculate_ave_multiple_colls_values,
-            "AREA_CATEGORIES_SINGLE-COLLECTION": calculate_cat_single_coll_values,
-            "AREA_CATEGORIES_TWO-COLLECTIONS": calculate_cat_two_colls_values,
-            "AREA_CATEGORIES_SINGLE-COLLECTION_FILTERED": calculate_cat_single_coll_filtered_values,
-            "TABLE_PRECALCULATED": calculate_table_precalculated_values,
-            "FREQUENCY_SINGLE-COLLECTION": calculate_frequency_values,
+            "AREA_SINGLE-COLLECTION": (
+                calculate_single_coll_values,
+                False,
+            ),
+            "AREA_SINGLE-COLLECTION_ALL-ITEMS": (
+                calculate_single_coll_all_items_values,
+                False,
+            ),
+            "AREA_TWO-COLLECTIONS": (
+                calculate_two_colls_values,
+                False,
+            ),
+            "AVERAGE_SINGLE-COLLECTION": (
+                calculate_ave_coll_values,
+                False,
+            ),
+            "AVERAGE_MULTIPLE-COLLECTION_ALL-ITEMS": (
+                calculate_ave_multiple_colls_values,
+                False,
+            ),
+            "AREA_CATEGORIES_SINGLE-COLLECTION": (
+                calculate_cat_single_coll_values,
+                False,
+            ),
+            "AREA_CATEGORIES_TWO-COLLECTIONS": (
+                calculate_cat_two_colls_values,
+                False,
+            ),
+            "AREA_CATEGORIES_SINGLE-COLLECTION_FILTERED": (
+                calculate_cat_single_coll_filtered_values,
+                False,
+            ),
+            "TABLE_PRECALCULATED": (
+                calculate_table_precalculated_values,
+                True,
+            ),
+            "FREQUENCY_SINGLE-COLLECTION": (
+                calculate_frequency_values,
+                False,
+            ),
         }
         layer_functions = {
             "AREA_SINGLE-COLLECTION": calculate_single_coll_layer,
@@ -737,7 +772,9 @@ class OperationFunctions:
             "AREA_CATEGORIES_SINGLE-COLLECTION_FILTERED": calculate_cat_single_coll_filtered_layer,
             "FREQUENCY_SINGLE-COLLECTION": calculate_frequency_layer,
         }
-        self.values_function = values_functions[operation]
+        self.values_function, self.values_function_accepts_group = (
+            values_functions[operation]
+        )
         self.layer_function = (
             layer_functions[operation]
             if operation in layer_functions
@@ -750,9 +787,6 @@ class OperationFunctions:
         polygon_obj: Polygon,
         group: str | None = None,
     ):
-        if self.values_function == calculate_table_precalculated_values:
-            return await self.values_function(
-                metric, polygon_obj, group, metric.has_group
-            )
-
+        if self.values_function_accepts_group:
+            return await self.values_function(metric, polygon_obj, group)
         return await self.values_function(metric, polygon_obj)

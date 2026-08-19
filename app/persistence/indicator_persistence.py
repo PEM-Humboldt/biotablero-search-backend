@@ -9,7 +9,7 @@ class AbstractIndicator:
         indicators_map = {
             "prot_conn": ProtConn,
             "dpc": DPC,
-            "species": SpeciesStats,
+            "statsOnSpecies": SpeciesStats,
         }
         self.indicator_obj = indicators_map[indicator_table]
         if self.indicator_obj is None:

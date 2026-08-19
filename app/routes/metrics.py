@@ -196,13 +196,11 @@ async def get_layer_by_polygon(
     },
 )
 async def get_metric_info(
-    metric_id: Annotated[
-        int,
-        Path(
-            description="Id of the metric",
-            examples=[1, 2, 3],
-        ),
+    metric: Annotated[
+        tuple[str, MetricConfig], fastapi.Depends(metric_id_param)
     ],
 ):
-    """Returns the information associated with a given metric, such as general description, methodology, considerations, and authorship."""
+    """Returns the information associated with a given metric."""
+    metric_id, _ = metric
+
     return await metrics_service.get_metric_info(metric_id)

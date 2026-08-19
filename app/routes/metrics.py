@@ -206,7 +206,7 @@ async def get_layer_by_polygon(
 )
 async def get_metric_info(
     metric: Annotated[
-        tuple[str, object], fastapi.Depends(metric_id_info_param)
+        tuple[str, MetricConfig], fastapi.Depends(metric_id_param)
     ],
 ):
     """Returns the information associated with a given metric."""

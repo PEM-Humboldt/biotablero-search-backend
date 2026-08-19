@@ -48,6 +48,7 @@ You must have these files in `./data/` path:
 - `paramos.geojson`
 - `dpc.csv`
 - `protconn.csv`
+- `statsOnSpecies.csv`
 
 ### Run script
 

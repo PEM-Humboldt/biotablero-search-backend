@@ -5,7 +5,7 @@ RUN_IN_TRANSACTION = True
 
 async def upgrade(db: BaseDBAsyncClient) -> str:
     return """
-        ALTER TABLE "species_stats" RENAME COLUMN "group_slug" TO "group";
+        ALTER TABLE "species_stats" RENAME COLUMN "group_slug" TO "group_name";
         ALTER TABLE "species_stats" DROP COLUMN IF EXISTS "geofence_type";
         ALTER TABLE "species_stats" DROP COLUMN IF EXISTS "region_slug";
         ALTER TABLE "species_stats" DROP COLUMN IF EXISTS "region_code";"""

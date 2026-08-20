@@ -52,7 +52,7 @@ async def seed_species_stats():
 
                 await SpeciesStats.create(
                     polygon=polygon,
-                    group=row["slug_grupo"].strip(),
+                    group_name=row["slug_grupo"].strip(),
                     total=_as_int(row["especies_region_total"]),
                     threatened_total=_as_int(
                         row["especies_amenazadas_mads_total"]

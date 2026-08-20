@@ -46,6 +46,8 @@ class AbstractIndicator:
         if self.indicator_obj.describe()["table"] == "species_stats":
             if has_group and group is not None:
                 return result[0].get_result_for_metric()
-            return {val.group: val.get_result_for_metric() for val in result}
+            return {
+                val.group_name: val.get_result_for_metric() for val in result
+            }
         else:
             return self.indicator_obj.get_result_for_metric(result[0])

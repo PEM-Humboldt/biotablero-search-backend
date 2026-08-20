@@ -73,7 +73,7 @@ async def get_or_create_polygon_metric(
 
     if (
         await _is_national_polygon(polygon_obj)
-        and metric_obj.name != "statsOnSpecies"
+        and not metric_obj.allows_national
     ):
         raise HTTPException(
             status_code=404,
@@ -127,7 +127,7 @@ async def get_or_create_polygon_metric_layer(
 
     if (
         await _is_national_polygon(polygon_obj)
-        and metric_obj.name != "statsOnSpecies"
+        and not metric_obj.allows_national
     ):
         raise HTTPException(
             status_code=404,

@@ -96,6 +96,7 @@ class Metric(Model):
     name = fields.CharField(max_length=100, unique=True)
     operation_type = fields.CharField(max_length=100)
     has_group = fields.BooleanField(default=False)
+    allows_national = fields.BooleanField(default=False)
     updated_at = fields.DatetimeField(auto_now=True)
     indicator_card_id = fields.CharField(max_length=60, null=True)
 

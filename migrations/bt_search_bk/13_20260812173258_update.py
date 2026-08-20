@@ -5,26 +5,18 @@ RUN_IN_TRANSACTION = True
 
 async def upgrade(db: BaseDBAsyncClient) -> str:
     return """
-        CREATE TABLE IF NOT EXISTS "species_stats" (
-    "id" SERIAL NOT NULL PRIMARY KEY,
-    "date" DATE NOT NULL,
-    "group" VARCHAR(100) NOT NULL,
-    "total" INT NOT NULL,
-    "threatened_total" INT NOT NULL,
-    "threatened_cr" INT NOT NULL,
-    "threatened_en" INT NOT NULL,
-    "threatened_vu" INT NOT NULL,
-    "invasive" INT NOT NULL,
-    "endemic" INT NOT NULL,
-    "endemic_threatened" INT NOT NULL,
-    "updated_at" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "polygon_id" INT NOT NULL REFERENCES "polygon" ("id") ON DELETE CASCADE
-);"""
+        ALTER TABLE "species_stats" RENAME COLUMN "group_slug" TO "group";
+        ALTER TABLE "species_stats" DROP COLUMN IF EXISTS "geofence_type";
+        ALTER TABLE "species_stats" DROP COLUMN IF EXISTS "region_slug";
+        ALTER TABLE "species_stats" DROP COLUMN IF EXISTS "region_code";"""
 
 
 async def downgrade(db: BaseDBAsyncClient) -> str:
     return """
-        DROP TABLE IF EXISTS "species_stats";"""
+        ALTER TABLE "species_stats" ADD COLUMN IF NOT EXISTS "geofence_type" VARCHAR(50) NOT NULL DEFAULT '';
+        ALTER TABLE "species_stats" ADD COLUMN IF NOT EXISTS "region_slug" VARCHAR(100) NOT NULL DEFAULT '';
+        ALTER TABLE "species_stats" ADD COLUMN IF NOT EXISTS "region_code" VARCHAR(20);
+        ALTER TABLE "species_stats" RENAME COLUMN "group" TO "group_slug";"""
 
 
 MODELS_STATE = (

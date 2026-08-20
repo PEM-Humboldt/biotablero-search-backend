@@ -8,7 +8,6 @@ async def upgrade(db: BaseDBAsyncClient) -> str:
         CREATE TABLE IF NOT EXISTS "species_stats" (
     "id" SERIAL NOT NULL PRIMARY KEY,
     "geofence_type" VARCHAR(50) NOT NULL,
-    "date" DATE NOT NULL,
     "region_slug" VARCHAR(100) NOT NULL,
     "region_code" VARCHAR(20),
     "group_slug" VARCHAR(100) NOT NULL,

@@ -1,6 +1,7 @@
 import hashlib
 import json
 import logging
+from pathlib import Path
 from tortoise.exceptions import DoesNotExist
 
 from app.models.models import Polygon, AreaType
@@ -81,7 +82,9 @@ async def insert_polygons_from_geojson(area_type, file_path):
     area_name = "area"
     code_field = None
 
-    if area_type == "states":
+    if area_type == "national":
+        code_field = "code"
+    elif area_type == "states":
         polygon_name = "dpto_cnmbr"
         area_name = "area_ha"
         code_field = "dpto_ccdgo"
@@ -141,6 +144,7 @@ async def seed_polygons():
     Inserts data from GeoJSON files.
     """
 
+    await insert_polygons_from_geojson("national", "data/colombia.geojson")
     await insert_polygons_from_geojson("states", "data/departamentos.geojson")
     await insert_polygons_from_geojson(
         "ea", "data/jurisdicciones-ambientales.geojson"

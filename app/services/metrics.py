@@ -44,6 +44,11 @@ from app.utils.errors import ServerError, MetadataError
 from app.persistence.utils.lock_utils import advisory_xact_lock
 
 
+async def _is_national_polygon(polygon_obj: Polygon) -> bool:
+    await polygon_obj.fetch_related("area_type")
+    return polygon_obj.area_type.id == "national"
+
+
 async def get_or_create_polygon_metric(
     polygon_id: int,
     metric_name: str,
@@ -64,6 +69,15 @@ async def get_or_create_polygon_metric(
     if not metric_obj:
         raise HTTPException(
             status_code=400, detail="Metric not found in database"
+        )
+
+    if (
+        await _is_national_polygon(polygon_obj)
+        and metric_obj.name != "statsOnSpecies"
+    ):
+        raise HTTPException(
+            status_code=404,
+            detail="Metric not available for national area",
         )
 
     if metric_obj.has_group and group is None:
@@ -109,6 +123,15 @@ async def get_or_create_polygon_metric_layer(
     if not metric_obj:
         raise HTTPException(
             status_code=400, detail="Metric not found in database"
+        )
+
+    if (
+        await _is_national_polygon(polygon_obj)
+        and metric_obj.name != "statsOnSpecies"
+    ):
+        raise HTTPException(
+            status_code=404,
+            detail="Metric not available for national area",
         )
 
     calculate_layer_func = OperationFunctions(

@@ -69,6 +69,11 @@ async def seed_species_stats():
                 created += 1
             except Exception as exc:
                 skipped += 1
+                logger.exception(
+                    "Failed to import species_stats row: "
+                    f"row={reader.line_num}, cod_region={row.get('cod_region')}, "
+                    f"group={row.get('slug_grupo')}, error={exc}, row_data={row}"
+                )
 
     logger.info(f"✔ {created} registros insertados de species_stats")
     if skipped:

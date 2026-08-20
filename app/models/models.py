@@ -202,7 +202,6 @@ class SpeciesStats(Model):
         related_name="species_stats",
         on_delete=fields.CASCADE,
     )
-    date = fields.DateField()
     group = fields.CharField(max_length=100)
     total = fields.IntField()
     threatened_total = fields.IntField()

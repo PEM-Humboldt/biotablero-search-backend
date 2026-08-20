@@ -1,6 +1,5 @@
 import csv
 import logging
-from datetime import date
 from pathlib import Path
 
 from app.models.models import Polygon, SpeciesStats
@@ -53,7 +52,6 @@ async def seed_species_stats():
 
                 await SpeciesStats.create(
                     polygon=polygon,
-                    date=date.fromisoformat(row["fecha_corte"]),
                     group=row["slug_grupo"].strip(),
                     total=_as_int(row["especies_region_total"]),
                     threatened_total=_as_int(

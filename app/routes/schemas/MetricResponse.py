@@ -161,6 +161,14 @@ class RecordGapsResponse(BaseMetricResult):
 
     frequency: list[int]
     bin_edges: list[float]
+    
+class RichnessResponse(BaseMetricResult):
+    """
+    Response model for record gaps frequency metric in a given year.
+    """
+
+    frequency: list[int]
+    bin_edges: list[float]
 
 
 class SpeciesStatsResponse(BaseModel):

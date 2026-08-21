@@ -5,7 +5,7 @@ from app.models.models import (
     MetricIndicator,
 )
 from enum import Enum
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 
 class CollectionEnum(Enum):
@@ -50,6 +50,7 @@ class OperationEnum(Enum):
     )
     TABLE_PRECALCULATED = "TABLE_PRECALCULATED"
     FREQUENCY_SINGLE_COLLECTION = "FREQUENCY_SINGLE-COLLECTION"
+    FREQUENCY_SINGLE_SELECTED_COLLECTION = "FREQUENCY_SINGLE-SELECTED-COLLECTION"
 
 
 class MetricEnum(Enum):
@@ -196,8 +197,24 @@ class MetricEnum(Enum):
     )
     RICHNESS = (
         "richness",
-        OperationEnum.FREQUENCY_SINGLE_COLLECTION,
-        CollectionEnum.INDICE_VACIOS_INFORMACION,  # TODO poner luego la coleccion de riqueza
+        OperationEnum.FREQUENCY_SINGLE_SELECTED_COLLECTION,
+        None,
+        None,
+        None,
+        None,
+        True,
+        False,
+        {
+            "total": CollectionEnum.RIQUEZA_OBSERVADA,
+            "anfibios": CollectionEnum.RIQUEZA_OBSERVADA_ANFIBIOS,
+            "aves": CollectionEnum.RIQUEZA_OBSERVADA_AVES,
+            "hongos": CollectionEnum.RIQUEZA_OBSERVADA_HONGOS,
+            "invertebrados": CollectionEnum.RIQUEZA_OBSERVADA_INVERTEBRADOS,
+            "mamiferos": CollectionEnum.RIQUEZA_OBSERVADA_MAMIFEROS,
+            "reptiles": CollectionEnum.RIQUEZA_OBSERVADA_REPTILES,
+            "plantas": CollectionEnum.RIQUEZA_OBSERVADA_PLANTAS,
+            "peces": CollectionEnum.RIQUEZA_OBSERVADA_PECES,
+        },
     )
 
     def __init__(
@@ -210,6 +227,7 @@ class MetricEnum(Enum):
         indicator_card_id: Optional[str] = None,
         has_group: bool = False,
         allows_national: bool = False,
+        group_collections: Optional[Dict[str, CollectionEnum]] = None,
     ):
         self.metric_name = metric_name
         self.operation_type = operation.value
@@ -219,6 +237,7 @@ class MetricEnum(Enum):
         self.indicator_card_id = indicator_card_id
         self.has_group = has_group
         self.allows_national = allows_national
+        self.group_collections = group_collections
 
 
 collections_dict = {}
@@ -264,4 +283,12 @@ async def seed_collections_and_metrics():
                     is_primary=False,
                     metric=new_metric,
                     collection=collections_dict[sec_col.value],
+                )
+        if metric.group_collections:
+            for group_name, group_col in metric.group_collections.items():
+                await MetricCollection.create(
+                    is_primary=False,
+                    metric=new_metric,
+                    collection=collections_dict[group_col.value],
+                    group_name=group_name,
                 )

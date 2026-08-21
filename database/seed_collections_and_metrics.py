@@ -18,6 +18,15 @@ class CollectionEnum(Enum):
     BOSQUE_SECO_TROPICAL = "BosqueSeco"
     HUMEDAL = "Humedales"
     AREAS_PROTEGIDAS = "AreasProtegidas"
+    RIQUEZA_OBSERVADA = "RiquezaObservada"
+    RIQUEZA_OBSERVADA_ANFIBIOS = "RiquezaObservadaAnfibios"
+    RIQUEZA_OBSERVADA_AVES = "RiquezaObservadaAves"
+    RIQUEZA_OBSERVADA_HONGOS = "RiquezaObservadaHongos"
+    RIQUEZA_OBSERVADA_INVERTEBRADOS = "RiquezaObservadaInvertebrados"
+    RIQUEZA_OBSERVADA_MAMIFEROS = "RiquezaObservadaMamiferos"
+    RIQUEZA_OBSERVADA_REPTILES = "RiquezaObservadaReptiles"
+    RIQUEZA_OBSERVADA_PLANTAS = "RiquezaObservadaPlantas"
+    RIQUEZA_OBSERVADA_PECES = "RiquezaObservadaPeces"
 
 
 class IndicatorEnum(Enum):

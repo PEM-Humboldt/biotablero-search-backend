@@ -40,7 +40,7 @@ from app.persistence.metric_persistence import (
 from app.persistence.indicator_persistence import AbstractIndicator
 
 from app.utils.s3_utils import upload_to_s3
-from app.utils.errors import ServerError, MetadataError
+from app.utils.errors import ServerError, MetadataError, NotFoundError
 from app.persistence.utils.lock_utils import advisory_xact_lock
 
 
@@ -91,7 +91,7 @@ async def get_or_create_polygon_metric(
     ) as connection:
         operation_functions = OperationFunctions(metric_obj.operation_type)
         polygon_metric = await get_polygon_metric(
-            polygon_obj, metric_obj, db=connection
+            polygon_obj, metric_obj, group=group, db=connection
         )
 
         if polygon_metric is not None:
@@ -102,7 +102,7 @@ async def get_or_create_polygon_metric(
         )
 
         await create_polygon_metric(
-            polygon_obj, metric_obj, values, db=connection
+            polygon_obj, metric_obj, values, group=group, db=connection
         )
         return values
 
@@ -222,6 +222,8 @@ async def calculate_single_coll_values(
 
     await primary_collection.fetch_related("collection")
     primary_collection = primary_collection.collection
+    print("collection", primary_collection)
+    print("=====================================================")
     classes_map, _, _, _, _ = await fetch_collection_metadata(
         primary_collection
     )
@@ -525,8 +527,8 @@ async def calculate_cat_two_colls_values(
 
     return {"id": id_pri, **raster_values}
 
-
-async def calculate_frequency_values(
+# TODO: esta es la función que cambia para recordGaps
+async def calculate_frequency_values_coll_all_items(
     metric: Metric, polygon_obj: Polygon
 ) -> Dict[str, str | list[float] | list[int]]:
     """
@@ -552,6 +554,42 @@ async def calculate_frequency_values(
 
     hist, bin_edges = get_frequency_histogram(
         raster_path=raster_url, polygon=polygon, bins=20, data_range=(0, 1)
+    )
+
+    return {
+        "id": id,
+        "frequency": hist.tolist(),
+        "bin_edges": bin_edges.tolist(),
+    }
+
+
+async def calculate_frequency_values_coll(
+    metric: Metric, polygon_obj: Polygon, group: str | None = None
+) -> Dict[str, str | list[float] | list[int]]:
+    """
+    Calculates the frequency of values from the collection associated to
+    the given group within a polygon.
+    """
+    group_collection = next(
+        (mc for mc in metric.collections if mc.group_name == group), None
+    )
+
+    if group_collection is None:
+        raise NotFoundError(
+            usr_msg=f"No data available for group '{group}'.",
+            log_msg=(
+                f"No MetricCollection with group_name='{group}' found for "
+                f"metric {metric.name}."
+            ),
+        )
+
+    await group_collection.fetch_related("collection")
+    collection = group_collection.collection
+    id, raster_url = get_items_asset_url(collection.name)[0]
+    polygon = geometries.MultiPolygon(**polygon_obj.geometry)
+
+    hist, bin_edges = get_frequency_histogram(
+        raster_path=raster_url, polygon=polygon, bins=20
     )
 
     return {
@@ -784,8 +822,12 @@ class OperationFunctions:
                 True,
             ),
             "FREQUENCY_SINGLE-COLLECTION": (
-                calculate_frequency_values,
+                calculate_frequency_values_coll_all_items,
                 False,
+            ),
+            "FREQUENCY_SINGLE-SELECTED-COLLECTION": (
+                calculate_frequency_values_coll,
+                True,
             ),
         }
         layer_functions = {

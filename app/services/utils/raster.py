@@ -530,7 +530,6 @@ def get_frequency_histogram(
     raster_path: str,
     polygon: geometries.MultiPolygon,
     bins: int = 20,
-    data_range: Tuple[float, float] = (0, 1),
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
     Calculate the frequency histogram of raster values within a given polygon.
@@ -544,6 +543,7 @@ def get_frequency_histogram(
     if valid_data.size == 0:
         raise ValueError("No valid data found in the polygon region.")
 
+    data_range = (float(np.nanmin(valid_data)), float(np.nanmax(valid_data)))
     hist, bin_edges = np.histogram(valid_data, bins=bins, range=data_range)
     return hist, bin_edges
 

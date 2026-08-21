@@ -20,6 +20,7 @@ from app.routes.schemas.MetricResponse import (
     RecordGapsResponse,
     SpeciesStatsResponse,
     SpeciesStatsGroupedResponse,
+    RichnessResponse
 )
 
 MetricResponse = Union[
@@ -39,6 +40,7 @@ MetricResponse = Union[
     RecordGapsResponse,
     SpeciesStatsResponse,
     SpeciesStatsGroupedResponse,
+    RichnessResponse,
 ]
 
 
@@ -77,6 +79,7 @@ class MetricsConfigType(TypedDict):
     recordGaps: MetricConfig
     currentRecordsGaps_average: MetricConfig
     statsOnSpecies: GroupedMetricConfig
+    richness : MetricConfig
 
 
 def parse_species_stats_response(values: Any, group: str | None):
@@ -408,6 +411,15 @@ METRICS_CONFIG: MetricsConfigType = {
             endemic_threatened=1,
         ),
         "description": "Species statistics by category (threatened, invasive, endemic, etc.)",
+    },
+    "richness" : {
+        "model": RichnessResponse,
+        "example": RichnessResponse(
+            id="2021",
+            frequency=[10, 20, 30],
+            bin_edges=[0.0, 1.0, 2.0, 3.0],
+        ),
+        "description": "Richness frequency",
     },
     # "timelineHF": {},
     # TODO: implementar estas:

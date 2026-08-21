@@ -44,11 +44,12 @@ class PolygonMetric(Model):
         related_name="polygon_metrics",
         on_delete=fields.CASCADE,
     )
+    group_name = fields.CharField(max_length=100, null=True)
     updated_at = fields.DatetimeField(auto_now=True)
 
     class Meta(Model.Meta):
         table = "polygon_metric"
-        unique_together = ("polygon", "metric")
+        unique_together = ("polygon", "metric", "group_name")
 
 
 class PolygonMetricLayer(Model):
@@ -110,6 +111,7 @@ class Metric(Model):
 class MetricCollection(Model):
     id = fields.IntField(pk=True)
     is_primary = fields.BooleanField()
+    group_name = fields.CharField(max_length=100, null=True)
     metric = fields.ForeignKeyField(
         "bt_search_bk.Metric",
         related_name="collections",

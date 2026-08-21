@@ -14,6 +14,7 @@ async def create_polygon_metric(
     polygon: Polygon,
     metric: Metric,
     values: list | dict,
+    group: str | None = None,
     db: BaseDBAsyncClient | None = None,
 ):
     """
@@ -27,6 +28,7 @@ async def create_polygon_metric(
             polygon=polygon,
             metric=metric,
             values=values,
+            group_name=group,
             **create_kwargs,
         )
     except IntegrityError as e:
@@ -45,12 +47,15 @@ async def create_polygon_metric(
 async def get_polygon_metric(
     polygon_obj: Polygon,
     metric_obj: Metric,
+    group: str | None = None,
     db: BaseDBAsyncClient | None = None,
 ) -> PolygonMetric | None:
     """
-    Get Polygon metric object by polygon and metric.
+    Get Polygon metric object by polygon, metric and group.
     """
-    query = PolygonMetric.filter(polygon=polygon_obj, metric=metric_obj)
+    query = PolygonMetric.filter(
+        polygon=polygon_obj, metric=metric_obj, group_name=group
+    )
     if db is not None:
         query = query.using_db(db)
     return await query.first()

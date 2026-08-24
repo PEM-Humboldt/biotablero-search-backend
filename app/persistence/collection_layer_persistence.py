@@ -36,6 +36,6 @@ async def create_collection_layer(
     except IntegrityError as e:
         raise ServerError(
             code=500,
-            usr_msg="There was an error saving the metric layer.",
+            usr_msg="There was an error saving the collection layer.",
             e=e,
         ) from e

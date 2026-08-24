@@ -222,8 +222,6 @@ async def calculate_single_coll_values(
 
     await primary_collection.fetch_related("collection")
     primary_collection = primary_collection.collection
-    print("collection", primary_collection)
-    print("=====================================================")
     classes_map, _, _, _, _ = await fetch_collection_metadata(
         primary_collection
     )

@@ -570,11 +570,18 @@ async def calculate_frequency_values_coll(
     Calculates the frequency of values from the collection associated to
     the given group within a polygon.
     """
-    group_collection = next(
-        (mc for mc in metric.collections if mc.group_name == group), None
-    )
+    if group is not None:
+        collection = next(
+            (mc for mc in metric.collections if mc.group_name == group), None
+        )
+    else:
+        collection = next(
+            (mc for mc in metric.collections if mc.is_primary), None
+        )
 
-    if group_collection is None:
+
+    
+    if collection is None:
         raise NotFoundError(
             usr_msg=f"No data available for group '{group}'.",
             log_msg=(
@@ -583,8 +590,8 @@ async def calculate_frequency_values_coll(
             ),
         )
 
-    await group_collection.fetch_related("collection")
-    collection = group_collection.collection
+    await collection.fetch_related("collection")
+    collection = collection.collection
     id, raster_url = get_items_asset_url(collection.name)[0]
     polygon = geometries.MultiPolygon(**polygon_obj.geometry)
 

@@ -34,7 +34,7 @@ async def get_collections():
 
 
 @router.get("/{collection_id}/layer", response_model=LayerWithBboxResponse)
-async def get_area_details(
+async def get_collection_layer(
     collection_id: Annotated[
         int,
         Path(

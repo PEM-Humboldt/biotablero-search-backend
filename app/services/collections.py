@@ -1,4 +1,4 @@
-from typing import List, Dict, Tuple
+from typing import List, Tuple
 from fastapi import HTTPException
 
 import app.persistence.collection_persistence as collection_persistence

@@ -20,7 +20,7 @@ from app.routes.schemas.MetricResponse import (
     RecordGapsResponse,
     SpeciesStatsResponse,
     SpeciesStatsGroupedResponse,
-    RichnessResponse
+    RichnessResponse,
 )
 
 MetricResponse = Union[
@@ -79,7 +79,7 @@ class MetricsConfigType(TypedDict):
     recordGaps: MetricConfig
     currentRecordsGaps_average: MetricConfig
     statsOnSpecies: GroupedMetricConfig
-    richness : MetricConfig
+    richness: MetricConfig
 
 
 def parse_species_stats_response(values: Any, group: str | None):
@@ -412,7 +412,7 @@ METRICS_CONFIG: MetricsConfigType = {
         ),
         "description": "Species statistics by category (threatened, invasive, endemic, etc.)",
     },
-    "richness" : {
+    "richness": {
         "model": RichnessResponse,
         "example": RichnessResponse(
             id="2021",

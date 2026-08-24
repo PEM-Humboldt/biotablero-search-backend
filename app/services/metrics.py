@@ -527,6 +527,7 @@ async def calculate_cat_two_colls_values(
 
     return {"id": id_pri, **raster_values}
 
+
 # TODO: esta es la función que cambia para recordGaps
 async def calculate_frequency_values_coll_all_items(
     metric: Metric, polygon_obj: Polygon
@@ -553,7 +554,7 @@ async def calculate_frequency_values_coll_all_items(
     polygon = geometries.MultiPolygon(**polygon_obj.geometry)
 
     hist, bin_edges = get_frequency_histogram(
-        raster_path=raster_url, polygon=polygon, bins=20, data_range=(0, 1)
+        raster_path=raster_url, polygon=polygon, bins=20
     )
 
     return {
@@ -579,8 +580,6 @@ async def calculate_frequency_values_coll(
             (mc for mc in metric.collections if mc.is_primary), None
         )
 
-
-    
     if collection is None:
         raise NotFoundError(
             usr_msg=f"No data available for group '{group}'.",

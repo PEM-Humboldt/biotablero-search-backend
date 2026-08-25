@@ -5,12 +5,12 @@ RUN_IN_TRANSACTION = True
 
 async def upgrade(db: BaseDBAsyncClient) -> str:
     return """
-        ALTER TABLE "metric" ADD "has_group" BOOL NOT NULL DEFAULT False;"""
+        ALTER TABLE "metric_indicator" ADD "has_group" BOOL NOT NULL DEFAULT False;"""
 
 
 async def downgrade(db: BaseDBAsyncClient) -> str:
     return """
-        ALTER TABLE "metric" DROP COLUMN "has_group";"""
+        ALTER TABLE "metric_indicator" DROP COLUMN "has_group";"""
 
 
 MODELS_STATE = (

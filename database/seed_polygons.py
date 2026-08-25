@@ -1,7 +1,6 @@
 import hashlib
 import json
 import logging
-from pathlib import Path
 from tortoise.exceptions import DoesNotExist
 
 from app.models.models import Polygon, AreaType

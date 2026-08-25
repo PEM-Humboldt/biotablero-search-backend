@@ -47,6 +47,11 @@ async def seed_species_stats():
                         )
 
                 if polygon is None:
+                    print(
+                        "polígono no encontrado, "
+                        f"row={reader.line_num}, cod_region={row.get('cod_region')}, "
+                        f"group={row.get('slug_grupo')}, row_data={row}"
+                    )
                     skipped += 1
                     continue
 
@@ -69,8 +74,8 @@ async def seed_species_stats():
                 created += 1
             except Exception as exc:
                 skipped += 1
-                logger.exception(
-                    "Failed to import species_stats row: "
+                print(
+                    "Error al importar species_stats: "
                     f"row={reader.line_num}, cod_region={row.get('cod_region')}, "
                     f"group={row.get('slug_grupo')}, error={exc}, row_data={row}"
                 )

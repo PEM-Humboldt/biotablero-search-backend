@@ -233,14 +233,15 @@ async def seed_collections_and_metrics():
             name=metric.metric_name,
             operation_type=metric.operation_type,
             indicator_card_id=metric.indicator_card_id,
-            has_group=metric.has_group,
             allows_national=metric.allows_national,
         )
         await new_metric.save()
 
         if metric.indicator:
             await MetricIndicator.create(
-                metric=new_metric, indicator=metric.indicator.value
+                metric=new_metric,
+                indicator=metric.indicator.value,
+                has_group=metric.has_group,
             )
 
         if metric.main_collection:

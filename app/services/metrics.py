@@ -1,5 +1,3 @@
-import re
-import unicodedata
 from typing import Dict, List
 from geojson_pydantic import geometries
 from fastapi import HTTPException
@@ -80,7 +78,8 @@ async def get_or_create_polygon_metric(
             detail="Metric not available for national area",
         )
 
-    if metric_obj.has_group and group is None:
+    indicator_obj = next(iter(metric_obj.indicator), None)
+    if indicator_obj is not None and indicator_obj.has_group and group is None:
         raise HTTPException(
             status_code=422,
             detail="group is required for this metric",
@@ -90,20 +89,24 @@ async def get_or_create_polygon_metric(
         "polygon_metric", str(polygon_obj.id), str(metric_obj.id)
     ) as connection:
         operation_functions = OperationFunctions(metric_obj.operation_type)
-        polygon_metric = await get_polygon_metric(
-            polygon_obj, metric_obj, db=connection
-        )
+        use_cache = indicator_obj is None or not indicator_obj.has_group
 
-        if polygon_metric is not None:
-            return polygon_metric.values
+        if use_cache:
+            polygon_metric = await get_polygon_metric(
+                polygon_obj, metric_obj, db=connection
+            )
 
-        values = await operation_functions.calculate_values(
+            if polygon_metric is not None:
+                return polygon_metric.values
+
+        values = await operation_functions.values_function(
             metric_obj, polygon_obj, group
         )
 
-        await create_polygon_metric(
-            polygon_obj, metric_obj, values, db=connection
-        )
+        if use_cache:
+            await create_polygon_metric(
+                polygon_obj, metric_obj, values, db=connection
+            )
         return values
 
 
@@ -202,7 +205,7 @@ SPECIFIC VALUES FUNCTIONS
 
 
 async def calculate_single_coll_values(
-    metric: Metric, polygon_obj: Polygon
+    metric: Metric, polygon_obj: Polygon, group: str | None = None
 ) -> Dict[str, str | float]:
     """
     Calculate values for a metric that uses only the first item from one collection,
@@ -238,7 +241,7 @@ async def calculate_single_coll_values(
 
 
 async def calculate_single_coll_all_items_values(
-    metric: Metric, polygon_obj: Polygon
+    metric: Metric, polygon_obj: Polygon, group: str | None = None
 ) -> List[Dict[str, str | float]]:
     """
     Calculate values for a metric that uses all items from one collection,
@@ -279,6 +282,7 @@ async def calculate_single_coll_all_items_values(
 async def calculate_two_colls_values(
     metric: Metric,
     polygon_obj: Polygon,
+    group: str | None = None,
 ) -> Dict[str, str | float]:
     """
     Calculate values for a metric that uses only the first item from two collections.
@@ -334,7 +338,7 @@ async def calculate_two_colls_values(
 
 
 async def calculate_ave_coll_values(
-    metric: Metric, polygon_obj: Polygon
+    metric: Metric, polygon_obj: Polygon, group: str | None = None
 ) -> Dict[str, str | float]:
     """
     calculates the average of the values from a collection within a polygon
@@ -361,7 +365,7 @@ async def calculate_ave_coll_values(
 
 
 async def calculate_ave_multiple_colls_values(
-    metric: Metric, polygon_obj: Polygon
+    metric: Metric, polygon_obj: Polygon, group: str | None = None
 ) -> List[Dict[str, str | float]]:
     """
     Calculates, for each primary item, the average in the full polygon and
@@ -430,7 +434,7 @@ async def calculate_ave_multiple_colls_values(
 
 
 async def calculate_cat_single_coll_values(
-    metric: Metric, polygon_obj: Polygon
+    metric: Metric, polygon_obj: Polygon, group: str | None = None
 ) -> Dict[str, str | float]:
     """
     calculates the area of each category of a collection within a polygon
@@ -467,7 +471,7 @@ async def calculate_cat_single_coll_values(
 
 
 async def calculate_cat_two_colls_values(
-    metric: Metric, polygon_obj: Polygon
+    metric: Metric, polygon_obj: Polygon, group: str | None = None
 ) -> Dict[str, str | float]:
     """
     calculates the area of each category of a collection within a polygon
@@ -527,7 +531,7 @@ async def calculate_cat_two_colls_values(
 
 
 async def calculate_frequency_values(
-    metric: Metric, polygon_obj: Polygon
+    metric: Metric, polygon_obj: Polygon, group: str | None = None
 ) -> Dict[str, str | list[float] | list[int]]:
     """
     calculates the frequency of values from a collection within a polygon
@@ -569,7 +573,6 @@ async def calculate_table_precalculated_values(
     metric: Metric,
     polygon_obj: Polygon,
     group: str | None = None,
-    has_group: bool = False,
 ) -> Dict[str, str | float] | List[Dict[str, str | float]]:
     """
     Queries the results for the precalculated indicators
@@ -583,12 +586,10 @@ async def calculate_table_precalculated_values(
         )
 
     query_obj = AbstractIndicator(indicator.indicator)
-    if has_group:
-        return await query_obj.get_values_by_polygon(
-            polygon=polygon_obj, has_group=has_group
-        )
     return await query_obj.get_values_by_polygon(
-        polygon=polygon_obj, group=group, has_group=has_group
+        polygon=polygon_obj,
+        group=group,
+        has_group=group is not None,
     )
 
 
@@ -747,46 +748,16 @@ class OperationFunctions:
     def __init__(self, operation):
         self.operation = operation
         values_functions = {
-            "AREA_SINGLE-COLLECTION": (
-                calculate_single_coll_values,
-                False,
-            ),
-            "AREA_SINGLE-COLLECTION_ALL-ITEMS": (
-                calculate_single_coll_all_items_values,
-                False,
-            ),
-            "AREA_TWO-COLLECTIONS": (
-                calculate_two_colls_values,
-                False,
-            ),
-            "AVERAGE_SINGLE-COLLECTION": (
-                calculate_ave_coll_values,
-                False,
-            ),
-            "AVERAGE_MULTIPLE-COLLECTION_ALL-ITEMS": (
-                calculate_ave_multiple_colls_values,
-                False,
-            ),
-            "AREA_CATEGORIES_SINGLE-COLLECTION": (
-                calculate_cat_single_coll_values,
-                False,
-            ),
-            "AREA_CATEGORIES_TWO-COLLECTIONS": (
-                calculate_cat_two_colls_values,
-                False,
-            ),
-            "AREA_CATEGORIES_SINGLE-COLLECTION_FILTERED": (
-                calculate_cat_single_coll_filtered_values,
-                False,
-            ),
-            "TABLE_PRECALCULATED": (
-                calculate_table_precalculated_values,
-                True,
-            ),
-            "FREQUENCY_SINGLE-COLLECTION": (
-                calculate_frequency_values,
-                False,
-            ),
+            "AREA_SINGLE-COLLECTION": calculate_single_coll_values,
+            "AREA_SINGLE-COLLECTION_ALL-ITEMS": calculate_single_coll_all_items_values,
+            "AREA_TWO-COLLECTIONS": calculate_two_colls_values,
+            "AVERAGE_SINGLE-COLLECTION": calculate_ave_coll_values,
+            "AVERAGE_MULTIPLE-COLLECTION_ALL-ITEMS": calculate_ave_multiple_colls_values,
+            "AREA_CATEGORIES_SINGLE-COLLECTION": calculate_cat_single_coll_values,
+            "AREA_CATEGORIES_TWO-COLLECTIONS": calculate_cat_two_colls_values,
+            "AREA_CATEGORIES_SINGLE-COLLECTION_FILTERED": calculate_cat_single_coll_filtered_values,
+            "TABLE_PRECALCULATED": calculate_table_precalculated_values,
+            "FREQUENCY_SINGLE-COLLECTION": calculate_frequency_values,
         }
         layer_functions = {
             "AREA_SINGLE-COLLECTION": calculate_single_coll_layer,
@@ -795,21 +766,9 @@ class OperationFunctions:
             "AREA_CATEGORIES_SINGLE-COLLECTION_FILTERED": calculate_cat_single_coll_filtered_layer,
             "FREQUENCY_SINGLE-COLLECTION": calculate_frequency_layer,
         }
-        self.values_function, self.values_function_accepts_group = (
-            values_functions[operation]
-        )
+        self.values_function = values_functions[operation]
         self.layer_function = (
             layer_functions[operation]
             if operation in layer_functions
             else None
         )
-
-    async def calculate_values(
-        self,
-        metric: Metric,
-        polygon_obj: Polygon,
-        group: str | None = None,
-    ):
-        if self.values_function_accepts_group:
-            return await self.values_function(metric, polygon_obj, group)
-        return await self.values_function(metric, polygon_obj)

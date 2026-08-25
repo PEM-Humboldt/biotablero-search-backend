@@ -118,11 +118,6 @@ async def get_values_by_polygon(
     values = await metrics_service.get_or_create_polygon_metric(
         polygon_id, metric_id, group=group
     )
-
-    response_parser = metric_config.get("response_parser")
-    if response_parser is not None:
-        return response_parser(values, group)
-
     model_response = metric_config["model"]
     return model_response.model_validate(values, by_alias=True)
 

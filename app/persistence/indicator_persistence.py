@@ -29,7 +29,7 @@ class AbstractIndicator:
         """
         filters: Dict[str, Polygon | str] = {"polygon": polygon}
         if has_group and group is not None:
-            filters["group"] = group
+            filters["group_name"] = group
 
         result = await self.indicator_obj.filter(**filters)
         if len(result) == 0:

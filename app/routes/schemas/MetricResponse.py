@@ -172,7 +172,3 @@ class SpeciesStatsResponse(BaseModel):
     invasive: int
     endemic: int
     endemic_threatened: int
-
-
-class SpeciesStatsGroupedResponse(RootModel[dict[str, SpeciesStatsResponse]]):
-    pass

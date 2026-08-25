@@ -1,5 +1,5 @@
-from typing import Any, Callable, Type, TypedDict, Union
-from typing_extensions import NotRequired, Required
+from typing import Type, TypedDict, Union
+from typing_extensions import Required
 
 
 from app.routes.schemas.MetricResponse import (
@@ -19,7 +19,6 @@ from app.routes.schemas.MetricResponse import (
     DPCSingleResponse,
     RecordGapsResponse,
     SpeciesStatsResponse,
-    SpeciesStatsGroupedResponse,
 )
 
 MetricResponse = Union[
@@ -38,7 +37,6 @@ MetricResponse = Union[
     DPCSingleResponse,
     RecordGapsResponse,
     SpeciesStatsResponse,
-    SpeciesStatsGroupedResponse,
 ]
 
 
@@ -46,14 +44,6 @@ class MetricConfig(TypedDict):
     model: Required[Type[MetricResponse]]
     example: Required[MetricResponse]
     description: Required[str]
-    response_parser: NotRequired[Callable[[Any, str | None], Any]]
-
-
-class GroupedMetricConfig(TypedDict):
-    model: Type[MetricResponse]
-    example: MetricResponse
-    description: str
-    response_parser: Callable[[Any, str | None], Any]
 
 
 class MetricsConfigType(TypedDict):
@@ -76,18 +66,7 @@ class MetricsConfigType(TypedDict):
     protectedAreas_wetland: MetricConfig
     recordGaps: MetricConfig
     currentRecordsGaps_average: MetricConfig
-    statsOnSpecies: GroupedMetricConfig
-
-
-def parse_species_stats_response(values: Any, group: str | None):
-    if group is None:
-        return SpeciesStatsGroupedResponse.model_validate(
-            values, by_alias=True
-        )
-
-    if isinstance(values, dict) and group in values:
-        values = values[group]
-    return SpeciesStatsResponse.model_validate(values, by_alias=True)
+    statsOnSpecies: MetricConfig
 
 
 # This config contains everything related to FastAPI and Pydantic validations
@@ -396,7 +375,6 @@ METRICS_CONFIG: MetricsConfigType = {
     },
     "statsOnSpecies": {
         "model": SpeciesStatsResponse,
-        "response_parser": parse_species_stats_response,
         "example": SpeciesStatsResponse(
             total=203,
             threatened_total=2,

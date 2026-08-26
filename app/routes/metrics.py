@@ -73,6 +73,15 @@ async def metric_id_param(
     return (metric_id, METRICS_CONFIG[metric_id])
 
 
+async def metric_id_info_param(
+    metric_id: Annotated[
+        str,
+        Path(description="Metric used to retrieve its information."),
+    ],
+) -> tuple[str, MetricConfig]:
+    return await metric_id_param(metric_id)
+
+
 def build_documentation_examples():
     result = {}
 
@@ -197,7 +206,7 @@ async def get_layer_by_polygon(
 )
 async def get_metric_info(
     metric: Annotated[
-        tuple[str, MetricConfig], fastapi.Depends(metric_id_param)
+        tuple[str, object], fastapi.Depends(metric_id_info_param)
     ],
 ):
     """Returns the information associated with a given metric."""

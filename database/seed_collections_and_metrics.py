@@ -40,6 +40,7 @@ class OperationEnum(Enum):
         "AREA_CATEGORIES_SINGLE-COLLECTION_FILTERED"
     )
     TABLE_PRECALCULATED = "TABLE_PRECALCULATED"
+    SELECTED_TABLE_PRECALCULATED = "SELECTED-TABLE_PRECALCULATED"
     FREQUENCY_SINGLE_COLLECTION = "FREQUENCY_SINGLE-COLLECTION"
 
 
@@ -177,7 +178,7 @@ class MetricEnum(Enum):
     )
     STATS_ON_SPECIES = (
         "statsOnSpecies",
-        OperationEnum.TABLE_PRECALCULATED,
+        OperationEnum.SELECTED_TABLE_PRECALCULATED,
         None,
         None,
         IndicatorEnum.STATSONSPECIES,

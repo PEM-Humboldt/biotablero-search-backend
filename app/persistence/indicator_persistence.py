@@ -22,13 +22,12 @@ class AbstractIndicator:
         self,
         polygon: Polygon,
         group: str | None = None,
-        has_group: bool = False,
     ) -> Dict[str, str | float] | List[Dict[str, str | float]]:
         """
         Returns the values for the configurated indicator and given polygon
         """
         filters: Dict[str, Polygon | str] = {"polygon": polygon}
-        if has_group and group is not None:
+        if group is not None:
             filters["group_name"] = group
 
         result = await self.indicator_obj.filter(**filters)
@@ -37,17 +36,14 @@ class AbstractIndicator:
                 "data not found",
                 usr_msg=f"There are no values in the database for the given metric and polygon",
             )
-        if self.indicator_obj.describe()["table"] == "dpc":
+        table_name = self.indicator_obj.describe()["table"]
+        if table_name == "dpc":
             return sorted(
                 (val.get_result_for_metric() for val in result),
                 key=lambda item: item["dpc"],
                 reverse=True,
             )
-        if self.indicator_obj.describe()["table"] == "species_stats":
-            if has_group and group is not None:
-                return result[0].get_result_for_metric()
-            return {
-                val.group_name: val.get_result_for_metric() for val in result
-            }
+        if table_name == "species_stats":
+            return result[0].get_result_for_metric()
         else:
             return self.indicator_obj.get_result_for_metric(result[0])

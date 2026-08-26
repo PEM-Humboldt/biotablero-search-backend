@@ -34,6 +34,7 @@ class Polygon(Model):
 class PolygonMetric(Model):
     id = fields.IntField(pk=True)
     values = fields.JSONField()
+    group = fields.CharField(max_length=100, default="total")
     polygon = fields.ForeignKeyField(
         "bt_search_bk.Polygon",
         related_name="metrics",
@@ -48,7 +49,7 @@ class PolygonMetric(Model):
 
     class Meta(Model.Meta):
         table = "polygon_metric"
-        unique_together = ("polygon", "metric")
+        unique_together = ("polygon", "metric", "group")
 
 
 class PolygonMetricLayer(Model):

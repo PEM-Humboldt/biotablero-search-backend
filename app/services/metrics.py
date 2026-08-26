@@ -51,7 +51,11 @@ async def get_or_create_polygon_metric(
     polygon_id: int,
     metric_name: str,
     group: str | None = None,
-) -> List[Dict[str, str | float]] | Dict[str, str | float]:
+) -> (
+    List[Dict[str, str | float]]
+    | Dict[str, str | float]
+    | Dict[str, Dict[str, str | float]]
+):
     """
     Checks if metric values already exist for the given polygon and metric.
     If they exist, return them. Otherwise, calculate, persist, and return.
@@ -78,35 +82,40 @@ async def get_or_create_polygon_metric(
             detail="Metric not available for national area",
         )
 
-    indicator_obj = next(iter(metric_obj.indicator), None)
-    if indicator_obj is not None and indicator_obj.has_group and group is None:
-        raise HTTPException(
-            status_code=422,
-            detail="group is required for this metric",
-        )
+    uses_selected_group = (
+        metric_obj.operation_type == "SELECTED-TABLE_PRECALCULATED"
+    )
+    selected_group = group if uses_selected_group and group else "total"
 
     async with advisory_xact_lock(
-        "polygon_metric", str(polygon_obj.id), str(metric_obj.id)
+        "polygon_metric",
+        str(polygon_obj.id),
+        str(metric_obj.id),
+        selected_group,
     ) as connection:
-        operation_functions = OperationFunctions(metric_obj.operation_type)
-        use_cache = indicator_obj is None or not indicator_obj.has_group
-
-        if use_cache:
-            polygon_metric = await get_polygon_metric(
-                polygon_obj, metric_obj, db=connection
-            )
-
-            if polygon_metric is not None:
-                return polygon_metric.values
-
-        values = await operation_functions.values_function(
-            metric_obj, polygon_obj, group
+        polygon_metric = await get_polygon_metric(
+            polygon_obj, metric_obj, group=selected_group, db=connection
         )
 
-        if use_cache:
-            await create_polygon_metric(
-                polygon_obj, metric_obj, values, db=connection
+        if polygon_metric is not None:
+            values = polygon_metric.values
+        else:
+            values = await OperationFunctions(
+                metric_obj.operation_type
+            ).values_function(
+                metric_obj,
+                polygon_obj,
+                selected_group if uses_selected_group else None,
             )
+
+            await create_polygon_metric(
+                polygon_obj,
+                metric_obj,
+                values,
+                group=selected_group,
+                db=connection,
+            )
+
         return values
 
 
@@ -588,8 +597,28 @@ async def calculate_table_precalculated_values(
     query_obj = AbstractIndicator(indicator.indicator)
     return await query_obj.get_values_by_polygon(
         polygon=polygon_obj,
-        group=group,
-        has_group=group is not None,
+        group=None,
+    )
+
+
+async def calculate_selected_table_precalculated_values(
+    metric: Metric,
+    polygon_obj: Polygon,
+    group: str | None = None,
+) -> Dict[str, str | float] | List[Dict[str, str | float]]:
+    """Queries the results for a precalculated indicator and group."""
+    indicator = next(iter(metric.indicator), None)
+    if indicator is None:
+        raise ServerError(
+            code=500,
+            usr_msg=f"There was an error calculating the metric {metric.name}.",
+            e=Exception("Indicator not found"),
+        )
+
+    query_obj = AbstractIndicator(indicator.indicator)
+    return await query_obj.get_values_by_polygon(
+        polygon=polygon_obj,
+        group=group or "total",
     )
 
 
@@ -746,7 +775,6 @@ def calculate_cat_single_coll_filtered_layer():
 
 class OperationFunctions:
     def __init__(self, operation):
-        self.operation = operation
         values_functions = {
             "AREA_SINGLE-COLLECTION": calculate_single_coll_values,
             "AREA_SINGLE-COLLECTION_ALL-ITEMS": calculate_single_coll_all_items_values,
@@ -757,6 +785,7 @@ class OperationFunctions:
             "AREA_CATEGORIES_TWO-COLLECTIONS": calculate_cat_two_colls_values,
             "AREA_CATEGORIES_SINGLE-COLLECTION_FILTERED": calculate_cat_single_coll_filtered_values,
             "TABLE_PRECALCULATED": calculate_table_precalculated_values,
+            "SELECTED-TABLE_PRECALCULATED": calculate_selected_table_precalculated_values,
             "FREQUENCY_SINGLE-COLLECTION": calculate_frequency_values,
         }
         layer_functions = {

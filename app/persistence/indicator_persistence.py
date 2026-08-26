@@ -26,8 +26,9 @@ class AbstractIndicator:
         """
         Returns the values for the configurated indicator and given polygon
         """
+        table_name = self.indicator_obj.describe()["table"]
         filters: Dict[str, Polygon | str] = {"polygon": polygon}
-        if group is not None:
+        if table_name == "species_stats" and group is not None:
             filters["group_name"] = group
 
         result = await self.indicator_obj.filter(**filters)
@@ -36,7 +37,6 @@ class AbstractIndicator:
                 "data not found",
                 usr_msg=f"There are no values in the database for the given metric and polygon",
             )
-        table_name = self.indicator_obj.describe()["table"]
         if table_name == "dpc":
             return sorted(
                 (val.get_result_for_metric() for val in result),

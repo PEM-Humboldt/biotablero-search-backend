@@ -8,5 +8,5 @@ async def get_metric_by_name(
     Get Metric object by short name.
     """
     return await Metric.get_or_none(name=metric_name).prefetch_related(
-        "collections", "indicator", "info"
+        "collections", "indicator"
     )

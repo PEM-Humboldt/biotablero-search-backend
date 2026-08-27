@@ -22,7 +22,13 @@ from app.services.utils.stac import (
 )
 from app.services.utils.stac import fetch_collection_metadata
 
-from app.models.models import Metric, MetricCollection, Collection, Polygon
+from app.models.models import (
+    Metric,
+    MetricCollection,
+    Collection,
+    Polygon,
+    MetricInfo,
+)
 from app.persistence.polygon_metric_layer_persistence import (
     get_existing_layer,
     create_polygon_metric_layer,
@@ -212,7 +218,10 @@ async def get_or_create_polygon_metric_layer(
         return {"layer": image_url}
 
 
-async def get_metric_info(metric_name: str):
+async def get_metric_info(metric_name: str) -> List[MetricInfo]:
+    """
+    Retrieves the information associated with a metric. Returns a list of MetricInfo records.
+    """
     metric = await get_metric_by_name(metric_name)
 
     if not metric:

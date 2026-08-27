@@ -619,11 +619,12 @@ async def calculate_frequency_selected_values(
 
     id, raster_url = get_items_asset_url(raster_collection.name)[0]
     polygon = geometries.MultiPolygon(**polygon_obj.geometry)
-    _, values, _, _, _ = await fetch_collection_metadata(
-            raster_collection
-        )
+    _, values, _, _, _ = await fetch_collection_metadata(raster_collection)
     hist, bin_edges = get_frequency_histogram(
-        raster_path=raster_url, polygon=polygon, bins=20, data_range=(values[0], values[-1])
+        raster_path=raster_url,
+        polygon=polygon,
+        bins=20,
+        data_range=(values[0], values[-1]),
     )
 
     return {

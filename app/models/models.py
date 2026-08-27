@@ -110,6 +110,7 @@ class Metric(Model):
 class MetricCollection(Model):
     id = fields.IntField(pk=True)
     is_primary = fields.BooleanField()
+    group_name = fields.CharField(max_length=100, null=True)
     metric = fields.ForeignKeyField(
         "bt_search_bk.Metric",
         related_name="collections",

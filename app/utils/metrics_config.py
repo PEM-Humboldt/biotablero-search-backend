@@ -376,6 +376,7 @@ METRICS_CONFIG: MetricsConfigType = {
     "statsOnSpecies": {
         "model": SpeciesStatsResponse,
         "example": SpeciesStatsResponse(
+            id="1530",
             total=203,
             threatened_total=2,
             threatened_cr=0,

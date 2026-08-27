@@ -216,6 +216,7 @@ class SpeciesStats(Model):
 
     def get_result_for_metric(self):
         return {
+            "id": str(self.id),
             "total": self.total,
             "threatened_total": self.threatened_total,
             "threatened_cr": self.threatened_cr,

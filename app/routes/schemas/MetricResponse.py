@@ -163,7 +163,7 @@ class RecordGapsResponse(BaseMetricResult):
     bin_edges: list[float]
 
 
-class SpeciesStatsResponse(BaseModel):
+class SpeciesStatsResponse(BaseMetricResult):
     total: int
     threatened_total: int
     threatened_cr: int

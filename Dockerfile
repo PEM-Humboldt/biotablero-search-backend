@@ -38,6 +38,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libexpat1 \
     libpq5 \
     curl \
+    netcat-openbsd \
     && rm -rf /var/lib/apt/lists/*
 
 ## User setup
@@ -56,6 +57,9 @@ RUN mkdir -p /app/logs && \
 ## Copy application code
 COPY --chown=app:app . /app
 
+## Ensure entrypoint script is executable
+RUN chmod +x /app/start.sh
+
 # Switch to non-root user
 USER app
 
@@ -64,7 +68,7 @@ EXPOSE 8000
 
 ## Docker health check setup
 HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
-    CMD curl -fsS http://localhost:${PORT}/docs > /dev/null || curl -fsS http://localhost:${PORT}/areas/types > /dev/null || exit 1
+    CMD curl -fsS http://localhost:${PORT}/health > /dev/null || exit 1
 
 ## Execute program
-CMD ["sh", "-c", "uvicorn app.main:app --host ${HOST} --port ${PORT}"]
+ENTRYPOINT ["./start.sh"]

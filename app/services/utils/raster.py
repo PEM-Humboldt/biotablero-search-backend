@@ -543,7 +543,8 @@ def get_frequency_histogram(
     valid_data = masked_data[~np.isnan(masked_data)]
     if valid_data.size == 0:
         raise ValueError("No valid data found in the polygon region.")
-
+    if data_range is None:
+        data_range = (float(np.nanmin(valid_data)), float(np.nanmax(valid_data)))
     hist, bin_edges = np.histogram(valid_data, bins=bins, range=data_range)
     return hist, bin_edges
 

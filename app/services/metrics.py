@@ -78,18 +78,11 @@ async def get_or_create_polygon_metric(
             detail="Metric not available for national area",
         )
 
-    indicator_obj = next(iter(metric_obj.indicator), None)
-    indicator_has_group = bool(indicator_obj and indicator_obj.has_group)
-    selected_group = group if indicator_has_group and group else "total"
-
     async with advisory_xact_lock(
-        "polygon_metric",
-        str(polygon_obj.id),
-        str(metric_obj.id),
-        selected_group,
+        "polygon_metric", str(polygon_obj.id), str(metric_obj.id)
     ) as connection:
         polygon_metric = await get_polygon_metric(
-            polygon_obj, metric_obj, group=selected_group, db=connection
+            polygon_obj, metric_obj, group=group, db=connection
         )
 
         if polygon_metric is not None:
@@ -100,14 +93,14 @@ async def get_or_create_polygon_metric(
         ).values_function(
             metric_obj,
             polygon_obj,
-            selected_group,
+            group,
         )
 
         await create_polygon_metric(
             polygon_obj,
             metric_obj,
             values,
-            group=selected_group,
+            group=group,
             db=connection,
         )
 
@@ -589,7 +582,10 @@ async def calculate_table_precalculated_values(
             e=Exception("Indicator not found"),
         )
 
-    query_obj = AbstractIndicator(indicator.indicator)
+    query_obj = AbstractIndicator(
+        indicator.indicator,
+        has_group=indicator.has_group,
+    )
     return await query_obj.get_values_by_polygon(
         polygon=polygon_obj,
         group=group or "total",

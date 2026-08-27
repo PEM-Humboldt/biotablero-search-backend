@@ -10,11 +10,18 @@ logger = getLogger(__name__)
 request_id_context = context_vars.request_id_context
 
 
+def _normalize_metric_group(metric: Metric, group: str | None) -> str:
+    indicator = next(iter(metric.indicator), None)
+    if indicator is not None and indicator.has_group and group:
+        return group
+    return "total"
+
+
 async def create_polygon_metric(
     polygon: Polygon,
     metric: Metric,
     values: list | dict,
-    group: str = "total",
+    group: str | None = None,
     db: BaseDBAsyncClient | None = None,
 ):
     """
@@ -28,7 +35,7 @@ async def create_polygon_metric(
             polygon=polygon,
             metric=metric,
             values=values,
-            group=group,
+            group_name=_normalize_metric_group(metric, group),
             **create_kwargs,
         )
     except IntegrityError as e:
@@ -47,7 +54,7 @@ async def create_polygon_metric(
 async def get_polygon_metric(
     polygon_obj: Polygon,
     metric_obj: Metric,
-    group: str = "total",
+    group: str | None = None,
     db: BaseDBAsyncClient | None = None,
 ) -> PolygonMetric | None:
     """
@@ -56,7 +63,7 @@ async def get_polygon_metric(
     query = PolygonMetric.filter(
         polygon=polygon_obj,
         metric=metric_obj,
-        group=group,
+        group_name=_normalize_metric_group(metric_obj, group),
     )
     if db is not None:
         query = query.using_db(db)

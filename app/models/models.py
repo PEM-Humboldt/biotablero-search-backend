@@ -34,7 +34,7 @@ class Polygon(Model):
 class PolygonMetric(Model):
     id = fields.IntField(pk=True)
     values = fields.JSONField()
-    group = fields.CharField(max_length=100, default="total")
+    group_name = fields.CharField(max_length=100, default="total")
     polygon = fields.ForeignKeyField(
         "bt_search_bk.Polygon",
         related_name="metrics",
@@ -49,7 +49,7 @@ class PolygonMetric(Model):
 
     class Meta(Model.Meta):
         table = "polygon_metric"
-        unique_together = ("polygon", "metric", "group")
+        unique_together = ("polygon", "metric", "group_name")
 
 
 class PolygonMetricLayer(Model):
@@ -217,6 +217,7 @@ class SpeciesStats(Model):
 
     def get_result_for_metric(self):
         return {
+            "id": str(self.id),
             "total": self.total,
             "threatened_total": self.threatened_total,
             "threatened_cr": self.threatened_cr,

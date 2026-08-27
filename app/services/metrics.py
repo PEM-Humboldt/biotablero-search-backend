@@ -78,25 +78,14 @@ async def get_or_create_polygon_metric(
             detail="Metric not available for national area",
         )
 
-    indicator_obj = next(iter(metric_obj.indicator), None)
-    indicator_has_group = bool(indicator_obj and indicator_obj.has_group)
-    collections_have_group = any(
-        mc.group_name is not None for mc in metric_obj.collections
-    )
-    selected_group = (
-        group
-        if (indicator_has_group or collections_have_group) and group
-        else "total"
-    )
 
     async with advisory_xact_lock(
         "polygon_metric",
         str(polygon_obj.id),
         str(metric_obj.id),
-        selected_group,
     ) as connection:
         polygon_metric = await get_polygon_metric(
-            polygon_obj, metric_obj, group=selected_group, db=connection
+            polygon_obj, metric_obj, group=group, db=connection
         )
 
         if polygon_metric is not None:
@@ -107,14 +96,14 @@ async def get_or_create_polygon_metric(
         ).values_function(
             metric_obj,
             polygon_obj,
-            selected_group,
+            group,
         )
 
         await create_polygon_metric(
             polygon_obj,
             metric_obj,
             values,
-            group=selected_group,
+            group=group,
             db=connection,
         )
 

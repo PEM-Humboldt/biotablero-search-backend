@@ -574,7 +574,9 @@ async def calculate_frequency_selected_values(
     the given group within a polygon.
     """
     print("===================================================")
-    print(f"Calculating frequency values for metric '{metric.name}' and polygon ID {polygon_obj.id} with group '{group}'")
+    print(
+        f"Calculating frequency values for metric '{metric.name}' and polygon ID {polygon_obj.id} with group '{group}'"
+    )
     collection = get_collection_by_group(metric, group)
 
     if collection is None:

@@ -12,7 +12,11 @@ request_id_context = context_vars.request_id_context
 
 def _normalize_metric_group(metric: Metric, group: str | None) -> str:
     indicator = next(iter(metric.indicator), None)
-    if indicator is not None and indicator.has_group and group:
+    indicator_has_group = bool(indicator and indicator.has_group)
+    collections_have_group = any(
+        mc.group_name is not None for mc in metric.collections
+    )
+    if (indicator_has_group or collections_have_group) and group:
         return group
     return "total"
 

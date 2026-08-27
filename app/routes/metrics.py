@@ -1,7 +1,7 @@
 import fastapi
 
 from typing import Annotated, cast
-from fastapi import Path
+from fastapi import Path, Query
 
 from app.middleware.exceptions import UnsupportedMetricException
 from app.routes.schemas.LayerResponse import LayerResponse
@@ -11,7 +11,6 @@ from app.utils.metrics_config import (
     MetricConfig,
     MetricResponse,
 )
-from fastapi import Query
 import app.services.metrics as metrics_service
 
 validation_error_example = {
@@ -106,15 +105,20 @@ async def get_values_by_polygon(
         tuple[str, MetricConfig], fastapi.Depends(metric_id_param)
     ],
     polygon_id: int,
+    group: Annotated[
+        str | None,
+        Query(
+            description="Optional species group slug to filter species stats",
+        ),
+    ] = None,
 ) -> MetricResponse:
     """Returns serialized metric values for a given polygon ID and metric."""
     metric_id, metric_config = metric
-    model_response = metric_config["model"]
 
     values = await metrics_service.get_or_create_polygon_metric(
-        polygon_id, metric_id
+        polygon_id, metric_id, group=group
     )
-
+    model_response = metric_config["model"]
     return model_response.model_validate(values, by_alias=True)
 
 

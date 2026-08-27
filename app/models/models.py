@@ -34,6 +34,7 @@ class Polygon(Model):
 class PolygonMetric(Model):
     id = fields.IntField(pk=True)
     values = fields.JSONField()
+    group_name = fields.CharField(max_length=100, default="total")
     polygon = fields.ForeignKeyField(
         "bt_search_bk.Polygon",
         related_name="metrics",
@@ -48,7 +49,7 @@ class PolygonMetric(Model):
 
     class Meta(Model.Meta):
         table = "polygon_metric"
-        unique_together = ("polygon", "metric")
+        unique_together = ("polygon", "metric", "group_name")
 
 
 class PolygonMetricLayer(Model):
@@ -95,6 +96,7 @@ class Metric(Model):
     id = fields.IntField(pk=True)
     name = fields.CharField(max_length=100, unique=True)
     operation_type = fields.CharField(max_length=100)
+    allows_national = fields.BooleanField(default=False)
     updated_at = fields.DatetimeField(auto_now=True)
     indicator_card_id = fields.CharField(max_length=60, null=True)
 
@@ -135,6 +137,7 @@ class MetricIndicator(Model):
         on_delete=fields.CASCADE,
     )
     indicator = fields.CharField(max_length=100, unique=True)
+    has_group = fields.BooleanField(default=False)
     updated_at = fields.DatetimeField(auto_now=True)
 
     class Meta(Model.Meta):
@@ -191,3 +194,38 @@ class DPC(Model):
 
     class Meta(Model.Meta):
         table = "dpc"
+
+
+class SpeciesStats(Model):
+    id = fields.IntField(pk=True)
+    polygon = fields.ForeignKeyField(
+        "bt_search_bk.Polygon",
+        related_name="species_stats",
+        on_delete=fields.CASCADE,
+    )
+    group_name = fields.CharField(max_length=100)
+    total = fields.IntField()
+    threatened_total = fields.IntField()
+    threatened_cr = fields.IntField()
+    threatened_en = fields.IntField()
+    threatened_vu = fields.IntField()
+    invasive = fields.IntField()
+    endemic = fields.IntField()
+    endemic_threatened = fields.IntField()
+    updated_at = fields.DatetimeField(auto_now=True)
+
+    def get_result_for_metric(self):
+        return {
+            "id": str(self.id),
+            "total": self.total,
+            "threatened_total": self.threatened_total,
+            "threatened_cr": self.threatened_cr,
+            "threatened_en": self.threatened_en,
+            "threatened_vu": self.threatened_vu,
+            "invasive": self.invasive,
+            "endemic": self.endemic,
+            "endemic_threatened": self.endemic_threatened,
+        }
+
+    class Meta(Model.Meta):
+        table = "species_stats"

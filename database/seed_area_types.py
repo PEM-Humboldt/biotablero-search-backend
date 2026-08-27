@@ -4,6 +4,7 @@ from app.models.models import AreaType
 async def seed_area_types():
     await AreaType.all().delete()
     area_types = [
+        AreaType(id="national", label="Colombia"),
         AreaType(id="states", label="Departamentos"),
         AreaType(id="ea", label="Jurisdicciones Ambientales"),
         AreaType(id="basinSubzones", label="Subzonas Hidrográficas"),

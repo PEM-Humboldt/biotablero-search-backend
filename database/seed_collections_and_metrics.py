@@ -23,6 +23,7 @@ class CollectionEnum(Enum):
 class IndicatorEnum(Enum):
     PROT_CONN = "prot_conn"
     DPC = "dpc"
+    STATSONSPECIES = "statsOnSpecies"
 
 
 class OperationEnum(Enum):
@@ -39,6 +40,7 @@ class OperationEnum(Enum):
         "AREA_CATEGORIES_SINGLE-COLLECTION_FILTERED"
     )
     TABLE_PRECALCULATED = "TABLE_PRECALCULATED"
+    SELECTED_TABLE_PRECALCULATED = "SELECTED-TABLE_PRECALCULATED"
     FREQUENCY_SINGLE_COLLECTION = "FREQUENCY_SINGLE-COLLECTION"
 
 
@@ -174,6 +176,16 @@ class MetricEnum(Enum):
         OperationEnum.AVERAGE_SINGLE_COLLECTION,
         CollectionEnum.INDICE_VACIOS_INFORMACION,
     )
+    STATS_ON_SPECIES = (
+        "statsOnSpecies",
+        OperationEnum.SELECTED_TABLE_PRECALCULATED,
+        None,
+        None,
+        IndicatorEnum.STATSONSPECIES,
+        None,
+        True,
+        True,
+    )
     RICHNESS = (
         "richness",
         OperationEnum.FREQUENCY_SINGLE_COLLECTION,
@@ -188,6 +200,8 @@ class MetricEnum(Enum):
         sec_collections: Optional[List[CollectionEnum]] = None,
         indicator: Optional[IndicatorEnum] = None,
         indicator_card_id: Optional[str] = None,
+        has_group: bool = False,
+        allows_national: bool = False,
     ):
         self.metric_name = metric_name
         self.operation_type = operation.value
@@ -195,6 +209,8 @@ class MetricEnum(Enum):
         self.sec_collections = sec_collections
         self.indicator = indicator
         self.indicator_card_id = indicator_card_id
+        self.has_group = has_group
+        self.allows_national = allows_national
 
 
 collections_dict = {}
@@ -218,12 +234,15 @@ async def seed_collections_and_metrics():
             name=metric.metric_name,
             operation_type=metric.operation_type,
             indicator_card_id=metric.indicator_card_id,
+            allows_national=metric.allows_national,
         )
         await new_metric.save()
 
         if metric.indicator:
             await MetricIndicator.create(
-                metric=new_metric, indicator=metric.indicator.value
+                metric=new_metric,
+                indicator=metric.indicator.value,
+                has_group=metric.has_group,
             )
 
         if metric.main_collection:

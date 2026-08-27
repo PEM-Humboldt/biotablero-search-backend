@@ -42,12 +42,14 @@ Aerich only generates schema changes. For data insertion, a script was created t
 ### Prerrequisites
 You must have these files in `./data/` path:
 
+- `colombia.geojson`
 - `departamentos.geojson`
 - `jurisdicciones-ambientales.geojson`
 - `subzonas-hidrograficas.geojson`
 - `paramos.geojson`
 - `dpc.csv`
 - `protconn.csv`
+- `statsOnSpecies.csv`
 
 ### Run script
 

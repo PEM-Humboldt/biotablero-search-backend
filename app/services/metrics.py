@@ -1,5 +1,3 @@
-import re
-import unicodedata
 from typing import Dict, List
 from geojson_pydantic import geometries
 from fastapi import HTTPException
@@ -44,8 +42,15 @@ from app.utils.errors import ServerError, MetadataError
 from app.persistence.utils.lock_utils import advisory_xact_lock
 
 
+async def _is_national_polygon(polygon_obj: Polygon) -> bool:
+    await polygon_obj.fetch_related("area_type")
+    return polygon_obj.area_type.id == "national"
+
+
 async def get_or_create_polygon_metric(
-    polygon_id: int, metric_name: str
+    polygon_id: int,
+    metric_name: str,
+    group: str | None = None,
 ) -> List[Dict[str, str | float]] | Dict[str, str | float]:
     """
     Checks if metric values already exist for the given polygon and metric.
@@ -64,23 +69,41 @@ async def get_or_create_polygon_metric(
             status_code=400, detail="Metric not found in database"
         )
 
+    if (
+        await _is_national_polygon(polygon_obj)
+        and not metric_obj.allows_national
+    ):
+        raise HTTPException(
+            status_code=404,
+            detail="Metric not available for national area",
+        )
+
     async with advisory_xact_lock(
         "polygon_metric", str(polygon_obj.id), str(metric_obj.id)
     ) as connection:
         polygon_metric = await get_polygon_metric(
-            polygon_obj, metric_obj, db=connection
+            polygon_obj, metric_obj, group=group, db=connection
         )
 
-        if polygon_metric:
+        if polygon_metric is not None:
             return polygon_metric.values
 
         values = await OperationFunctions(
             metric_obj.operation_type
-        ).values_function(metric_obj, polygon_obj)
+        ).values_function(
+            metric_obj,
+            polygon_obj,
+            group,
+        )
 
         await create_polygon_metric(
-            polygon_obj, metric_obj, values, db=connection
+            polygon_obj,
+            metric_obj,
+            values,
+            group=group,
+            db=connection,
         )
+
         return values
 
 
@@ -100,6 +123,15 @@ async def get_or_create_polygon_metric_layer(
     if not metric_obj:
         raise HTTPException(
             status_code=400, detail="Metric not found in database"
+        )
+
+    if (
+        await _is_national_polygon(polygon_obj)
+        and not metric_obj.allows_national
+    ):
+        raise HTTPException(
+            status_code=404,
+            detail="Metric not available for national area",
         )
 
     calculate_layer_func = OperationFunctions(
@@ -170,7 +202,7 @@ SPECIFIC VALUES FUNCTIONS
 
 
 async def calculate_single_coll_values(
-    metric: Metric, polygon_obj: Polygon
+    metric: Metric, polygon_obj: Polygon, _group: str | None = None
 ) -> Dict[str, str | float]:
     """
     Calculate values for a metric that uses only the first item from one collection,
@@ -206,7 +238,7 @@ async def calculate_single_coll_values(
 
 
 async def calculate_single_coll_all_items_values(
-    metric: Metric, polygon_obj: Polygon
+    metric: Metric, polygon_obj: Polygon, _group: str | None = None
 ) -> List[Dict[str, str | float]]:
     """
     Calculate values for a metric that uses all items from one collection,
@@ -247,6 +279,7 @@ async def calculate_single_coll_all_items_values(
 async def calculate_two_colls_values(
     metric: Metric,
     polygon_obj: Polygon,
+    _group: str | None = None,
 ) -> Dict[str, str | float]:
     """
     Calculate values for a metric that uses only the first item from two collections.
@@ -302,7 +335,7 @@ async def calculate_two_colls_values(
 
 
 async def calculate_ave_coll_values(
-    metric: Metric, polygon_obj: Polygon
+    metric: Metric, polygon_obj: Polygon, _group: str | None = None
 ) -> Dict[str, str | float]:
     """
     calculates the average of the values from a collection within a polygon
@@ -329,7 +362,7 @@ async def calculate_ave_coll_values(
 
 
 async def calculate_ave_multiple_colls_values(
-    metric: Metric, polygon_obj: Polygon
+    metric: Metric, polygon_obj: Polygon, _group: str | None = None
 ) -> List[Dict[str, str | float]]:
     """
     Calculates, for each primary item, the average in the full polygon and
@@ -398,7 +431,7 @@ async def calculate_ave_multiple_colls_values(
 
 
 async def calculate_cat_single_coll_values(
-    metric: Metric, polygon_obj: Polygon
+    metric: Metric, polygon_obj: Polygon, _group: str | None = None
 ) -> Dict[str, str | float]:
     """
     calculates the area of each category of a collection within a polygon
@@ -435,7 +468,7 @@ async def calculate_cat_single_coll_values(
 
 
 async def calculate_cat_two_colls_values(
-    metric: Metric, polygon_obj: Polygon
+    metric: Metric, polygon_obj: Polygon, _group: str | None = None
 ) -> Dict[str, str | float]:
     """
     calculates the area of each category of a collection within a polygon
@@ -495,7 +528,7 @@ async def calculate_cat_two_colls_values(
 
 
 async def calculate_frequency_values(
-    metric: Metric, polygon_obj: Polygon
+    metric: Metric, polygon_obj: Polygon, _group: str | None = None
 ) -> Dict[str, str | list[float] | list[int]]:
     """
     calculates the frequency of values from a collection within a polygon
@@ -534,7 +567,9 @@ def calculate_cat_single_coll_filtered_values():
 
 
 async def calculate_table_precalculated_values(
-    metric: Metric, polygon_obj: Polygon
+    metric: Metric,
+    polygon_obj: Polygon,
+    group: str | None = None,
 ) -> Dict[str, str | float] | List[Dict[str, str | float]]:
     """
     Queries the results for the precalculated indicators
@@ -547,8 +582,14 @@ async def calculate_table_precalculated_values(
             e=Exception("Indicator not found"),
         )
 
-    query_obj = AbstractIndicator(indicator.indicator)
-    return await query_obj.get_values_by_polygon(polygon=polygon_obj)
+    query_obj = AbstractIndicator(
+        indicator.indicator,
+        has_group=indicator.has_group,
+    )
+    return await query_obj.get_values_by_polygon(
+        polygon=polygon_obj,
+        group=group or "total",
+    )
 
 
 """
@@ -561,7 +602,7 @@ async def calculate_single_coll_layer(
     primary_collection: Collection,
     item_id: str,
     class_id: str,
-    metric: Metric | None = None,
+    _metric: Metric | None = None,
 ) -> str:
     """
     Get the layer for a metric that uses only one collection
@@ -714,6 +755,7 @@ class OperationFunctions:
             "AREA_CATEGORIES_TWO-COLLECTIONS": calculate_cat_two_colls_values,
             "AREA_CATEGORIES_SINGLE-COLLECTION_FILTERED": calculate_cat_single_coll_filtered_values,
             "TABLE_PRECALCULATED": calculate_table_precalculated_values,
+            "SELECTED-TABLE_PRECALCULATED": calculate_table_precalculated_values,
             "FREQUENCY_SINGLE-COLLECTION": calculate_frequency_values,
         }
         layer_functions = {

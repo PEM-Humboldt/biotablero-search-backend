@@ -161,3 +161,14 @@ class RecordGapsResponse(BaseMetricResult):
 
     frequency: list[int]
     bin_edges: list[float]
+
+
+class SpeciesStatsResponse(BaseMetricResult):
+    total: int
+    threatened_total: int
+    threatened_cr: int
+    threatened_en: int
+    threatened_vu: int
+    invasive: int
+    endemic: int
+    endemic_threatened: int

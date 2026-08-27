@@ -22,7 +22,7 @@ from app.services.utils.stac import (
 )
 from app.services.utils.stac import fetch_collection_metadata
 
-from app.models.models import Metric, MetricCollection, Collection, Polygon
+from app.models.models import Metric, Collection, Polygon
 from app.persistence.polygon_metric_layer_persistence import (
     get_existing_layer,
     create_polygon_metric_layer,
@@ -35,10 +35,13 @@ from app.persistence.polygon_metric_persistence import (
 from app.persistence.metric_persistence import (
     get_metric_by_name,
 )
+from app.persistence.metric_collection_persistence import (
+    get_collection_by_group,
+)
 from app.persistence.indicator_persistence import AbstractIndicator
 
 from app.utils.s3_utils import upload_to_s3
-from app.utils.errors import ServerError, MetadataError, NotFoundError
+from app.utils.errors import ServerError, MetadataError
 from app.persistence.utils.lock_utils import advisory_xact_lock
 
 
@@ -563,34 +566,6 @@ async def calculate_frequency_values(
     }
 
 
-def _get_collection_by_group(
-    metric: Metric, group: str | None
-) -> MetricCollection:
-    """
-    Selects the MetricCollection matching the given group, falling back to
-    the primary collection when no group is provided (group == "total").
-    """
-    if group and group != "total":
-        collection = next(
-            (mc for mc in metric.collections if mc.group_name == group), None
-        )
-    else:
-        collection = next(
-            (mc for mc in metric.collections if mc.is_primary), None
-        )
-
-    if collection is None:
-        raise NotFoundError(
-            usr_msg=f"No data available for group '{group}'.",
-            log_msg=(
-                f"No MetricCollection with group_name='{group}' found for "
-                f"metric {metric.name}."
-            ),
-        )
-
-    return collection
-
-
 async def calculate_frequency_selected_values(
     metric: Metric, polygon_obj: Polygon, group: str | None = None
 ) -> Dict[str, str | list[float] | list[int]]:
@@ -598,7 +573,16 @@ async def calculate_frequency_selected_values(
     Calculates the frequency of values from the collection associated to
     the given group within a polygon.
     """
-    collection = _get_collection_by_group(metric, group)
+    print("===================================================")
+    print(f"Calculating frequency values for metric '{metric.name}' and polygon ID {polygon_obj.id} with group '{group}'")
+    collection = get_collection_by_group(metric, group)
+
+    if collection is None:
+        raise ServerError(
+            code=500,
+            usr_msg=f"There was an error calculating the metric {metric.name}.",
+            e=Exception(f"Collection not found for group '{group}'"),
+        )
 
     await collection.fetch_related("collection")
     raster_collection = collection.collection

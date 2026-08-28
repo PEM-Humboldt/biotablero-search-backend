@@ -539,8 +539,6 @@ async def calculate_frequency_values_selected_coll_all_items(
     """
 
     collection = get_collection_by_group(metric, group)
-    print("#################################################")
-    print(collection)
 
     if collection is None:
         raise ServerError(
@@ -592,8 +590,6 @@ async def calculate_frequency_selected_values(
 
     await collection.fetch_related("collection")
     raster_collection = collection.collection
-    print("#################################################")
-    print(raster_collection)
     id, raster_url = get_items_asset_url(raster_collection.name)[0]
     polygon = geometries.MultiPolygon(**polygon_obj.geometry)
     _, values, _, _, _ = await fetch_collection_metadata(raster_collection)

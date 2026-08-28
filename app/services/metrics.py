@@ -564,7 +564,50 @@ async def calculate_frequency_values(
         "frequency": hist.tolist(),
         "bin_edges": bin_edges.tolist(),
     }
+async def calculate_frequency_values_coll_all_items(
+    metric: Metric, polygon_obj: Polygon, group: str | None = None
+) -> List[Dict[str, str | list[float] | list[int]]]:
+    """
+    Calculates the frequency of values for every item (e.g. year) of the
+    collection associated to the given group within a polygon.
+    """
+    if group is not None:
+        collection = next(
+            (mc for mc in metric.collections if mc.group_name == group), None
+        )
+    else:
+        collection = next(
+            (mc for mc in metric.collections if mc.is_primary), None
+        )
 
+    if collection is None:
+        raise NotFoundError(
+            usr_msg=f"No data available for group '{group}'.",
+            log_msg=(
+                f"No MetricCollection with group_name='{group}' found for "
+                f"metric {metric.name}."
+            ),
+        )
+
+    await collection.fetch_related("collection")
+    collection = collection.collection
+
+    polygon = geometries.MultiPolygon(**polygon_obj.geometry)
+
+    result = []
+    for id, raster_url in get_items_asset_url(collection.name):
+        hist, bin_edges = get_frequency_histogram(
+            raster_path=raster_url, polygon=polygon, bins=20, data_range=(0, 1)
+        )
+        result.append(
+            {
+                "id": id,
+                "frequency": hist.tolist(),
+                "bin_edges": bin_edges.tolist(),
+            }
+        )
+
+    return result
 
 async def calculate_frequency_selected_values(
     metric: Metric, polygon_obj: Polygon, group: str | None = None

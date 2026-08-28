@@ -162,6 +162,12 @@ async def get_layer_by_polygon(
             examples=["Natural"],
         ),
     ],
+    group: Annotated[
+        str | None,
+        Query(
+            description="Optional taxonomic group slug to filter the layer",
+        ),
+    ] = None,
 ) -> LayerResponse:
     """
     Returns the url of rendered image layer for a given metric, polygon ID, item ID, and category,
@@ -170,6 +176,6 @@ async def get_layer_by_polygon(
 
     metric_id, _ = metric
     layer = await metrics_service.get_or_create_polygon_metric_layer(
-        metric_id, polygon_id, item_id, class_id
+        metric_id, polygon_id, item_id, class_id, group=group
     )
     return LayerResponse(**layer)

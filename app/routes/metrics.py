@@ -179,3 +179,24 @@ async def get_layer_by_polygon(
         metric_id, polygon_id, item_id, class_id, group=group
     )
     return LayerResponse(**layer)
+
+
+@router.get(
+    "/{metric_id}/groups",
+    responses={
+        200: {
+            "description": "Group slugs available to filter this metric, empty if it doesn't support groups",
+            "content": {
+                "application/json": {"example": ["aves", "mamiferos", "reptiles"]}
+            },
+        }
+    },
+)
+async def get_groups_by_metric(
+    metric: Annotated[
+        tuple[str, MetricConfig], fastapi.Depends(metric_id_param)
+    ],
+) -> list[str]:
+    """Returns whether a metric's results can be filtered by group, and which groups are available."""
+    metric_id, _ = metric
+    return await metrics_service.get_metric_groups(metric_id)

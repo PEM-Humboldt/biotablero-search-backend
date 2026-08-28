@@ -154,13 +154,17 @@ class DPCListResponse(RootModel[list[DPCSingleResponse]]):
     pass
 
 
-class FrequencyResponse(BaseMetricResult):
+class FrequencySingleResponse(BaseMetricResult):
     """
     Response model for frequency metric in a given year.
     """
 
     frequency: list[int]
     bin_edges: list[float]
+
+
+class FrequencyListResponse(RootModel[list[FrequencySingleResponse]]):
+    pass
 
 
 class SpeciesStatsResponse(BaseMetricResult):

@@ -11,7 +11,6 @@ from typing import Dict, List, Optional
 class CollectionEnum(Enum):
     HUELLA_HUMANA_CLASIFICADA = "HuellaHumanaClasificada"
     HUELLA_HUMANA_CONTINUA = "HuellaHumanaContinua"
-    INDICE_VACIOS_INFORMACION = "IndiceVaciosInformacion"
     PERDIDA_PERSISTENCIA = "PerdidaYPersistencia"
     COBERTURA = "Coberturas"
     PARAMO = "Paramos"
@@ -31,7 +30,9 @@ class CollectionEnum(Enum):
     INDICE_VACIOS_INFORMACION_ANFIBIOS = "IndiceVaciosInformacionAnfibios"
     INDICE_VACIOS_INFORMACION_AVES = "IndiceVaciosInformacionAves"
     INDICE_VACIOS_INFORMACION_HONGOS = "IndiceVaciosInformacionHongos"
-    INDICE_VACIOS_INFORMACION_INVERTEBRADOS = "IndiceVaciosInformacionInvertebrados"
+    INDICE_VACIOS_INFORMACION_INVERTEBRADOS = (
+        "IndiceVaciosInformacionInvertebrados"
+    )
     INDICE_VACIOS_INFORMACION_MAMIFEROS = "IndiceVaciosInformacionMamiferos"
     INDICE_VACIOS_INFORMACION_REPTILES = "IndiceVaciosInformacionReptiles"
     INDICE_VACIOS_INFORMACION_PLANTAS = "IndiceVaciosInformacionPlantas"

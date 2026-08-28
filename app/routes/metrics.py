@@ -187,7 +187,9 @@ async def get_layer_by_polygon(
         200: {
             "description": "Group slugs available to filter this metric, empty if it doesn't support groups",
             "content": {
-                "application/json": {"example": ["aves", "mamiferos", "reptiles"]}
+                "application/json": {
+                    "example": ["aves", "mamiferos", "reptiles"]
+                }
             },
         }
     },

@@ -3,7 +3,7 @@ from app.models.models import Metric, MetricCollection
 
 def normalize_metric_group(metric: Metric, group: str | None) -> str:
     """
-    Returns the requested group only if the metric actually supports groups, 
+    Returns the requested group only if the metric actually supports groups,
     otherwise returns "total".
     """
     indicator = next(iter(metric.indicator), None)

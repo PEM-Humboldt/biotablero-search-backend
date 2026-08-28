@@ -3,22 +3,14 @@ from tortoise.exceptions import IntegrityError
 from logging import getLogger
 
 from app.models.models import Metric, PolygonMetric, Polygon
+from app.persistence.metric_collection_persistence import (
+    normalize_metric_group,
+)
 from app.utils import context_vars
 from app.utils.errors import ServerError
 
 logger = getLogger(__name__)
 request_id_context = context_vars.request_id_context
-
-
-def _normalize_metric_group(metric: Metric, group: str | None) -> str:
-    indicator = next(iter(metric.indicator), None)
-    indicator_has_group = bool(indicator and indicator.has_group)
-    collections_have_group = any(
-        mc.group_name is not None for mc in metric.collections
-    )
-    if (indicator_has_group or collections_have_group) and group:
-        return group
-    return "total"
 
 
 async def create_polygon_metric(
@@ -39,7 +31,7 @@ async def create_polygon_metric(
             polygon=polygon,
             metric=metric,
             values=values,
-            group_name=_normalize_metric_group(metric, group),
+            group_name=normalize_metric_group(metric, group),
             **create_kwargs,
         )
     except IntegrityError as e:
@@ -67,7 +59,7 @@ async def get_polygon_metric(
     query = PolygonMetric.filter(
         polygon=polygon_obj,
         metric=metric_obj,
-        group_name=_normalize_metric_group(metric_obj, group),
+        group_name=normalize_metric_group(metric_obj, group),
     )
     if db is not None:
         query = query.using_db(db)

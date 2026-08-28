@@ -1,4 +1,7 @@
 from app.models.models import Metric, PolygonMetricLayer, Polygon
+from app.persistence.metric_collection_persistence import (
+    normalize_metric_group,
+)
 from app.utils.errors import ServerError
 from tortoise.backends.base.client import BaseDBAsyncClient
 from tortoise.exceptions import IntegrityError
@@ -9,10 +12,15 @@ async def get_existing_layer(
     polygon: Polygon,
     class_id: str,
     item_id: str,
+    group: str | None = None,
     db: BaseDBAsyncClient | None = None,
 ):
     query = PolygonMetricLayer.filter(
-        metric=metric_id, polygon=polygon, class_id=class_id, item_id=item_id
+        metric=metric_id,
+        polygon=polygon,
+        class_id=class_id,
+        item_id=item_id,
+        group_name=normalize_metric_group(metric_id, group),
     )
     if db is not None:
         query = query.using_db(db)
@@ -25,6 +33,7 @@ async def create_polygon_metric_layer(
     class_id: str,
     item_id: str,
     image_url: str,
+    group: str | None = None,
     db: BaseDBAsyncClient | None = None,
 ):
     create_kwargs = {}
@@ -36,6 +45,7 @@ async def create_polygon_metric_layer(
             polygon=polygon_obj,
             class_id=class_id,
             item_id=item_id,
+            group_name=normalize_metric_group(metric_obj, group),
             layer_url=image_url,
             **create_kwargs,
         )

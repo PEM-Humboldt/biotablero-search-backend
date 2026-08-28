@@ -1,6 +1,23 @@
 from app.models.models import Metric, MetricCollection
 
 
+def normalize_metric_group(metric: Metric, group: str | None) -> str:
+    """
+    Resolves the effective group for caching/lookup purposes: returns the
+    requested group only if the metric actually supports groups (either
+    through its indicator or through per-group collections), otherwise
+    falls back to "total".
+    """
+    indicator = next(iter(metric.indicator), None)
+    indicator_has_group = bool(indicator and indicator.has_group)
+    collections_have_group = any(
+        mc.group_name is not None for mc in metric.collections
+    )
+    if (indicator_has_group or collections_have_group) and group:
+        return group
+    return "total"
+
+
 def get_collection_by_group(
     metric: Metric, group: str | None
 ) -> MetricCollection | None:

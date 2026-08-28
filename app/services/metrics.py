@@ -111,7 +111,11 @@ async def get_or_create_polygon_metric(
 
 
 async def get_or_create_polygon_metric_layer(
-    metric_name: str, polygon_id: int, item_id: str, class_id: str
+    metric_name: str,
+    polygon_id: int,
+    item_id: str,
+    class_id: str,
+    group: str | None = None,
 ) -> Dict[str, str]:
     """
     Checks if the layer already exists. If not, generates it, saves and returns the URL.
@@ -152,38 +156,42 @@ async def get_or_create_polygon_metric_layer(
         str(polygon_obj.id),
         item_id,
         class_id,
+        group or "total",
     ) as connection:
         existing_layer = await get_existing_layer(
-            metric_obj, polygon_obj, class_id, item_id, db=connection
+            metric_obj,
+            polygon_obj,
+            class_id,
+            item_id,
+            group=group,
+            db=connection,
         )
 
         if existing_layer:
             return {"layer": existing_layer.layer_url}
 
-        primary_collection = next(
-            (mc for mc in metric_obj.collections if mc.is_primary), None
-        )
-        if primary_collection is None:
+        collection = get_collection_by_group(metric_obj, group)
+        if collection is None:
             raise ServerError(
                 code=500,
                 usr_msg=f"There was an error calculating the metric {metric_obj.name}.",
-                e=Exception("Primary collection not found"),
+                e=Exception(f"Collection not found for group '{group}'"),
             )
 
-        await primary_collection.fetch_related("collection")
+        await collection.fetch_related("collection")
 
         polygon = geometries.MultiPolygon(**polygon_obj.geometry)
 
         img_base64 = await calculate_layer_func(
             polygon,
-            primary_collection.collection,
+            collection.collection,
             item_id,
             class_id,
             metric_obj,
         )
         image_url = await upload_to_s3(
             image_data=img_base64,
-            filename=f"{metric_name}_{polygon_id}_{item_id}_{class_id}.png",
+            filename=f"{metric_name}_{polygon_id}_{item_id}_{class_id}_{group or 'total'}.png",
             content_type="image/png",
         )
 
@@ -193,6 +201,7 @@ async def get_or_create_polygon_metric_layer(
             class_id=class_id,
             item_id=item_id,
             image_url=image_url,
+            group=group,
             db=connection,
         )
 
@@ -813,7 +822,8 @@ class OperationFunctions:
             "AREA_SINGLE-COLLECTION_ALL-ITEMS": calculate_single_coll_layer,
             "AREA_TWO-COLLECTIONS": calculate_two_colls_layer,
             "AREA_CATEGORIES_SINGLE-COLLECTION_FILTERED": calculate_cat_single_coll_filtered_layer,
-            "FREQUENCY_SINGLE-COLLECTION": calculate_frequency_layer,
+            "FREQUENCY_SINGLE-SELECTED-COLLECTION": calculate_frequency_layer,
+            "FREQUENCY_SINGLE-SELECTED-COLLECTION_ALL-ITEMS": calculate_frequency_layer,
         }
         self.values_function = values_functions[operation]
         self.layer_function = (

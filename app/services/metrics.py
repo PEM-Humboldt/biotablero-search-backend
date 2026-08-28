@@ -530,74 +530,39 @@ async def calculate_cat_two_colls_values(
     return {"id": id_pri, **raster_values}
 
 
-# TODO esta es la que se tiene que cambiar para record gaps
-async def calculate_frequency_values(
-    metric: Metric, polygon_obj: Polygon, _group: str | None = None
-) -> Dict[str, str | list[float] | list[int]]:
-    """
-    calculates the frequency of values from a collection within a polygon
-    """
 
-    primary_collection = next(
-        (mc for mc in metric.collections if mc.is_primary), None
-    )
-
-    if primary_collection is None:
-        raise ServerError(
-            code=500,
-            usr_msg=f"There was an error calculating the metric {metric.name}.",
-            e=Exception("Primary collection not found"),
-        )
-
-    await primary_collection.fetch_related("collection")
-    primary_collection = primary_collection.collection
-
-    id, raster_url = get_items_asset_url(primary_collection.name)[0]
-    polygon = geometries.MultiPolygon(**polygon_obj.geometry)
-
-    hist, bin_edges = get_frequency_histogram(
-        raster_path=raster_url, polygon=polygon, bins=20, data_range=(0, 1)
-    )
-
-    return {
-        "id": id,
-        "frequency": hist.tolist(),
-        "bin_edges": bin_edges.tolist(),
-    }
-async def calculate_frequency_values_coll_all_items(
+async def calculate_frequency_values_selected_coll_all_items(
     metric: Metric, polygon_obj: Polygon, group: str | None = None
 ) -> List[Dict[str, str | list[float] | list[int]]]:
     """
     Calculates the frequency of values for every item (e.g. year) of the
     collection associated to the given group within a polygon.
     """
-    if group is not None:
-        collection = next(
-            (mc for mc in metric.collections if mc.group_name == group), None
-        )
-    else:
-        collection = next(
-            (mc for mc in metric.collections if mc.is_primary), None
-        )
+
+    collection = get_collection_by_group(metric, group)
+    print("#################################################")
+    print(collection)
 
     if collection is None:
-        raise NotFoundError(
-            usr_msg=f"No data available for group '{group}'.",
-            log_msg=(
-                f"No MetricCollection with group_name='{group}' found for "
-                f"metric {metric.name}."
-            ),
+        raise ServerError(
+            code=500,
+            usr_msg=f"There was an error calculating the metric {metric.name}.",
+            e=Exception(f"Collection not found for group '{group}'"),
         )
 
     await collection.fetch_related("collection")
-    collection = collection.collection
+    raster_collection = collection.collection
 
     polygon = geometries.MultiPolygon(**polygon_obj.geometry)
+    _, values, _, _, _ = await fetch_collection_metadata(raster_collection)
 
     result = []
-    for id, raster_url in get_items_asset_url(collection.name):
+    for id, raster_url in get_items_asset_url(raster_collection.name):
         hist, bin_edges = get_frequency_histogram(
-            raster_path=raster_url, polygon=polygon, bins=20, data_range=(0, 1)
+            raster_path=raster_url,
+            polygon=polygon,
+            bins=20,
+            data_range=(values[0], values[-1]),
         )
         result.append(
             {
@@ -608,6 +573,7 @@ async def calculate_frequency_values_coll_all_items(
         )
 
     return result
+
 
 async def calculate_frequency_selected_values(
     metric: Metric, polygon_obj: Polygon, group: str | None = None
@@ -627,7 +593,8 @@ async def calculate_frequency_selected_values(
 
     await collection.fetch_related("collection")
     raster_collection = collection.collection
-
+    print("#################################################")
+    print(raster_collection)
     id, raster_url = get_items_asset_url(raster_collection.name)[0]
     polygon = geometries.MultiPolygon(**polygon_obj.geometry)
     _, values, _, _, _ = await fetch_collection_metadata(raster_collection)
@@ -839,7 +806,9 @@ class OperationFunctions:
             "AREA_CATEGORIES_SINGLE-COLLECTION_FILTERED": calculate_cat_single_coll_filtered_values,
             "TABLE_PRECALCULATED": calculate_table_precalculated_values,
             "SELECTED-TABLE_PRECALCULATED": calculate_table_precalculated_values,
-            "FREQUENCY_SINGLE-COLLECTION": calculate_frequency_values,
+            "FREQUENCY_SINGLE-SELECTED-COLLECTION_ALL-ITEMS": (
+                calculate_frequency_values_selected_coll_all_items
+            ),
             "FREQUENCY_SINGLE-SELECTED-COLLECTION": (
                 calculate_frequency_selected_values
             ),

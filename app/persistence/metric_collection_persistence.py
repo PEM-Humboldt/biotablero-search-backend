@@ -3,10 +3,8 @@ from app.models.models import Metric, MetricCollection
 
 def normalize_metric_group(metric: Metric, group: str | None) -> str:
     """
-    Resolves the effective group for caching/lookup purposes: returns the
-    requested group only if the metric actually supports groups (either
-    through its indicator or through per-group collections), otherwise
-    falls back to "total".
+    Returns the requested group only if the metric actually supports groups, 
+    otherwise returns "total".
     """
     indicator = next(iter(metric.indicator), None)
     indicator_has_group = bool(indicator and indicator.has_group)

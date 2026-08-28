@@ -208,6 +208,31 @@ async def get_or_create_polygon_metric_layer(
         return {"layer": image_url}
 
 
+async def get_metric_groups(metric_name: str) -> List[str]:
+    """
+    Returns the list of groups available to filter this metric's
+    results, or an empty list if the metric doesn't support groups.
+    """
+    metric_obj = await get_metric_by_name(metric_name)
+
+    if not metric_obj:
+        raise HTTPException(
+            status_code=404, detail="Metric not found in database"
+        )
+
+    indicator_obj = next(iter(metric_obj.indicator), None)
+    if indicator_obj is not None and indicator_obj.has_group:
+        return await AbstractIndicator(
+            indicator_obj.indicator, indicator_obj.has_group
+        ).get_available_groups()
+
+    return [
+        mc.group_name
+        for mc in metric_obj.collections
+        if mc.group_name is not None
+    ]
+
+
 """
 SPECIFIC VALUES FUNCTIONS
 """

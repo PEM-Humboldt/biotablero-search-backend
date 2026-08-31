@@ -22,7 +22,12 @@ from app.services.utils.stac import (
 )
 from app.services.utils.stac import fetch_collection_metadata
 
-from app.models.models import Metric, Collection, Polygon
+from app.models.models import (
+    Metric,
+    Collection,
+    Polygon,
+    MetricInfo,
+)
 from app.persistence.polygon_metric_layer_persistence import (
     get_existing_layer,
     create_polygon_metric_layer,
@@ -39,7 +44,9 @@ from app.persistence.metric_collection_persistence import (
     get_collection_by_group,
 )
 from app.persistence.indicator_persistence import AbstractIndicator
-
+from app.persistence.metric_info_persistence import (
+    get_metric_info_by_metric,
+)
 from app.utils.s3_utils import upload_to_s3
 from app.utils.errors import ServerError, MetadataError
 from app.persistence.utils.lock_utils import advisory_xact_lock
@@ -77,7 +84,7 @@ async def get_or_create_polygon_metric(
         and not metric_obj.allows_national
     ):
         raise HTTPException(
-            status_code=404,
+            status_code=501,
             detail="Metric not available for national area",
         )
 
@@ -137,7 +144,7 @@ async def get_or_create_polygon_metric_layer(
         and not metric_obj.allows_national
     ):
         raise HTTPException(
-            status_code=404,
+            status_code=501,
             detail="Metric not available for national area",
         )
 
@@ -231,6 +238,18 @@ async def get_metric_groups(metric_name: str) -> List[str]:
         for mc in metric_obj.collections
         if mc.group_name is not None
     ]
+    
+    
+async def get_metric_info(metric_name: str) -> List[MetricInfo]:
+    """
+    Retrieves the information associated with a metric. Returns a list of MetricInfo records.
+    """
+    metric = await get_metric_by_name(metric_name)
+
+    if not metric:
+        raise HTTPException(status_code=404, detail="Metric not found")
+
+    return await get_metric_info_by_metric(metric_name)
 
 
 """
@@ -606,7 +625,7 @@ async def calculate_frequency_selected_coll_values_all_items(
     return result
 
 
-async def calculate_frequency_selected_values(
+async def calculate_frequency_values_selected_coll(
     metric: Metric, polygon_obj: Polygon, group: str | None = None
 ) -> Dict[str, str | list[float] | list[int]]:
     """
@@ -839,7 +858,7 @@ class OperationFunctions:
                 calculate_frequency_selected_coll_values_all_items
             ),
             "FREQUENCY_SINGLE-SELECTED-COLLECTION": (
-                calculate_frequency_selected_values
+                calculate_frequency_values_selected_coll
             ),
         }
         layer_functions = {

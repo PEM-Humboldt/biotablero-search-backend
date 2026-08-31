@@ -16,7 +16,7 @@ class CollectionEnum(Enum):
     PARAMO = "Paramos"
     BOSQUE_SECO_TROPICAL = "BosqueSeco"
     HUMEDAL = "Humedales"
-    AREAS_PROTEGIDAS = "AreasProtegidas"
+    AREAS_PROTEGIDAS = ("AreasProtegidas", True)
     RIQUEZA_OBSERVADA = "RiquezaObservada"
     RIQUEZA_OBSERVADA_ANFIBIOS = "RiquezaObservadaAnfibios"
     RIQUEZA_OBSERVADA_AVES = "RiquezaObservadaAves"
@@ -37,6 +37,10 @@ class CollectionEnum(Enum):
     INDICE_VACIOS_INFORMACION_REPTILES = "IndiceVaciosInformacionReptiles"
     INDICE_VACIOS_INFORMACION_PLANTAS = "IndiceVaciosInformacionPlantas"
     INDICE_VACIOS_INFORMACION_PECES = "IndiceVaciosInformacionPeces"
+
+    def __init__(self, col_name: str, allows_layer: bool = False):
+        self.col_name = col_name
+        self.allows_layer = allows_layer
 
 
 class IndicatorEnum(Enum):
@@ -277,7 +281,9 @@ async def seed_collections_and_metrics():
     await MetricIndicator.all().delete()
 
     for col in CollectionEnum:
-        new_collection = Collection(name=col.value)
+        new_collection = Collection(
+            name=col.col_name, allows_layer=col.allows_layer
+        )
         await new_collection.save()
         collections_dict[col.value] = new_collection
 

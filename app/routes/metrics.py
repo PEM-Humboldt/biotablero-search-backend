@@ -5,6 +5,7 @@ from fastapi import Path, Query
 
 from app.middleware.exceptions import UnsupportedMetricException
 from app.routes.schemas.LayerResponse import LayerResponse
+from app.routes.schemas.MetricInfoResponse import MetricInfoListResponse
 from app.utils.metrics_config import (
     ALLOWED_METRICS,
     METRICS_CONFIG,
@@ -70,6 +71,15 @@ async def metric_id_param(
     if metric_id not in METRICS_CONFIG:
         raise UnsupportedMetricException(metric_id)
     return (metric_id, METRICS_CONFIG[metric_id])
+
+
+async def metric_id_info_param(
+    metric_id: Annotated[
+        str,
+        Path(description="Metric used to retrieve its information."),
+    ],
+) -> tuple[str, MetricConfig]:
+    return await metric_id_param(metric_id)
 
 
 def build_documentation_examples():
@@ -191,6 +201,36 @@ async def get_layer_by_polygon(
         metric_id, polygon_id, item_id, class_id, group=group
     )
     return LayerResponse(**layer)
+
+
+@router.get(
+    "/{metric_id}/info",
+    response_model=MetricInfoListResponse,
+    responses={
+        200: {
+            "description": "Metric information",
+            "content": {
+                "application/json": {
+                    "example": [
+                        {
+                            "type": "meto",
+                            "description": "Descripción de la metodología de la métrica en HTML",
+                        }
+                    ]
+                }
+            },
+        },
+    },
+)
+async def get_metric_info(
+    metric: Annotated[
+        tuple[str, MetricConfig], fastapi.Depends(metric_id_info_param)
+    ],
+):
+    """Returns the information associated with a given metric."""
+    metric_id, _ = metric
+
+    return await metrics_service.get_metric_info(metric_id)
 
 
 @router.get(

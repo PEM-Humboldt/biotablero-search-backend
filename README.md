@@ -50,6 +50,7 @@ You must have these files in `./data/` path:
 - `dpc.csv`
 - `protconn.csv`
 - `statsOnSpecies.csv`
+- `metric_info.csv`
 
 ### Run script
 

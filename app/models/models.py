@@ -86,12 +86,29 @@ class PolygonMetricLayer(Model):
 class Collection(Model):
     id = fields.IntField(pk=True)
     name = fields.CharField(max_length=100, unique=True)
+    allows_layer = fields.BooleanField(default=False)
     updated_at = fields.DatetimeField(auto_now=True)
 
     metrics: fields.ReverseRelation["MetricCollection"]
 
     class Meta(Model.Meta):
         table = "collection"
+
+
+class CollectionLayer(Model):
+    id = fields.IntField(pk=True)
+    collection = fields.ForeignKeyField(
+        "bt_search_bk.Collection",
+        related_name="layer_items",
+        on_delete=fields.CASCADE,
+    )
+    value = fields.IntField()
+    layer_url = fields.CharField(max_length=255)
+    bbox = fields.JSONField(default=list)
+    updated_at = fields.DatetimeField(auto_now=True)
+
+    class Meta(Model.Meta):
+        table = "collection_layer"
 
 
 class Metric(Model):
@@ -104,6 +121,7 @@ class Metric(Model):
 
     collections: fields.ReverseRelation["MetricCollection"]
     indicator: fields.ReverseRelation["MetricIndicator"]
+    info: fields.ReverseRelation["MetricInfo"]
 
     class Meta(Model.Meta):
         table = "metric"
@@ -145,6 +163,21 @@ class MetricIndicator(Model):
 
     class Meta(Model.Meta):
         table = "metric_indicator"
+
+
+class MetricInfo(Model):
+    id = fields.IntField(pk=True)
+    metric = fields.ForeignKeyField(
+        "bt_search_bk.Metric",
+        related_name="info",
+        on_delete=fields.CASCADE,
+    )
+    type = fields.CharField(max_length=100)
+    description = fields.TextField()
+    updated_at = fields.DatetimeField(auto_now=True)
+
+    class Meta(Model.Meta):
+        table = "metric_info"
 
 
 class ProtConn(Model):

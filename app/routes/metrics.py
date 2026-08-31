@@ -108,7 +108,13 @@ async def get_values_by_polygon(
     group: Annotated[
         str | None,
         Query(
-            description="Optional species group slug to filter species stats",
+            description=(
+                "Optional group identifier to filter results by. Use "
+                "GET /metrics/{metric_id}/groups to see the groups available "
+                "for a given metric. If the metric doesn't support groups, "
+                "this parameter is silently ignored and the metric's "
+                "regular (non-grouped) values are returned."
+            ),
         ),
     ] = None,
 ) -> MetricResponse:
@@ -165,7 +171,13 @@ async def get_layer_by_polygon(
     group: Annotated[
         str | None,
         Query(
-            description="Optional taxonomic group slug to filter the layer",
+            description=(
+                "Optional group identifier to filter the layer by. Use "
+                "GET /metrics/{metric_id}/groups to see the groups available "
+                "for a given metric. If the metric doesn't support groups, "
+                "this parameter is silently ignored and the metric's "
+                "regular (non-grouped) layer is returned."
+            ),
         ),
     ] = None,
 ) -> LayerResponse:
@@ -185,7 +197,7 @@ async def get_layer_by_polygon(
     "/{metric_id}/groups",
     responses={
         200: {
-            "description": "Group slugs available to filter this metric, empty if it doesn't support groups",
+            "description": "Group identifiers available to filter this metric, empty if it doesn't support groups",
             "content": {
                 "application/json": {
                     "example": ["aves", "mamiferos", "reptiles"]

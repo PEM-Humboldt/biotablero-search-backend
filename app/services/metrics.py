@@ -220,7 +220,7 @@ async def get_metric_info(metric_name: str) -> List[MetricInfo]:
     if not info:
         raise HTTPException(
             status_code=501,
-            detail="Metric information not found",
+            detail="Metric has no associated information",
         )
 
     return info

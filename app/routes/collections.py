@@ -26,7 +26,7 @@ router = APIRouter(
 
 
 @router.get("", response_model=List[CollectionResponse])
-async def get_collections():
+async def get_collections() -> List[CollectionResponse]:
     """
     Returns the list of available collections.
     """

@@ -1,7 +1,8 @@
+from typing import List, Dict
 from app.models.models import Collection
 
 
-async def list_collections():
+async def list_collections() -> List[Dict[str, int | str]]:
     """
     List Collections with basic information.
     """

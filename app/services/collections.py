@@ -17,8 +17,13 @@ from app.utils.s3_utils import upload_to_s3
 
 
 async def get_collections() -> List[CollectionResponse]:
+    """
+    Returns id, name of the available collections
+    """
     collections_db = await collection_persistence.list_collections()
-    collections = [CollectionResponse(**coll) for coll in collections_db]
+    collections = [
+        CollectionResponse.model_validate(coll) for coll in collections_db
+    ]
 
     return collections
 

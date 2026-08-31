@@ -5,7 +5,8 @@ from app.utils.errors import NotFoundError
 
 
 class AbstractIndicator:
-    def __init__(self, indicator_table: str):
+    def __init__(self, indicator_table: str, has_group: bool = False):
+        self.has_group = has_group
         indicators_map = {
             "prot_conn": ProtConn,
             "dpc": DPC,
@@ -28,7 +29,7 @@ class AbstractIndicator:
         """
         table_name = self.indicator_obj.describe()["table"]
         filters: Dict[str, Polygon | str] = {"polygon": polygon}
-        if table_name == "species_stats" and group is not None:
+        if self.has_group and group is not None:
             filters["group_name"] = group
 
         result = await self.indicator_obj.filter(**filters)

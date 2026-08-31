@@ -22,7 +22,12 @@ from app.services.utils.stac import (
 )
 from app.services.utils.stac import fetch_collection_metadata
 
-from app.models.models import Metric, MetricCollection, Collection, Polygon
+from app.models.models import (
+    Metric,
+    Collection,
+    Polygon,
+    MetricInfo,
+)
 from app.persistence.polygon_metric_layer_persistence import (
     get_existing_layer,
     create_polygon_metric_layer,
@@ -35,12 +40,15 @@ from app.persistence.polygon_metric_persistence import (
 from app.persistence.metric_persistence import (
     get_metric_by_name,
 )
+from app.persistence.metric_collection_persistence import (
+    get_collection_by_group,
+)
 from app.persistence.indicator_persistence import AbstractIndicator
 from app.persistence.metric_info_persistence import (
     get_metric_info_by_metric,
 )
 from app.utils.s3_utils import upload_to_s3
-from app.utils.errors import ServerError, MetadataError, NotFoundError
+from app.utils.errors import ServerError, MetadataError
 from app.persistence.utils.lock_utils import advisory_xact_lock
 
 
@@ -80,25 +88,11 @@ async def get_or_create_polygon_metric(
             detail="Metric not available for national area",
         )
 
-    indicator_obj = next(iter(metric_obj.indicator), None)
-    indicator_has_group = bool(indicator_obj and indicator_obj.has_group)
-    collections_have_group = any(
-        mc.group_name is not None for mc in metric_obj.collections
-    )
-    selected_group = (
-        group
-        if (indicator_has_group or collections_have_group) and group
-        else "total"
-    )
-
     async with advisory_xact_lock(
-        "polygon_metric",
-        str(polygon_obj.id),
-        str(metric_obj.id),
-        selected_group,
+        "polygon_metric", str(polygon_obj.id), str(metric_obj.id)
     ) as connection:
         polygon_metric = await get_polygon_metric(
-            polygon_obj, metric_obj, group=selected_group, db=connection
+            polygon_obj, metric_obj, group=group, db=connection
         )
 
         if polygon_metric is not None:
@@ -109,14 +103,14 @@ async def get_or_create_polygon_metric(
         ).values_function(
             metric_obj,
             polygon_obj,
-            selected_group,
+            group,
         )
 
         await create_polygon_metric(
             polygon_obj,
             metric_obj,
             values,
-            group=selected_group,
+            group=group,
             db=connection,
         )
 
@@ -212,7 +206,10 @@ async def get_or_create_polygon_metric_layer(
         return {"layer": image_url}
 
 
-async def get_metric_info(metric_name: str):
+async def get_metric_info(metric_name: str) -> List[MetricInfo]:
+    """
+    Retrieves the information associated with a metric. Returns a list of MetricInfo records.
+    """
     metric = await get_metric_by_name(metric_name)
 
     if not metric:
@@ -588,42 +585,21 @@ async def calculate_frequency_values(
     }
 
 
-def _get_collection_by_group(
-    metric: Metric, group: str | None
-) -> MetricCollection:
-    """
-    Selects the MetricCollection matching the given group, falling back to
-    the primary collection when no group is provided (group == "total").
-    """
-    if group and group != "total":
-        collection = next(
-            (mc for mc in metric.collections if mc.group_name == group), None
-        )
-    else:
-        collection = next(
-            (mc for mc in metric.collections if mc.is_primary), None
-        )
-
-    if collection is None:
-        raise NotFoundError(
-            usr_msg=f"No data available for group '{group}'.",
-            log_msg=(
-                f"No MetricCollection with group_name='{group}' found for "
-                f"metric {metric.name}."
-            ),
-        )
-
-    return collection
-
-
-async def calculate_frequency_selected_values(
+async def calculate_frequency_values_selected_coll(
     metric: Metric, polygon_obj: Polygon, group: str | None = None
 ) -> Dict[str, str | list[float] | list[int]]:
     """
     Calculates the frequency of values from the collection associated to
     the given group within a polygon.
     """
-    collection = _get_collection_by_group(metric, group)
+    collection = get_collection_by_group(metric, group)
+
+    if collection is None:
+        raise ServerError(
+            code=500,
+            usr_msg=f"There was an error calculating the metric {metric.name}.",
+            e=Exception(f"Collection not found for group '{group}'"),
+        )
 
     await collection.fetch_related("collection")
     raster_collection = collection.collection
@@ -665,7 +641,10 @@ async def calculate_table_precalculated_values(
             e=Exception("Indicator not found"),
         )
 
-    query_obj = AbstractIndicator(indicator.indicator)
+    query_obj = AbstractIndicator(
+        indicator.indicator,
+        has_group=indicator.has_group,
+    )
     return await query_obj.get_values_by_polygon(
         polygon=polygon_obj,
         group=group or "total",
@@ -838,7 +817,7 @@ class OperationFunctions:
             "SELECTED-TABLE_PRECALCULATED": calculate_table_precalculated_values,
             "FREQUENCY_SINGLE-COLLECTION": calculate_frequency_values,
             "FREQUENCY_SINGLE-SELECTED-COLLECTION": (
-                calculate_frequency_selected_values
+                calculate_frequency_values_selected_coll
             ),
         }
         layer_functions = {

@@ -836,7 +836,7 @@ class OperationFunctions:
             "TABLE_PRECALCULATED": calculate_table_precalculated_values,
             "SELECTED-TABLE_PRECALCULATED": calculate_table_precalculated_values,
             "FREQUENCY_SINGLE-SELECTED-COLLECTION_ALL-ITEMS": (
-                calculate_frequency_values_selected_coll_all_items
+                calculate_frequency_selected_coll_values_all_items
             ),
             "FREQUENCY_SINGLE-SELECTED-COLLECTION": (
                 calculate_frequency_selected_values

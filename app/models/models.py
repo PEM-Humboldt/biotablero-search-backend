@@ -84,6 +84,7 @@ class PolygonMetricLayer(Model):
 class Collection(Model):
     id = fields.IntField(pk=True)
     name = fields.CharField(max_length=100, unique=True)
+    allows_layer = fields.BooleanField(default=False)
     updated_at = fields.DatetimeField(auto_now=True)
 
     metrics: fields.ReverseRelation["MetricCollection"]

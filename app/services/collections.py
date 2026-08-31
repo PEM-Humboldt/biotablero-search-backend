@@ -42,6 +42,12 @@ async def get_or_create_collection_layer(
     if not collection_obj:
         raise HTTPException(status_code=404, detail="Collection not found")
 
+    if not collection_obj.allows_layer:
+        raise HTTPException(
+            status_code=501,
+            detail="Endpoint not available for the given collection",
+        )
+
     async with advisory_xact_lock(
         "collection_layer",
         str(collection_id),

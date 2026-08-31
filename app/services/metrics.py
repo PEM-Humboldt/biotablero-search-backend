@@ -215,7 +215,15 @@ async def get_metric_info(metric_name: str) -> List[MetricInfo]:
     if not metric:
         raise HTTPException(status_code=404, detail="Metric not found")
 
-    return await get_metric_info_by_metric(metric_name)
+    info = await get_metric_info_by_metric(metric_name)
+
+    if not info:
+        raise HTTPException(
+            status_code=501,
+            detail="Metric information not found",
+        )
+
+    return info
 
 
 """

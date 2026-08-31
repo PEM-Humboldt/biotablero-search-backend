@@ -8,7 +8,10 @@ async def get_existing_layer(
     collection: Collection,
     value: int,
     db: BaseDBAsyncClient | None = None,
-):
+) -> CollectionLayer | None:
+    """
+    Returns the existing layer for a value in a given collection
+    """
     query = CollectionLayer.filter(collection=collection, value=value)
     if db is not None:
         query = query.using_db(db)
@@ -21,7 +24,10 @@ async def create_collection_layer(
     image_url: str,
     bbox: tuple[float, float, float, float],
     db: BaseDBAsyncClient | None = None,
-):
+) -> None:
+    """
+    Store the computed layer for the given value and collection.
+    """
     create_kwargs = {}
     if db is not None:
         create_kwargs["using_db"] = db

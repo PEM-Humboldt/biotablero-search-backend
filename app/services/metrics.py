@@ -564,7 +564,7 @@ async def calculate_cat_two_colls_values(
     return {"id": id_pri, **raster_values}
 
 
-async def calculate_frequency_values_selected_coll_all_items(
+async def calculate_frequency_selected_coll_values_all_items(
     metric: Metric, polygon_obj: Polygon, group: str | None = None
 ) -> List[Dict[str, str | list[float] | list[int]]]:
     """

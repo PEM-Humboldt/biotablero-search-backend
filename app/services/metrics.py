@@ -593,7 +593,7 @@ async def calculate_frequency_values(
     }
 
 
-async def calculate_frequency_values_selected_coll(
+async def calculate_frequency_selected_coll_values(
     metric: Metric, polygon_obj: Polygon, group: str | None = None
 ) -> Dict[str, str | list[float] | list[int]]:
     """
@@ -825,7 +825,7 @@ class OperationFunctions:
             "SELECTED-TABLE_PRECALCULATED": calculate_table_precalculated_values,
             "FREQUENCY_SINGLE-COLLECTION": calculate_frequency_values,
             "FREQUENCY_SINGLE-SELECTED-COLLECTION": (
-                calculate_frequency_values_selected_coll
+                calculate_frequency_selected_coll_values
             ),
         }
         layer_functions = {

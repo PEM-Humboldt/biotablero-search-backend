@@ -238,8 +238,8 @@ async def get_metric_groups(metric_name: str) -> List[str]:
         for mc in metric_obj.collections
         if mc.group_name is not None
     ]
-    
-    
+
+
 async def get_metric_info(metric_name: str) -> List[MetricInfo]:
     """
     Retrieves the information associated with a metric. Returns a list of MetricInfo records.

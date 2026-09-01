@@ -70,7 +70,7 @@ class PolygonMetricLayer(Model):
     updated_at = fields.DatetimeField(auto_now=True)
 
     class Meta(Model.Meta):
-        table = "polygon_metric_item"
+        table = "polygon_metric_layer"
         unique_together = (
             (
                 "metric",

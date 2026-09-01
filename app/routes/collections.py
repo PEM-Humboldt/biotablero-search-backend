@@ -51,7 +51,8 @@ async def get_collection_layer(
     ],
 ) -> LayerWithBboxResponse:
     """
-    Returns the url of rendered image layer for a given collection, polygon ID, and value.
+    Returns the url of the rendered image layer for a given collection and value.
+    Also the the bbox required for that image
     """
     img_url, bbox = await collection_service.get_or_create_collection_layer(
         collection_id, value

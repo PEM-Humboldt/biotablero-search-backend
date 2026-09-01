@@ -17,7 +17,7 @@ from app.routes.schemas.MetricResponse import (
     ProtConnResponse,
     DPCListResponse,
     DPCSingleResponse,
-    RecordGapsResponse,
+    FrequencyResponse,
     SpeciesStatsResponse,
 )
 
@@ -35,7 +35,7 @@ MetricResponse = Union[
     ProtConnResponse,
     DPCListResponse,
     DPCSingleResponse,
-    RecordGapsResponse,
+    FrequencyResponse,
     SpeciesStatsResponse,
 ]
 
@@ -67,6 +67,7 @@ class MetricsConfigType(TypedDict):
     recordGaps: MetricConfig
     currentRecordsGaps_average: MetricConfig
     statsOnSpecies: MetricConfig
+    richness: MetricConfig
 
 
 # This config contains everything related to FastAPI and Pydantic validations
@@ -357,13 +358,22 @@ METRICS_CONFIG: MetricsConfigType = {
         "description": "Protected areas types",
     },
     "recordGaps": {
-        "model": RecordGapsResponse,
-        "example": RecordGapsResponse(
+        "model": FrequencyResponse,
+        "example": FrequencyResponse(
             id="2021",
             frequency=[10, 20, 30],
             bin_edges=[0.0, 1.0, 2.0, 3.0],
         ),
         "description": "Record gaps frequency",
+    },
+    "richness": {
+        "model": FrequencyResponse,
+        "example": FrequencyResponse(
+            id="2021",
+            frequency=[10, 20, 30],
+            bin_edges=[0.0, 1.0, 2.0, 3.0],
+        ),
+        "description": "Richness frequency",
     },
     "currentRecordsGaps_average": {
         "model": AverageResponse,

@@ -35,6 +35,9 @@ from app.persistence.polygon_metric_persistence import (
 from app.persistence.metric_persistence import (
     get_metric_by_name,
 )
+from app.persistence.metric_collection_persistence import (
+    get_collection_by_group,
+)
 from app.persistence.indicator_persistence import AbstractIndicator
 
 from app.utils.s3_utils import upload_to_s3
@@ -527,6 +530,7 @@ async def calculate_cat_two_colls_values(
     return {"id": id_pri, **raster_values}
 
 
+# TODO esta es la que se tiene que cambiar para record gaps
 async def calculate_frequency_values(
     metric: Metric, polygon_obj: Polygon, _group: str | None = None
 ) -> Dict[str, str | list[float] | list[int]]:
@@ -553,6 +557,42 @@ async def calculate_frequency_values(
 
     hist, bin_edges = get_frequency_histogram(
         raster_path=raster_url, polygon=polygon, bins=20, data_range=(0, 1)
+    )
+
+    return {
+        "id": id,
+        "frequency": hist.tolist(),
+        "bin_edges": bin_edges.tolist(),
+    }
+
+
+async def calculate_frequency_selected_coll_values(
+    metric: Metric, polygon_obj: Polygon, group: str | None = None
+) -> Dict[str, str | list[float] | list[int]]:
+    """
+    Calculates the frequency of values from the collection associated to
+    the given group within a polygon.
+    """
+    collection = get_collection_by_group(metric, group)
+
+    if collection is None:
+        raise ServerError(
+            code=500,
+            usr_msg=f"There was an error calculating the metric {metric.name}.",
+            e=Exception(f"Collection not found for group '{group}'"),
+        )
+
+    await collection.fetch_related("collection")
+    raster_collection = collection.collection
+
+    id, raster_url = get_items_asset_url(raster_collection.name)[0]
+    polygon = geometries.MultiPolygon(**polygon_obj.geometry)
+    _, values, _, _, _ = await fetch_collection_metadata(raster_collection)
+    hist, bin_edges = get_frequency_histogram(
+        raster_path=raster_url,
+        polygon=polygon,
+        bins=20,
+        data_range=(values[0], values[-1]),
     )
 
     return {
@@ -757,6 +797,9 @@ class OperationFunctions:
             "TABLE_PRECALCULATED": calculate_table_precalculated_values,
             "SELECTED-TABLE_PRECALCULATED": calculate_table_precalculated_values,
             "FREQUENCY_SINGLE-COLLECTION": calculate_frequency_values,
+            "FREQUENCY_SINGLE-SELECTED-COLLECTION": (
+                calculate_frequency_selected_coll_values
+            ),
         }
         layer_functions = {
             "AREA_SINGLE-COLLECTION": calculate_single_coll_layer,

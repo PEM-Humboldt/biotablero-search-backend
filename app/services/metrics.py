@@ -84,7 +84,7 @@ async def get_or_create_polygon_metric(
         and not metric_obj.allows_national
     ):
         raise HTTPException(
-            status_code=404,
+            status_code=501,
             detail="Metric not available for national area",
         )
 
@@ -140,7 +140,7 @@ async def get_or_create_polygon_metric_layer(
         and not metric_obj.allows_national
     ):
         raise HTTPException(
-            status_code=404,
+            status_code=501,
             detail="Metric not available for national area",
         )
 

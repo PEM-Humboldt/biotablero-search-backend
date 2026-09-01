@@ -70,7 +70,7 @@ class PolygonMetricLayer(Model):
     updated_at = fields.DatetimeField(auto_now=True)
 
     class Meta(Model.Meta):
-        table = "polygon_metric_item"
+        table = "polygon_metric_layer"
         unique_together = (
             (
                 "metric",
@@ -84,12 +84,29 @@ class PolygonMetricLayer(Model):
 class Collection(Model):
     id = fields.IntField(pk=True)
     name = fields.CharField(max_length=100, unique=True)
+    allows_layer = fields.BooleanField(default=False)
     updated_at = fields.DatetimeField(auto_now=True)
 
     metrics: fields.ReverseRelation["MetricCollection"]
 
     class Meta(Model.Meta):
         table = "collection"
+
+
+class CollectionLayer(Model):
+    id = fields.IntField(pk=True)
+    collection = fields.ForeignKeyField(
+        "bt_search_bk.Collection",
+        related_name="layer_items",
+        on_delete=fields.CASCADE,
+    )
+    value = fields.IntField()
+    layer_url = fields.CharField(max_length=255)
+    bbox = fields.JSONField(default=list)
+    updated_at = fields.DatetimeField(auto_now=True)
+
+    class Meta(Model.Meta):
+        table = "collection_layer"
 
 
 class Metric(Model):

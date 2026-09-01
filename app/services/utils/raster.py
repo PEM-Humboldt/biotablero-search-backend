@@ -4,7 +4,7 @@ import io
 from PIL import Image
 import numpy as np
 
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, cast
 from shapely import box
 from shapely.ops import transform as shapely_transform
 from shapely.geometry import shape, Polygon as ShapelyPolygon, MultiPolygon
@@ -12,7 +12,7 @@ from shapely.geometry import shape, Polygon as ShapelyPolygon, MultiPolygon
 import rasterio
 from rasterio.crs import CRS
 from rasterio.transform import array_bounds
-from rasterio.windows import from_bounds
+from rasterio.windows import Window, from_bounds
 from rasterio.features import rasterize
 import gc
 
@@ -687,3 +687,117 @@ def get_two_raster_image(
         gc.collect()
 
     return img_base64
+
+
+def _get_value_bbox(
+    raster_path: str,
+    class_value: float,
+) -> Optional[Tuple[int, int, int, int]]:
+    """
+    return the row/col bounding box (row_min, row_max, col_min, col_max)
+    in full-raster pixel coordinates where class_value occurs
+    """
+    bbox: Optional[Tuple[int, int, int, int]] = None
+
+    with rasterio.open(raster_path) as src:
+        for _, window in src.block_windows(1):
+            block = src.read(1, window=window)
+            mask = block == class_value
+            if not np.any(mask):
+                continue
+
+            row_off, col_off = int(window.row_off), int(window.col_off)
+            rows = np.any(mask, axis=1)
+            cols = np.any(mask, axis=0)
+            r0, r1 = np.where(rows)[0][[0, -1]]
+            c0, c1 = np.where(cols)[0][[0, -1]]
+            r0, r1 = r0 + row_off, r1 + row_off
+            c0, c1 = c0 + col_off, c1 + col_off
+
+            if bbox is None:
+                bbox = (r0, r1, c0, c1)
+            else:
+                pr0, pr1, pc0, pc1 = bbox
+                bbox = (
+                    min(pr0, r0),
+                    max(pr1, r1),
+                    min(pc0, c0),
+                    max(pc1, c1),
+                )
+
+    return bbox
+
+
+def generate_image_for_value(
+    raster_path: str,
+    class_value: int,
+    values: List[int],
+    colors: List[str],
+) -> Tuple[str, Tuple[float, float, float, float]]:
+    """
+    Generate a single PNG for class_value in its bounding box
+    """
+    Image.MAX_IMAGE_PIXELS = None
+
+    value_idx = None
+    try:
+        value_idx = values.index(class_value)
+    except ValueError:
+        raise NotFoundError(
+            usr_msg=f"Value {class_value} not found in collection",
+            log_msg=f"{class_value} not found in the values metadata.",
+        )
+
+    color = None
+    try:
+        color = colors[value_idx]
+    except IndexError:
+        raise MetadataError(
+            code=501,
+            usr_msg="There was an internal error processing the request",
+            log_msg=f"Value {class_value} doesn't have ab associated color in metadata.",
+        )
+
+    bbox = _get_value_bbox(raster_path, class_value)
+    if bbox is None:
+        raise NotFoundError(
+            usr_msg="No data available for the selected class.",
+            log_msg=f"No data generated for class value {class_value}.",
+        )
+
+    row_min, row_max, col_min, col_max = bbox
+    window = Window.from_slices((row_min, row_max + 1), (col_min, col_max + 1))
+
+    with rasterio.open(raster_path) as src:
+        block = src.read(1, window=window)
+
+        lon_min, lat_max = src.xy(row_min, col_min)
+        lon_max, lat_min = src.xy(row_max, col_max)
+        bbox_geo = [lon_min, lat_min, lon_max, lat_max]
+
+    mask = block == class_value
+    try:
+
+        h, w = mask.shape
+        rgba = np.zeros((h, w, 4), dtype=np.uint8)
+        rgba[mask] = hex_to_rgba(color)
+
+        pil_image = Image.fromarray(rgba, mode="RGBA")
+
+        img_buffer = io.BytesIO()
+        pil_image.save(img_buffer, format="PNG")
+        img_buffer.seek(0)
+        img_base64 = base64.b64encode(img_buffer.getvalue()).decode("utf-8")
+        del block, mask, rgba, img_buffer, pil_image
+    except Exception as e:
+        logger.error(
+            f"Unexpected error rendering class value {class_value}: {str(e)}"
+        )
+        raise ServerError(
+            code=500,
+            usr_msg=f"There was an error processing the requested class.",
+            e=e,
+        )
+    gc.collect()
+
+    return img_base64, cast(tuple[float, float, float, float], bbox_geo)

@@ -22,7 +22,12 @@ from app.services.utils.stac import (
 )
 from app.services.utils.stac import fetch_collection_metadata
 
-from app.models.models import Metric, Collection, Polygon
+from app.models.models import (
+    Metric,
+    Collection,
+    Polygon,
+    MetricInfo,
+)
 from app.persistence.polygon_metric_layer_persistence import (
     get_existing_layer,
     create_polygon_metric_layer,
@@ -39,7 +44,9 @@ from app.persistence.metric_collection_persistence import (
     get_collection_by_group,
 )
 from app.persistence.indicator_persistence import AbstractIndicator
-
+from app.persistence.metric_info_persistence import (
+    get_metric_info_by_metric,
+)
 from app.utils.s3_utils import upload_to_s3
 from app.utils.errors import ServerError, MetadataError
 from app.persistence.utils.lock_utils import advisory_xact_lock
@@ -197,6 +204,26 @@ async def get_or_create_polygon_metric_layer(
         )
 
         return {"layer": image_url}
+
+
+async def get_metric_info(metric_name: str) -> List[MetricInfo]:
+    """
+    Retrieves the information associated with a metric. Returns a list of MetricInfo records.
+    """
+    metric = await get_metric_by_name(metric_name)
+
+    if not metric:
+        raise HTTPException(status_code=404, detail="Metric not found")
+
+    info = await get_metric_info_by_metric(metric_name)
+
+    if not info:
+        raise HTTPException(
+            status_code=501,
+            detail="Metric has no associated information",
+        )
+
+    return info
 
 
 """

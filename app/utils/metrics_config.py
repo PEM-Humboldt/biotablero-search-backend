@@ -381,7 +381,7 @@ METRICS_CONFIG: MetricsConfigType = {
             id="2018",
             average=0.87,
         ),
-        "description": "Average human footprint index",
+        "description": "Average record gaps index",
     },
     "statsOnSpecies": {
         "model": SpeciesStatsResponse,

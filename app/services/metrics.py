@@ -240,7 +240,7 @@ async def get_metric_groups(metric_name: str) -> List[str]:
             detail="Metric doesn't support groups",
         )
 
-    if indicator_has_group:
+    if indicator_obj is not None and indicator_has_group:
         return await AbstractIndicator(
             indicator_obj.indicator, indicator_obj.has_group
         ).get_available_groups()

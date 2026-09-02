@@ -25,4 +25,3 @@ def normalize_metric_group(metric: Metric, group: str | None) -> str:
     if (indicator_has_group or collections_have_group) and group:
         return group
     return "total"
-

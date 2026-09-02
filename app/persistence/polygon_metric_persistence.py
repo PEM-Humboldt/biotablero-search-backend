@@ -3,7 +3,7 @@ from tortoise.exceptions import IntegrityError
 from logging import getLogger
 
 from app.models.models import Metric, PolygonMetric, Polygon
-from app.persistence.metric_collection_persistence import (
+from app.persistence.metric_persistence import (
     normalize_metric_group,
 )
 from app.utils import context_vars

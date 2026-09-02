@@ -1,5 +1,5 @@
 from app.models.models import Metric, PolygonMetricLayer, Polygon
-from app.persistence.metric_collection_persistence import (
+from app.persistence.metric_persistence import (
     normalize_metric_group,
 )
 from app.utils.errors import ServerError

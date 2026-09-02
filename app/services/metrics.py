@@ -182,7 +182,7 @@ async def get_or_create_polygon_metric_layer(
             raise ServerError(
                 code=500,
                 usr_msg=f"There was an error calculating the metric {metric_obj.name}.",
-                e=Exception(f"Collection not found for group '{group}'"),
+                e=Exception(f"Collection not found"),
             )
 
         await collection.fetch_related("collection")
@@ -217,8 +217,7 @@ async def get_or_create_polygon_metric_layer(
 
 async def get_metric_groups(metric_name: str) -> List[str]:
     """
-    Returns the list of groups available to filter this metric's
-    results, or an empty list if the metric doesn't support groups.
+    Returns the list of groups available to filter this metric's results.
     """
     metric_obj = await get_metric_by_name(metric_name)
 
@@ -228,16 +227,25 @@ async def get_metric_groups(metric_name: str) -> List[str]:
         )
 
     indicator_obj = next(iter(metric_obj.indicator), None)
-    if indicator_obj is not None and indicator_obj.has_group:
-        return await AbstractIndicator(
-            indicator_obj.indicator, indicator_obj.has_group
-        ).get_available_groups()
-
-    return [
+    indicator_has_group = bool(indicator_obj and indicator_obj.has_group)
+    collection_groups = [
         mc.group_name
         for mc in metric_obj.collections
         if mc.group_name is not None
     ]
+
+    if not indicator_has_group and not collection_groups:
+        raise HTTPException(
+            status_code=501,
+            detail="Metric doesn't support groups",
+        )
+
+    if indicator_has_group:
+        return await AbstractIndicator(
+            indicator_obj.indicator, indicator_obj.has_group
+        ).get_available_groups()
+
+    return collection_groups
 
 
 async def get_metric_info(metric_name: str) -> List[MetricInfo]:

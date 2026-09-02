@@ -237,7 +237,7 @@ async def get_metric_info(
     "/{metric_id}/groups",
     responses={
         200: {
-            "description": "Group identifiers available to filter this metric, empty if it doesn't support groups",
+            "description": "Group identifiers available to filter this metric",
             "content": {
                 "application/json": {
                     "example": ["aves", "mamiferos", "reptiles"]

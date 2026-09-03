@@ -42,6 +42,10 @@ class CollectionEnum(Enum):
         self.col_name = col_name
         self.allows_layer = allows_layer
 
+    def __init__(self, col_name: str, allows_layer: bool = False):
+        self.col_name = col_name
+        self.allows_layer = allows_layer
+
 
 class IndicatorEnum(Enum):
     PROT_CONN = "prot_conn"

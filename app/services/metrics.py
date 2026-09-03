@@ -257,7 +257,15 @@ async def get_metric_info(metric_name: str) -> List[MetricInfo]:
     if not metric:
         raise HTTPException(status_code=404, detail="Metric not found")
 
-    return await get_metric_info_by_metric(metric_name)
+    info = await get_metric_info_by_metric(metric_name)
+
+    if not info:
+        raise HTTPException(
+            status_code=501,
+            detail="Metric has no associated information",
+        )
+
+    return info
 
 
 """
@@ -633,7 +641,7 @@ async def calculate_frequency_selected_coll_values_all_items(
     return result
 
 
-async def calculate_frequency_values_selected_coll(
+async def calculate_frequency_selected_coll_values(
     metric: Metric, polygon_obj: Polygon, group: str | None = None
 ) -> Dict[str, str | list[float] | list[int]]:
     """
@@ -866,7 +874,7 @@ class OperationFunctions:
                 calculate_frequency_selected_coll_values_all_items
             ),
             "FREQUENCY_SINGLE-SELECTED-COLLECTION": (
-                calculate_frequency_values_selected_coll
+                calculate_frequency_selected_coll_values
             ),
         }
         layer_functions = {

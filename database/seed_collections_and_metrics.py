@@ -214,7 +214,7 @@ class MetricEnum(Enum):
             "peces": CollectionEnum.INDICE_VACIOS_INFORMACION_PECES,
         },
     )
-    CURRENTRECORDGAPS_AVERAGE = (
+    RECORDGAPS_AVERAGES = (
         "recordGaps_averages",
         OperationEnum.AVERAGE_SINGLE_SELECTED_COLLECTION_ALL_ITEMS,
         CollectionEnum.INDICE_VACIOS_INFORMACION,

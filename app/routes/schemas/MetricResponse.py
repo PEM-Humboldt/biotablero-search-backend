@@ -48,12 +48,15 @@ class CurrentHFResponse(BaseMetricResult):
     Muy_Alta: float = Field(alias="Muy Alta")
 
 
-class AverageResponse(BaseMetricResult):
+class AverageSingleResponse(BaseMetricResult):
     """
     Response model the average of a cropped collection in a given year.
     """
 
     average: float
+    
+class AverageListResponse(RootModel[list[AverageSingleResponse]]):
+    pass
 
 
 class TimelineHFSingleResponse(BaseMetricResult):

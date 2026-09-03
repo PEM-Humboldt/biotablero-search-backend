@@ -676,6 +676,37 @@ async def calculate_frequency_selected_coll_values(
     }
 
 
+
+async def calculate_average_selected_coll_values_all_items(
+    metric: Metric, polygon_obj: Polygon, group: str | None = None
+) -> Dict[str, str | float]:
+    """
+    Calculates the average of values for every item (e.g. year) of the
+    collection associated to the given group within a polygon.
+    """
+
+    collection = get_collection_by_group(metric, group)
+
+    if collection is None:
+        raise ServerError(
+            code=500,
+            usr_msg=f"There was an error calculating the metric {metric.name}.",
+            e=Exception(f"Collection not found for group '{group}'"),
+        )
+
+    await collection.fetch_related("collection")
+    raster_collection = collection.collection
+
+    polygon = geometries.MultiPolygon(**polygon_obj.geometry)
+    result = []
+    for id, raster_url in get_items_asset_url(raster_collection.name):
+        average = get_one_raster_average(raster_url, polygon)
+        result.append({"id": id, "average": average})
+
+    return result
+
+
+
 def calculate_cat_single_coll_filtered_values():
     pass
 
@@ -876,6 +907,7 @@ class OperationFunctions:
             "FREQUENCY_SINGLE-SELECTED-COLLECTION": (
                 calculate_frequency_selected_coll_values
             ),
+            "AVERAGE_SINGLE-SELECTED-COLLECTION_ALL-ITEMS": calculate_average_selected_coll_values_all_items,
         }
         layer_functions = {
             "AREA_SINGLE-COLLECTION": calculate_single_coll_layer,

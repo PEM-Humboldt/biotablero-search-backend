@@ -390,14 +390,18 @@ METRICS_CONFIG: MetricsConfigType = {
     },
     "recordGaps_averages": {
         "model": AverageListResponse,
-        "example": AverageListResponse([AverageSingleResponse(
-            id="2018",
-            average=0.87,
+        "example": AverageListResponse(
+            [
+                AverageSingleResponse(
+                    id="2018",
+                    average=0.87,
+                ),
+                AverageSingleResponse(
+                    id="2019",
+                    average=0.92,
+                ),
+            ]
         ),
-        AverageSingleResponse(
-            id="2019",
-            average=0.92,
-        ),]),
         "description": "Average record gaps index",
     },
     "statsOnSpecies": {

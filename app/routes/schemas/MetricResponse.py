@@ -54,7 +54,8 @@ class AverageSingleResponse(BaseMetricResult):
     """
 
     average: float
-    
+
+
 class AverageListResponse(RootModel[list[AverageSingleResponse]]):
     pass
 

@@ -676,10 +676,9 @@ async def calculate_frequency_selected_coll_values(
     }
 
 
-
 async def calculate_average_selected_coll_values_all_items(
     metric: Metric, polygon_obj: Polygon, group: str | None = None
-) -> Dict[str, str | float]:
+) -> List[Dict[str, str | float]]:
     """
     Calculates the average of values for every item (e.g. year) of the
     collection associated to the given group within a polygon.
@@ -704,7 +703,6 @@ async def calculate_average_selected_coll_values_all_items(
         result.append({"id": id, "average": average})
 
     return result
-
 
 
 def calculate_cat_single_coll_filtered_values():

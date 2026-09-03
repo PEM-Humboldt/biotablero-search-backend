@@ -17,8 +17,9 @@ from app.routes.schemas.MetricResponse import (
     ProtConnResponse,
     DPCListResponse,
     DPCSingleResponse,
-    FrequencyResponse,
+    FrequencySingleResponse,
     SpeciesStatsResponse,
+    FrequencyListResponse,
 )
 
 MetricResponse = Union[
@@ -35,7 +36,8 @@ MetricResponse = Union[
     ProtConnResponse,
     DPCListResponse,
     DPCSingleResponse,
-    FrequencyResponse,
+    FrequencySingleResponse,
+    FrequencyListResponse,
     SpeciesStatsResponse,
 ]
 
@@ -358,17 +360,26 @@ METRICS_CONFIG: MetricsConfigType = {
         "description": "Protected areas types",
     },
     "recordGaps": {
-        "model": FrequencyResponse,
-        "example": FrequencyResponse(
-            id="2021",
-            frequency=[10, 20, 30],
-            bin_edges=[0.0, 1.0, 2.0, 3.0],
+        "model": FrequencyListResponse,
+        "example": FrequencyListResponse(
+            [
+                FrequencySingleResponse(
+                    id="2023",
+                    frequency=[10, 20, 30],
+                    bin_edges=[0.0, 1.0, 2.0, 3.0],
+                ),
+                FrequencySingleResponse(
+                    id="2024",
+                    frequency=[12, 18, 25],
+                    bin_edges=[0.0, 1.0, 2.0, 3.0],
+                ),
+            ]
         ),
         "description": "Record gaps frequency",
     },
     "richness": {
-        "model": FrequencyResponse,
-        "example": FrequencyResponse(
+        "model": FrequencySingleResponse,
+        "example": FrequencySingleResponse(
             id="2021",
             frequency=[10, 20, 30],
             bin_edges=[0.0, 1.0, 2.0, 3.0],

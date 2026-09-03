@@ -66,6 +66,7 @@ class PolygonMetricLayer(Model):
     )
     class_id = fields.CharField(max_length=100)
     item_id = fields.CharField(max_length=100)
+    group_name = fields.CharField(max_length=100, default="total")
     layer_url = fields.CharField(max_length=255)
     updated_at = fields.DatetimeField(auto_now=True)
 
@@ -77,6 +78,7 @@ class PolygonMetricLayer(Model):
                 "polygon",
                 "item_id",
                 "class_id",
+                "group_name",
             ),
         )
 

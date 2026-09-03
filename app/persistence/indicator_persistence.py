@@ -48,3 +48,15 @@ class AbstractIndicator:
             return result[0].get_result_for_metric()
         else:
             return self.indicator_obj.get_result_for_metric(result[0])
+
+    async def get_available_groups(self) -> List[str]:
+        """
+        Returns the distinct group_name values stored for this indicator's
+        table.
+        """
+        groups = (
+            await self.indicator_obj.all()
+            .distinct()
+            .values_list("group_name", flat=True)
+        )
+        return list(groups)

@@ -11,7 +11,6 @@ from typing import Dict, List, Optional
 class CollectionEnum(Enum):
     HUELLA_HUMANA_CLASIFICADA = "HuellaHumanaClasificada"
     HUELLA_HUMANA_CONTINUA = "HuellaHumanaContinua"
-    INDICE_VACIOS_INFORMACION = "IndiceVaciosInformacion"
     PERDIDA_PERSISTENCIA = "PerdidaYPersistencia"
     COBERTURA = "Coberturas"
     PARAMO = "Paramos"
@@ -27,6 +26,17 @@ class CollectionEnum(Enum):
     RIQUEZA_OBSERVADA_REPTILES = "RiquezaObservadaReptiles"
     RIQUEZA_OBSERVADA_PLANTAS = "RiquezaObservadaPlantas"
     RIQUEZA_OBSERVADA_PECES = "RiquezaObservadaPeces"
+    INDICE_VACIOS_INFORMACION = "IndiceVaciosInformacion"
+    INDICE_VACIOS_INFORMACION_ANFIBIOS = "IndiceVaciosInformacionAnfibios"
+    INDICE_VACIOS_INFORMACION_AVES = "IndiceVaciosInformacionAves"
+    INDICE_VACIOS_INFORMACION_HONGOS = "IndiceVaciosInformacionHongos"
+    INDICE_VACIOS_INFORMACION_INVERTEBRADOS = (
+        "IndiceVaciosInformacionInvertebrados"
+    )
+    INDICE_VACIOS_INFORMACION_MAMIFEROS = "IndiceVaciosInformacionMamiferos"
+    INDICE_VACIOS_INFORMACION_REPTILES = "IndiceVaciosInformacionReptiles"
+    INDICE_VACIOS_INFORMACION_PLANTAS = "IndiceVaciosInformacionPlantas"
+    INDICE_VACIOS_INFORMACION_PECES = "IndiceVaciosInformacionPeces"
 
     def __init__(self, col_name: str, allows_layer: bool = False):
         self.col_name = col_name
@@ -54,7 +64,9 @@ class OperationEnum(Enum):
     )
     TABLE_PRECALCULATED = "TABLE_PRECALCULATED"
     SELECTED_TABLE_PRECALCULATED = "SELECTED-TABLE_PRECALCULATED"
-    FREQUENCY_SINGLE_COLLECTION = "FREQUENCY_SINGLE-COLLECTION"
+    FREQUENCY_SINGLE_SELECTED_COLLECTION_ALL_ITEMS = (
+        "FREQUENCY_SINGLE-SELECTED-COLLECTION_ALL-ITEMS"
+    )
     FREQUENCY_SINGLE_SELECTED_COLLECTION = (
         "FREQUENCY_SINGLE-SELECTED-COLLECTION"
     )
@@ -181,11 +193,23 @@ class MetricEnum(Enum):
     )
     RECORDGAPS = (
         "recordGaps",
-        OperationEnum.FREQUENCY_SINGLE_COLLECTION,
+        OperationEnum.FREQUENCY_SINGLE_SELECTED_COLLECTION_ALL_ITEMS,
         CollectionEnum.INDICE_VACIOS_INFORMACION,
         None,
         None,
-        "indice-de-vacios",
+        None,
+        True,
+        False,
+        {
+            "anfibios": CollectionEnum.INDICE_VACIOS_INFORMACION_ANFIBIOS,
+            "aves": CollectionEnum.INDICE_VACIOS_INFORMACION_AVES,
+            "hongos": CollectionEnum.INDICE_VACIOS_INFORMACION_HONGOS,
+            "invertebrados": CollectionEnum.INDICE_VACIOS_INFORMACION_INVERTEBRADOS,
+            "mamiferos": CollectionEnum.INDICE_VACIOS_INFORMACION_MAMIFEROS,
+            "reptiles": CollectionEnum.INDICE_VACIOS_INFORMACION_REPTILES,
+            "plantas": CollectionEnum.INDICE_VACIOS_INFORMACION_PLANTAS,
+            "peces": CollectionEnum.INDICE_VACIOS_INFORMACION_PECES,
+        },
     )
     CURRENTRECORDSGAPS_AVERAGE = (
         "currentRecordsGaps_average",

@@ -690,7 +690,7 @@ async def calculate_average_selected_coll_values_all_items(
         raise ServerError(
             code=500,
             usr_msg=f"There was an error calculating the metric {metric.name}.",
-            e=Exception(f"Collection not found for group '{group}'"),
+            e=Exception(f"Collection not found"),
         )
 
     await collection.fetch_related("collection")

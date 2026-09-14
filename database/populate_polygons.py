@@ -41,14 +41,12 @@ NAMES_QUERY = """
 def get_ids(conn):
     with conn.cursor() as cur:
         cur.execute(IDS_QUERY)
-
         for row in cur:
             yield row[0]
 
 def get_names(conn):
     with conn.cursor() as cur:
         cur.execute(NAMES_QUERY)
-
         for row in cur:
             yield row[0]
 
@@ -57,16 +55,14 @@ def call_api_values(polygon_id, metric_id):
         polygon_id=polygon_id,
         metric_id=metric_id,
     )
-    print(url) #PARA PRUEBAS, SE BORRA LUEGO
-    
+    log_result(f"  URL: {url}")
     response = requests.get(
         url,
         headers={
             "accept": "application/json",
         },
-        timeout=30,
+        #timeout=30,
     )
-
     return response
 
 def call_api_layer(polygon_id, metric_id, item_id, class_id):
@@ -76,105 +72,100 @@ def call_api_layer(polygon_id, metric_id, item_id, class_id):
         item_id=item_id,
         class_id=class_id
     )
-    print(url) #PARA PRUEBAS, SE BORRA LUEGO
-    
+    log_result(f"  URL: {url}")
     response = requests.get(
         url,
         headers={
             "accept": "application/json",
         },
-        timeout=30,
+        #timeout=30,
     )
-
     return response
 
+def log_result(text):
+    print(text)
+    with open("./logs/resultados.txt", "a", encoding="utf-8") as f:
+        f.write(text + "\n")
 
 def main():
-
     with psycopg.connect(**DB_CONFIG) as conn:
-        names = list(get_names(conn))
-        print(f"Names encontrados: {len(names)}")
+        metric = list(get_names(conn))
+        log_result(f"metric encontradas: {len(metric)}")
         for polygon_id in get_ids(conn):
-            print(f"\n=== ID: {polygon_id} ===")
-            for metric_id in names:
-                print(
-                    f"Consultando "
-                    f"id={polygon_id}, "
-                    f"name={metric_id}"
-                )
-                try:
-                    response = call_api_values(
-                        polygon_id,
-                        metric_id,
+            log_result(f"\n=== ID: {polygon_id} ===")
+            for metric_id in metric:
+                if metric_id in ["richness", "persistenceHF", "sciPersistenceHF", "sciPersistenceHF_protectedAreas"]:
+                    continue
+                else:
+                    log_result(
+                        f"Consultando "
+                        f"id={polygon_id}, "
+                        f"name={metric_id}"
                     )
-                    print(
-                        f"  Status: {response.status_code}"
-                    )
-                    if response.ok:
-                        print(
-                            f"  OK: {response.text}"
+                    try:
+                        response = call_api_values(
+                            polygon_id,
+                            metric_id,
                         )
-                        if metric_id in ["dpc", "statsOnSpecies", "currentHF_average", "currenrRecordsGaps_average"]:
-                            continue
-                        else:    
-                            data = response.json()
-                            
-                            if isinstance(data, dict):
-                                objects = [data]
-                            elif isinstance(data, list):
-                                objects = data
-                            else:
-                                objects = []
-                            try:
-                                for obj in objects:
-                                    item_id = obj.get("id")
-                                    for key, value in obj.items():
-                                        if key == "id":
-                                            continue
-                                        class_id = key
-                                        if metric_id in ["recordGaps", "richness"]:
-                                            class_id = metric_id
-                                        print(
-                                            f"    item_id : {item_id}, "
-                                            f"class_id : {class_id}"
-                                        )
-                                        try:#Poblado de polygon_metric_item
-                                            response = call_api_layer(
-                                                polygon_id,
-                                                metric_id,
-                                                item_id,
-                                                class_id
-                                            )
-                                            print(
-                                                f"  Status: {response.status_code}"
-                                            )
-                                            if response.ok:
-                                                print(
-                                                    f"  OK: {response.text}"
-                                                )
-                                            else:
-                                                print(
-                                                    f"  ERROR: {response.text}"
-                                                )
-                                        except requests.RequestException as exc:
-                                            print(
-                                                f"  ERROR de conexión: {exc}"
-                                            )
-                                        time.sleep(0.2)                            
-                            except KeyError as ke:
-                                print(
-                                    f"  ERROR: No hay item_id"
-                                )
-                    else:
-                        print(
-                            f"  ERROR: {response.text}"
+                        log_result(
+                            f"  Status: {response.status_code}"
                         )
-                except requests.RequestException as exc:
-                    print(
-                        f"  ERROR de conexión: {exc}"
-                    )
-                time.sleep(0.2)
+                        if response.ok:
+                            if metric_id in ["dpc", "statsOnSpecies", "currentHF_average", "currenrRecordsGaps_average", "timelineHF", "protectedAreas", "protectedAreas_paramo", "protectedAreas_tropicalDryForest", "protectedAreas_wetland", "protConn"]:
+                                continue
+                            else:    
+                                data = response.json()
+                                if isinstance(data, dict):
+                                    objects = [data]
+                                elif isinstance(data, list):
+                                    objects = data
+                                else:
+                                    objects = []
+                                try:
+                                    for obj in objects:
+                                        item_id = obj.get("id")
+                                        for key, value in obj.items():
+                                            if key == "id":
+                                                continue
+                                            class_id = key
+                                            if metric_id in ["recordGaps", "richness"]:
+                                                class_id = metric_id
+                                            log_result(
+                                                f"    item_id : {item_id}, "
+                                                f"class_id : {class_id}"
+                                            )
+                                            try:#Poblado de polygon_metric_item
+                                                response = call_api_layer(
+                                                    polygon_id,
+                                                    metric_id,
+                                                    item_id,
+                                                    class_id
+                                                )
+                                                log_result(
+                                                    f"  Status: {response.status_code}"
+                                                )
+                                                if response.ok == False:
+                                                    log_result(
+                                                        f"  ERROR: {response.text}"
+                                                    )
+                                            except requests.RequestException as exc:
+                                                log_result(
+                                                    f"  ERROR de conexión: {exc}"
+                                                )
+                                except KeyError as ke:
+                                    log_result(
+                                        f"  ERROR: No hay item_id"
+                                    )
+                        else:
+                            log_result(
+                                f"  ERROR: {response.text}"
+                            )
+                    except requests.RequestException as exc:
+                        log_result(
+                            f"  ERROR de conexión: {exc}"
+                        )
 
 
 if __name__ == "__main__":
     main()
+    print("Proceso finalizado.")

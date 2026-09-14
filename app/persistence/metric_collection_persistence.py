@@ -1,4 +1,5 @@
 from app.models.models import Metric, MetricCollection
+from app.utils.errors import NotFoundError
 
 
 def get_collection_by_group(
@@ -10,7 +11,19 @@ def get_collection_by_group(
     collection when no group is provided (group == "total").
     """
     if group and group != "total":
-        return next(
+        collection = next(
             (mc for mc in metric.collections if mc.group_name == group), None
         )
+        if collection is None:
+            raise NotFoundError(
+                usr_msg=(
+                    f"Group '{group}' not found for metric "
+                    f"'{metric.name}'."
+                ),
+                log_msg=(
+                    f"No MetricCollection with group_name='{group}' found "
+                    f"for metric {metric.name}."
+                ),
+            )
+        return collection
     return next((mc for mc in metric.collections if mc.is_primary), None)

@@ -6,7 +6,8 @@ from app.routes.schemas.MetricResponse import (
     LossPersistenceListResponse,
     CoverageResponse,
     CurrentHFResponse,
-    AverageResponse,
+    AverageSingleResponse,
+    AverageListResponse,
     TimelineHFListResponse,
     TimelineHFSingleResponse,
     LossPersistenceSingleResponse,
@@ -26,7 +27,8 @@ MetricResponse = Union[
     LossPersistenceListResponse,
     CoverageResponse,
     CurrentHFResponse,
-    AverageResponse,
+    AverageSingleResponse,
+    AverageListResponse,
     TimelineHFListResponse,
     TimelineHFSingleResponse,
     ParamoResponse,
@@ -67,7 +69,7 @@ class MetricsConfigType(TypedDict):
     protectedAreas_tropicalDryForest: MetricConfig
     protectedAreas_wetland: MetricConfig
     recordGaps: MetricConfig
-    currentRecordsGaps_average: MetricConfig
+    recordGaps_averages: MetricConfig
     statsOnSpecies: MetricConfig
     richness: MetricConfig
 
@@ -130,8 +132,8 @@ METRICS_CONFIG: MetricsConfigType = {
         "description": "Categorized human footprint index",
     },
     "currentHF_average": {
-        "model": AverageResponse,
-        "example": AverageResponse(
+        "model": AverageSingleResponse,
+        "example": AverageSingleResponse(
             id="2018",
             average=12.34,
         ),
@@ -386,11 +388,19 @@ METRICS_CONFIG: MetricsConfigType = {
         ),
         "description": "Richness frequency",
     },
-    "currentRecordsGaps_average": {
-        "model": AverageResponse,
-        "example": AverageResponse(
-            id="2018",
-            average=0.87,
+    "recordGaps_averages": {
+        "model": AverageListResponse,
+        "example": AverageListResponse(
+            [
+                AverageSingleResponse(
+                    id="2018",
+                    average=0.87,
+                ),
+                AverageSingleResponse(
+                    id="2019",
+                    average=0.92,
+                ),
+            ]
         ),
         "description": "Average record gaps index",
     },

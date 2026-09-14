@@ -70,6 +70,9 @@ class OperationEnum(Enum):
     FREQUENCY_SINGLE_SELECTED_COLLECTION = (
         "FREQUENCY_SINGLE-SELECTED-COLLECTION"
     )
+    AVERAGE_SINGLE_SELECTED_COLLECTION_ALL_ITEMS = (
+        "AVERAGE_SINGLE-SELECTED-COLLECTION_ALL-ITEMS"
+    )
 
 
 class MetricEnum(Enum):
@@ -198,7 +201,7 @@ class MetricEnum(Enum):
         None,
         None,
         None,
-        True,
+        False,
         False,
         {
             "anfibios": CollectionEnum.INDICE_VACIOS_INFORMACION_ANFIBIOS,
@@ -211,10 +214,25 @@ class MetricEnum(Enum):
             "peces": CollectionEnum.INDICE_VACIOS_INFORMACION_PECES,
         },
     )
-    CURRENTRECORDSGAPS_AVERAGE = (
-        "currentRecordsGaps_average",
-        OperationEnum.AVERAGE_SINGLE_COLLECTION,
+    RECORDGAPS_AVERAGES = (
+        "recordGaps_averages",
+        OperationEnum.AVERAGE_SINGLE_SELECTED_COLLECTION_ALL_ITEMS,
         CollectionEnum.INDICE_VACIOS_INFORMACION,
+        None,
+        None,
+        None,
+        True,
+        False,
+        {
+            "anfibios": CollectionEnum.INDICE_VACIOS_INFORMACION_ANFIBIOS,
+            "aves": CollectionEnum.INDICE_VACIOS_INFORMACION_AVES,
+            "hongos": CollectionEnum.INDICE_VACIOS_INFORMACION_HONGOS,
+            "invertebrados": CollectionEnum.INDICE_VACIOS_INFORMACION_INVERTEBRADOS,
+            "mamiferos": CollectionEnum.INDICE_VACIOS_INFORMACION_MAMIFEROS,
+            "reptiles": CollectionEnum.INDICE_VACIOS_INFORMACION_REPTILES,
+            "plantas": CollectionEnum.INDICE_VACIOS_INFORMACION_PLANTAS,
+            "peces": CollectionEnum.INDICE_VACIOS_INFORMACION_PECES,
+        },
     )
     STATS_ON_SPECIES = (
         "statsOnSpecies",

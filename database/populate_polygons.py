@@ -1,6 +1,5 @@
 import psycopg
 import requests
-import time
 
 
 # =========================
@@ -26,27 +25,27 @@ GET_LAYER_POLYGON = "http://127.0.0.1:8000/metrics/{metric_id}/layer?polygon_id=
 # Consultas
 # =========================
 
-IDS_QUERY = """
+POLYGONS_QUERY = """
     SELECT id
     FROM polygon
     ORDER BY id;
 """
 
-NAMES_QUERY = """
+METRICS_QUERY = """
     SELECT name
     FROM metric
     ORDER BY name;
 """
 
-def get_ids(conn):
+def get_polygons(conn):
     with conn.cursor() as cur:
-        cur.execute(IDS_QUERY)
+        cur.execute(POLYGONS_QUERY)
         for row in cur:
             yield row[0]
 
-def get_names(conn):
+def get_metrics(conn):
     with conn.cursor() as cur:
-        cur.execute(NAMES_QUERY)
+        cur.execute(METRICS_QUERY)
         for row in cur:
             yield row[0]
 
@@ -61,7 +60,6 @@ def call_api_values(polygon_id, metric_id):
         headers={
             "accept": "application/json",
         },
-        #timeout=30,
     )
     return response
 
@@ -78,23 +76,24 @@ def call_api_layer(polygon_id, metric_id, item_id, class_id):
         headers={
             "accept": "application/json",
         },
-        #timeout=30,
     )
     return response
 
 def log_result(text):
     print(text)
-    with open("./logs/resultados.txt", "a", encoding="utf-8") as f:
+    with open("./logs/populate_polygons_res.txt", "a", encoding="utf-8") as f:
         f.write(text + "\n")
 
 def main():
+    print("Proceso Iniciado.")
     with psycopg.connect(**DB_CONFIG) as conn:
-        metric = list(get_names(conn))
+        metric = list(get_metrics(conn))
         log_result(f"metric encontradas: {len(metric)}")
-        for polygon_id in get_ids(conn):
+        for polygon_id in get_polygons(conn):
             log_result(f"\n=== ID: {polygon_id} ===")
             for metric_id in metric:
-                if metric_id in ["richness", "persistenceHF", "sciPersistenceHF", "sciPersistenceHF_protectedAreas"]:
+                #Si alguna metrica es de las siguientes o el id del poligono es menor a 2, se omite la consulta de polygon_metric
+                if (metric_id in ["persistenceHF", "sciPersistenceHF", "sciPersistenceHF_protectedAreas"]) or polygon_id < 2:
                     continue
                 else:
                     log_result(
@@ -102,7 +101,7 @@ def main():
                         f"id={polygon_id}, "
                         f"name={metric_id}"
                     )
-                    try:
+                    try:#Poblado de polygon_metric
                         response = call_api_values(
                             polygon_id,
                             metric_id,
@@ -111,6 +110,7 @@ def main():
                             f"  Status: {response.status_code}"
                         )
                         if response.ok:
+                            #Si alguna metrica es de las siguientes se omite la consulta de polygon_metric_layer
                             if metric_id in ["dpc", "statsOnSpecies", "currentHF_average", "currenrRecordsGaps_average", "timelineHF", "protectedAreas", "protectedAreas_paramo", "protectedAreas_tropicalDryForest", "protectedAreas_wetland", "protConn"]:
                                 continue
                             else:    
@@ -134,7 +134,7 @@ def main():
                                                 f"    item_id : {item_id}, "
                                                 f"class_id : {class_id}"
                                             )
-                                            try:#Poblado de polygon_metric_item
+                                            try:#Poblado de polygon_metric_layer
                                                 response = call_api_layer(
                                                     polygon_id,
                                                     metric_id,

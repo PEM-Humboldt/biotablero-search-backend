@@ -11,7 +11,6 @@ from app.models.models import (
 from app.utils.config import get_settings, TORTOISE_ORM
 
 settings = get_settings()
-logger = logging.getLogger(__name__)
 
 # =========================
 # Consultas POSTGRESQL
@@ -263,10 +262,6 @@ async def populate_PM_and_PML():
         f"polygon_metric_layer encontrados: {len(polygon_metric_layer_count)}"
     )
     await Tortoise.close_connections()
-    logger.info(
-        "Proceso finalizado, la conexión a la base de datos ha sido cerrada",
-        extra={"request_id": "N/A"},
-    )
 
 
 if __name__ == "__main__":

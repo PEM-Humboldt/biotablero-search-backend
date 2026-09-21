@@ -10,6 +10,7 @@ import sys
 class Settings(BaseSettings):
 
     stac_url: str = "http://localhost:8080"
+    api_base_url: str = "http://localhost:8080"
     env: str = "dev"
     cors_origin: str = ""
     db_user: str = ""

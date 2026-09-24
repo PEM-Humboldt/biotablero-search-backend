@@ -63,7 +63,7 @@ def _crop_raster_by_polygon(
     raster_path: str,
     polygon: geometries.MultiPolygon,
     max_dim: Optional[int] = None,
-) -> Tuple[np.ndarray, np.ndarray, Optional[float]]:
+) -> Tuple[np.ndarray, rasterio.Affine, Optional[float]]:
     """
     Crop a raster by a given polygon and return the masked data, the window
     transform, and the nodata value.

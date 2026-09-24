@@ -40,9 +40,7 @@ def _decimated_read_params(
     """
     Given a raster window, returns the out_shape to pass to a decimated
     rasterio read (or None if no decimation is needed) plus the transform
-    that matches that decimated grid. Uses nearest-neighbor at read time
-    (cheap, since it can be served from the raster's overviews) so class
-    codes are never blended.
+    that matches that decimated grid.
     """
     if max_dim is None:
         return None, window_transform
@@ -174,7 +172,7 @@ def get_one_raster_image(
         )
 
     masked_data, _, _ = _crop_raster_by_polygon(
-        raster_path, polygon, max_dim=max_dim
+        raster_path, polygon, max_dim=max_dim * 3
     )
 
     if len(masked_data) == 0 or np.all(masked_data != class_value):
@@ -182,18 +180,34 @@ def get_one_raster_image(
             usr_msg="No data available for the selected class.",
             log_msg=f"No data generated for class value {class_value}.",
         )
+
+    presence = masked_data == class_value
+
+    h, w = presence.shape
+    if h > max_dim or w > max_dim:
+        fy, fx = -(-h // max_dim), -(-w // max_dim)
+        h, w = h // fy, w // fx
+        presence = (
+            presence[: h * fy, : w * fx].reshape(h, fy, w, fx).any((1, 3))
+        )
+
+    if not presence.any():
+        raise NotFoundError(
+            usr_msg="No data available for the selected class.",
+            log_msg=f"No data generated for class value {class_value}.",
+        )
     try:
-        h, w = masked_data.shape
+        h, w = presence.shape
         rgba = np.zeros((h, w, 4), dtype=np.uint8)
 
-        rgba[masked_data == class_value] = colormap[class_value]
+        rgba[presence] = colormap[class_value]
 
         pil_image = Image.fromarray(rgba, mode="RGBA")
         img_buffer = io.BytesIO()
         pil_image.save(img_buffer, format="PNG")
         img_buffer.seek(0)
         img_base64 = base64.b64encode(img_buffer.getvalue()).decode("utf-8")
-        del masked_data, rgba, img_buffer, pil_image
+        del presence, rgba, img_buffer, pil_image
     except Exception as e:
         logger.error(
             f"Unexpected error rendering class value {class_value}: {str(e)}"
@@ -703,7 +717,7 @@ def get_two_raster_image(
                 raster_path=raster_path,
                 mask_raster_path=mask_raster_path,
                 polygon=polygon,
-                max_dim=max_dim,
+                max_dim=max_dim * 3,
             )
         )
 
@@ -717,10 +731,17 @@ def get_two_raster_image(
         )
 
         mask_binary = mask_data > 0
-        combined_mask = (polygon_mask == 1) & mask_binary
-        masked_data = np.where(combined_mask, data, np.nan)
+        presence = (polygon_mask == 1) & mask_binary & (data == class_value)
 
-        if len(masked_data) == 0 or np.all(masked_data != class_value):
+        h, w = presence.shape
+        if h > max_dim or w > max_dim:
+            fy, fx = -(-h // max_dim), -(-w // max_dim)
+            h, w = h // fy, w // fx
+            presence = (
+                presence[: h * fy, : w * fx].reshape(h, fy, w, fx).any((1, 3))
+            )
+
+        if not presence.any():
             raise NotFoundError(
                 usr_msg="No data available for the selected class.",
                 log_msg=(
@@ -729,9 +750,8 @@ def get_two_raster_image(
                 ),
             )
 
-        h, w = masked_data.shape
         rgba = np.zeros((h, w, 4), dtype=np.uint8)
-        rgba[masked_data == class_value] = colormap[class_value]
+        rgba[presence] = colormap[class_value]
 
         pil_image = Image.fromarray(rgba, mode="RGBA")
         img_buffer = io.BytesIO()
@@ -739,8 +759,8 @@ def get_two_raster_image(
         img_buffer.seek(0)
         img_base64 = base64.b64encode(img_buffer.getvalue()).decode("utf-8")
 
-        del data, mask_data, polygon_mask, mask_binary, combined_mask
-        del masked_data, rgba, img_buffer, pil_image
+        del data, mask_data, polygon_mask, mask_binary
+        del presence, rgba, img_buffer, pil_image
     except NotFoundError:
         raise
     except Exception as e:

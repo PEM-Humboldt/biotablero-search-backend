@@ -11,6 +11,7 @@ from shapely.geometry import shape, Polygon as ShapelyPolygon, MultiPolygon
 
 import rasterio
 from rasterio.crs import CRS
+from rasterio.enums import Resampling
 from rasterio.transform import array_bounds
 from rasterio.windows import Window, from_bounds
 from rasterio.features import rasterize
@@ -20,6 +21,7 @@ from pyproj import Transformer
 from geojson_pydantic import geometries
 
 from app.middleware.log_middleware import logger
+from app.utils.config import get_settings
 from app.utils.errors import (
     NotFoundError,
     ServerError,
@@ -27,12 +29,53 @@ from app.utils.errors import (
     MetadataError,
 )
 
+max_dim = get_settings().layer_max_dimension_px
+
+
+def _decimated_read_params(
+    window: Window,
+    window_transform: rasterio.Affine,
+    max_dim: Optional[int],
+) -> Tuple[Optional[Tuple[int, int]], rasterio.Affine]:
+    """
+    Given a raster window, returns the out_shape to pass to a decimated
+    rasterio read (or None if no decimation is needed) plus the transform
+    that matches that decimated grid. Uses nearest-neighbor at read time
+    (cheap, since it can be served from the raster's overviews) so class
+    codes are never blended.
+    """
+    if max_dim is None:
+        return None, window_transform
+
+    longest_side = max(window.width, window.height)
+    if longest_side <= max_dim:
+        return None, window_transform
+
+    scale = max_dim / longest_side
+    out_height = max(1, round(window.height * scale))
+    out_width = max(1, round(window.width * scale))
+
+    decimated_transform = window_transform * window_transform.scale(
+        window.width / out_width, window.height / out_height
+    )
+    return (out_height, out_width), decimated_transform
+
 
 def _crop_raster_by_polygon(
     raster_path: str,
     polygon: geometries.MultiPolygon,
+    max_dim: Optional[int] = None,
 ) -> Tuple[np.ndarray, np.ndarray, Optional[float]]:
-    """Crop a raster by a given polygon and return the masked data, the window transform, and the nodata value."""
+    """
+    Crop a raster by a given polygon and return the masked data, the window
+    transform, and the nodata value.
+
+    max_dim caps the longest side (in px) of the returned array: when the
+    polygon's window exceeds it, the raster is read at a decimated
+    resolution (nearest-neighbor) instead of its native one, cheaply served
+    from the source's overviews when present. Leave it None (the default)
+    for callers that need exact pixel counts, e.g. area/average metrics.
+    """
 
     polygon_geom = shape(polygon)
     source_crs = CRS.from_string("EPSG:4326")
@@ -55,11 +98,18 @@ def _crop_raster_by_polygon(
 
         minx, miny, maxx, maxy = polygon_geom.bounds
         window = from_bounds(minx, miny, maxx, maxy, src.transform)
-        window_transform = src.window_transform(window)
-        data = src.read(1, window=window)
+        out_shape, window_transform = _decimated_read_params(
+            window, src.window_transform(window), max_dim
+        )
+        data = src.read(
+            1,
+            window=window,
+            out_shape=out_shape,
+            resampling=Resampling.nearest,
+        )
         if data is None:
             raise ValueError("Could not read raster data")
-        data = data.astype(np.float64)
+        data = data.astype(np.float32)
 
         src_nodata = src.nodata
 
@@ -123,7 +173,9 @@ def get_one_raster_image(
             log_msg=f"Class {class_value} not found in the colors metadata.",
         )
 
-    masked_data, _, _ = _crop_raster_by_polygon(raster_path, polygon)
+    masked_data, _, _ = _crop_raster_by_polygon(
+        raster_path, polygon, max_dim=max_dim
+    )
 
     if len(masked_data) == 0 or np.all(masked_data != class_value):
         raise NotFoundError(
@@ -192,7 +244,9 @@ def get_one_raster_gradient_image(
             ),
         )
 
-    masked_data, _, nodata = _crop_raster_by_polygon(raster_path, polygon)
+    masked_data, _, nodata = _crop_raster_by_polygon(
+        raster_path, polygon, max_dim=max_dim
+    )
     if nodata is not None:
         masked_data = np.where(masked_data == nodata, np.nan, masked_data)
 
@@ -568,6 +622,7 @@ def crop_two_rasters_by_polygon(
     raster_path: str,
     mask_raster_path: str,
     polygon: geometries.MultiPolygon,
+    max_dim: Optional[int] = None,
 ) -> Tuple[
     np.ndarray, np.ndarray, rasterio.Affine, ShapelyPolygon | MultiPolygon
 ]:
@@ -598,14 +653,27 @@ def crop_two_rasters_by_polygon(
         window = from_bounds(minx, miny, maxx, maxy, src.transform)
         window_mask = from_bounds(minx, miny, maxx, maxy, mask_src.transform)
 
-        data = src.read(1, window=window)
-        mask_data = mask_src.read(1, window=window_mask)
+        out_shape, window_transform = _decimated_read_params(
+            window, src.window_transform(window), max_dim
+        )
+
+        data = src.read(
+            1,
+            window=window,
+            out_shape=out_shape,
+            resampling=Resampling.nearest,
+        )
+        mask_data = mask_src.read(
+            1,
+            window=window_mask,
+            out_shape=out_shape,
+            resampling=Resampling.nearest,
+        )
 
         data = np.where(np.isnan(data), 0, data)
 
         mask_data = np.where(np.isnan(mask_data), 0, mask_data)
 
-        window_transform = src.window_transform(window)
         return data, mask_data, window_transform, polygon_geom
 
 
@@ -635,6 +703,7 @@ def get_two_raster_image(
                 raster_path=raster_path,
                 mask_raster_path=mask_raster_path,
                 polygon=polygon,
+                max_dim=max_dim,
             )
         )
 

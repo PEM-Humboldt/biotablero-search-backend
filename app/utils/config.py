@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     read_timeout: int = 10
     retry_max_attempts: int = 1
     retry_mode: str = "standard"
+    layer_max_dimension_px: int = 4096
 
     @property
     def retry_config(self) -> dict:

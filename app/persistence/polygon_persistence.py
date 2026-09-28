@@ -22,8 +22,8 @@ async def get_polygon(polygon: PolygonGeometry) -> Optional[int]:
     Check if a polygon exists in the DB by hash. Return its ID if it exists.
     """
     multi_polygon = MultiPolygon.model_validate(
-            cast_to_multi_polygon(polygon.model_dump())
-        )
+        cast_to_multi_polygon(polygon.model_dump())
+    )
     hash_value = generate_hash(multi_polygon)
     polygon_obj = await Polygon.get_or_none(hash=hash_value)
     if polygon_obj:

@@ -666,7 +666,6 @@ async def calculate_frequency_selected_coll_values(
         raster_path=raster_url,
         polygon=polygon,
         bins=20,
-        data_range=(values[0], values[-1]),
     )
 
     return {

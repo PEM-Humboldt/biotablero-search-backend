@@ -627,7 +627,7 @@ async def calculate_frequency_selected_coll_values_all_items(
         hist, bin_edges = get_frequency_histogram(
             raster_path=raster_url,
             polygon=polygon,
-            bins=20,
+            bins=metric.edges or 20,
             data_range=(values[0], values[-1]),
         )
         result.append(
@@ -665,7 +665,7 @@ async def calculate_frequency_selected_coll_values(
     hist, bin_edges = get_frequency_histogram(
         raster_path=raster_url,
         polygon=polygon,
-        bins=20,
+        bins=metric.edges or 20,
         data_range=(values[0], values[-1]),
     )
 

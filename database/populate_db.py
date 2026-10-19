@@ -40,6 +40,8 @@ async def populate_db(which_set="all"):
             case "metrics":
                 await seed_collections_and_metrics()
                 await seed_metrics_info()
+            case "metrics_info":
+                await seed_metrics_info()
     except Exception as e:
         print(e)
 
@@ -58,8 +60,9 @@ if __name__ == "__main__":
         "-s",
         "--sets",
         dest="which_set",
-        help="Especifica que conjunto de datos poblar, opciones: 'all', 'areas', 'metrics', 'indicators",
+        help="Especifica que conjunto de datos poblar, opciones: 'all', 'areas', 'metrics', 'indicators', 'metrics_info'",
         default="all",
+        choices=["all", "areas", "metrics", "indicators", "metrics_info"],
         required=False,
     )
 

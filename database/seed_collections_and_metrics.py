@@ -75,6 +75,9 @@ class OperationEnum(Enum):
     )
 
 
+RICHNESS_EDGES = [1, 2, 3, 6, 11, 21, 51, 101, 201, 501, 1001]
+
+
 class MetricEnum(Enum):
     COVERAGE = (
         "coverage",
@@ -263,6 +266,7 @@ class MetricEnum(Enum):
             "plantas": CollectionEnum.RIQUEZA_OBSERVADA_PLANTAS,
             "peces": CollectionEnum.RIQUEZA_OBSERVADA_PECES,
         },
+        RICHNESS_EDGES,
     )
 
     def __init__(
@@ -276,6 +280,7 @@ class MetricEnum(Enum):
         has_group: bool = False,
         allows_national: bool = False,
         group_collections: Optional[Dict[str, CollectionEnum]] = None,
+        edges: Optional[List[int]] = None,
     ):
         self.metric_name = metric_name
         self.operation_type = operation.value
@@ -286,6 +291,7 @@ class MetricEnum(Enum):
         self.has_group = has_group
         self.allows_national = allows_national
         self.group_collections = group_collections
+        self.edges = edges
 
 
 collections_dict = {}
@@ -312,6 +318,7 @@ async def seed_collections_and_metrics():
             operation_type=metric.operation_type,
             indicator_card_id=metric.indicator_card_id,
             allows_national=metric.allows_national,
+            edges=metric.edges,
         )
         await new_metric.save()
 

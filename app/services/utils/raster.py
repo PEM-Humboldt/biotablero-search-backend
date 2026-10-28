@@ -597,11 +597,13 @@ def get_two_raster_areas_by_category(
 def get_frequency_histogram(
     raster_path: str,
     polygon: geometries.MultiPolygon,
-    bins: int = 20,
+    bins: int | list[float] = 20,
     data_range: Optional[Tuple[float, float]] = None,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
     Calculate the frequency histogram of raster values within a given polygon.
+    bins can be the number of equal-width bins or the list of bin edges; when
+    edges are given, data_range is ignored
     """
 
     masked_data, _, nodata = _crop_raster_by_polygon(raster_path, polygon)
@@ -611,6 +613,12 @@ def get_frequency_histogram(
     valid_data = masked_data[~np.isnan(masked_data)]
     if valid_data.size == 0:
         raise ValueError("No valid data found in the polygon region.")
+
+    if isinstance(bins, list):
+        hist, bin_edges = np.histogram(valid_data, bins=[*bins, np.inf])
+        bin_edges[-1] = max(float(np.max(valid_data)), bins[-1])
+        return hist, bin_edges
+
     if data_range is None:
         data_range = (
             float(np.nanmin(valid_data)),

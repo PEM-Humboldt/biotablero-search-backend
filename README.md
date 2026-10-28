@@ -65,6 +65,7 @@ The script accepts the param `-s` or `--sets` to populate onle some set of data,
 - `areas`: area types and polygons
 - `indicators`: tables associated with precualculated indicators
 - `metrics`: tables associated with metrics, collections and metric relations
+- `metrics_info`: Table with the descriptive information for the different metrics. 
 
 At the end of this file there are some additional commands for database migrations
 

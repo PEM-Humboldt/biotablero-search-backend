@@ -273,7 +273,6 @@ class ReportData(Model):
     creation_date = fields.DatetimeField(auto_now_add=True)
     user_name = fields.CharField(max_length=75)
     description = fields.CharField(max_length=500)
-    data = fields.CharField(max_length=280, null=True)
 
     class Meta(Model.Meta):
         table = "report_data"

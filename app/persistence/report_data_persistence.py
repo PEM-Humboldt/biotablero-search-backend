@@ -7,14 +7,12 @@ logger = getLogger(__name__)
 request_id_context = context_vars.request_id_context
 
 
-async def create_report_data(
-    user_name: str, description: str, data: str | None = None
-) -> ReportData:
+async def create_report_data(user_name: str, description: str) -> ReportData:
     """
     Create a new report data record in the DB.
     """
     report_data = await ReportData.create(
-        user_name=user_name, description=description, data=data
+        user_name=user_name, description=description
     )
 
     logger.info(

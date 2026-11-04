@@ -12,7 +12,7 @@ async def add_report_data(
     Saves the reason given by a user to download a report.
     """
     report_data_obj = await create_report_data(
-        user_name, report_data.description, report_data.data
+        user_name, report_data.description
     )
 
     return ReportDataResponse(
@@ -20,5 +20,4 @@ async def add_report_data(
         creation_date=report_data_obj.creation_date,
         user_name=report_data_obj.user_name,
         description=report_data_obj.description,
-        data=report_data_obj.data,
     )

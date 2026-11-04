@@ -9,8 +9,7 @@ async def upgrade(db: BaseDBAsyncClient) -> str:
     "id" SERIAL NOT NULL PRIMARY KEY,
     "creation_date" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "user_name" VARCHAR(75) NOT NULL,
-    "description" VARCHAR(500) NOT NULL,
-    "data" VARCHAR(280)
+    "description" VARCHAR(500) NOT NULL
 );"""
 
 
@@ -58,10 +57,10 @@ MODELS_STATE = (
     "IyPVZ4VUui0jKwwIvaBjX4bk3FlD+4neB2gtsJbicU7zbEY+L0RXDcZdoSPE5mFjubTLpz"
     "o4vJ5llhhVnTpr9eiXdIXx1n6BZXU0YKUE0ZkVOzMoaJCqC4uVRjQ2eMtQBLFsuVuR2aiR"
     "7gCe7nq3Y/wYuC5F2LfYAbbFuORyYw1C30AhiZ3mY/wPGlFS0SB0+gYUO4V5YnIvO8vx8d"
-    "NUdVDV1OGWzdQW2dD0yaxLjYqZypSSnJmXT4IJJz+JBLOZRuKVIMmKRbimTXBIktCsrvwx"
-    "JO/MJohfJyLmD9KIISkar4WZXdG/5U1X6h6c/W9m8y/rnFBWD+ZTL/cqXyG1H9EJcTCPa2"
-    "WL5NXmMKsAWlieQxiWhV7DiqAKOicrbfFcFQ5e3A20YAMYfeiQCIefyujQA+rrYDMNBrK4"
-    "C6+Yhc/ZFja4u5CqPSVtgwudMlr1yjEDVGo+WgKcngq45fRrmtUEIm6FVExyATBJkgyAQx"
-    "m+1gR1cX3cJQUHi8tzkIhBJJiP40bNT2SqI/j9hxK4a6GRU54z7b70Boc77iUrJRmM37eI"
-    "skIG0dHCNnJXSRw5OK97BgVGATiyzJiTaxOGgm4eU/5VKI4g=="
+    "NUdVDV1OGWzdQW2dD0yaxLjYqZypSSnJmXT4IJJz+JBLOZRuKVIMmKRbimTXBIktCqr6wZ"
+    "Ddm7RUPXqhUctWrW8ya7myeTBsMhk2uZLUjcjrx4lywd4Wy7fJH0oBtqAEiDwmEa2KHUcV"
+    "YFRUzsayIhiqvL1l2wgg5hAXEQAxj7m0EcDH1XYABnptBVA3H5GrP3JsbTFXYVTaChsmd7"
+    "rkFSIUosZotBw0JRl81fHLKLcVSshxvIq4D+Q4IMcBOQ5mGxns6OqiWxgKCo/3NgeBUCIJ"
+    "0Z+GjdpeSfTnETtuxSAuoyJn3Gf7vfVszvdJSrbAsnmfJZEEpK2DY+SshC5yeFLx7gyMCm"
+    "zPkCU50fYMB80kvPwH/w8qVw=="
 )

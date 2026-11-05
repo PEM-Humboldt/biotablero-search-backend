@@ -83,8 +83,6 @@ def get_current_user_name(
     except jwt.PyJWTError as e:
         raise _unauthorized(f"invalid token ({e})")
 
-    # ID and refresh tokens share issuer and audience, only access tokens
-    # are accepted
     if claims.get("typ") != "Bearer":
         raise _unauthorized(f"unexpected token type ({claims.get('typ')})")
 

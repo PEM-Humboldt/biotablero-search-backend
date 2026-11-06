@@ -541,6 +541,33 @@ def get_one_raster_areas_by_category(
     return areas_by_category
 
 
+def get_one_raster_areas_total(
+    raster_path: str,
+    polygon: geometries.MultiPolygon,
+) -> Dict[str, float]:
+    """
+    Calculate the area in hectares of raster values within a given polygon,
+    grouped by user-defined categories.
+    """
+    masked_data, window_transform, nodata = _crop_raster_by_polygon(
+        raster_path, polygon
+    )
+
+    if nodata is not None:
+        masked_data = np.where(masked_data == nodata, 0, masked_data)
+
+    data = np.where(
+        masked_data > 0, 1.0, np.where(np.isnan(masked_data), np.nan, 0.0)
+    )
+
+    pixel_area_ha = _get_raster_pixel_area_ha(window_transform, "EPSG:4326")
+    unique_values, counts = np.unique(data, return_counts=True)
+    pixel_count = counts[np.where(unique_values == 1.0)[0][0]]
+
+    area_ha = float(pixel_count * pixel_area_ha)
+    return area_ha
+
+
 def get_two_raster_areas_by_category(
     raster1_path: str,
     raster2_path: str,

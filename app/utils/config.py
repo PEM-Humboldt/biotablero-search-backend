@@ -27,6 +27,13 @@ class Settings(BaseSettings):
     retry_max_attempts: int = 1
     retry_mode: str = "standard"
     layer_max_dimension_px: int = 4096
+    kc_base_url: str = "http://localhost:8080"
+    kc_realm: str = "bt-cm"
+    kc_client: str = "bt-cm-client"
+
+    @property
+    def kc_issuer(self) -> str:
+        return f"{self.kc_base_url.rstrip('/')}/realms/{self.kc_realm}"
 
     @property
     def retry_config(self) -> dict:

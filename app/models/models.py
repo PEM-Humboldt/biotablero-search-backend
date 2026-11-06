@@ -266,3 +266,13 @@ class SpeciesStats(Model):
 
     class Meta(Model.Meta):
         table = "species_stats"
+
+
+class ReportData(Model):
+    id = fields.IntField(pk=True)
+    creation_date = fields.DatetimeField(auto_now_add=True)
+    user_name = fields.CharField(max_length=75)
+    description = fields.CharField(max_length=500)
+
+    class Meta(Model.Meta):
+        table = "report_data"

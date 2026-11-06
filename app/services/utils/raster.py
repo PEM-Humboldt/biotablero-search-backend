@@ -546,8 +546,7 @@ def get_one_raster_areas_total(
     polygon: geometries.MultiPolygon,
 ) -> Dict[str, float]:
     """
-    Calculate the area in hectares of raster values within a given polygon,
-    grouped by user-defined categories.
+    Calculate the total area in hectares of a raster within a given polygon.
     """
     masked_data, window_transform, nodata = _crop_raster_by_polygon(
         raster_path, polygon

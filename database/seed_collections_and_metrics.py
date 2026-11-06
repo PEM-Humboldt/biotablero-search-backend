@@ -18,20 +18,36 @@ class CollectionEnum(Enum):
     HUMEDAL = "Humedales"
     AREAS_PROTEGIDAS = ("AreasProtegidas", True)
     AREAS_PROTEGIDAS_AREANATURALUNICA = "AreasProtegidasAreaNaturalUnica"
-    AREAS_PROTEGIDAS_SANTUARIOFLORA="AreasProtegidasSantuarioFlora"
-    AREAS_PROTEGIDAS_VIAPARQUE="AreasProtegidasViaParque"
-    AREAS_PROTEGIDAS_DISTRICTOSCONSERVACIONSUELOS="AreasProtegidasDistritosConservacionSuelos"
-    AREAS_PROTEGIDAS_DISTRICTOSNACIONALESMANEJOINTEGRADO="AreasProtegidasDistritosNacionalesManejoIntegrado"
-    AREAS_PROTEGIDAS_DISTRICTOSREGIONALESMANEJOINTEGRADO="AreasProtegidasDistritosRegionalesManejoIntegrado"
-    AREAS_PROTEGIDAS_PARQUENACIONALNATURAL="AreasProtegidasParqueNacionalNatural"
-    AREAS_PROTEGIDAS_PARQUESNATURALESREGIONALES="AreasProtegidasParquesNaturalesRegionales"
-    AREAS_PROTEGIDAS_RESENVANATURAL="AreasProtegidasReservaNatural"
-    AREAS_PROTEGIDAS_RESENVANATURALSOCIEDADCIVIL="AreasProtegidasReservaNaturalSociedadCivil"
-    AREAS_PROTEGIDAS_RESERVASFORESTALESPROTECTORASNACIONALES="AreasProtegidasReservasForestalesProtectorasNacionales"
-    AREAS_PROTEGIDAS_RESERVASFORESTALESPROTECTORASREGIONALES="AreasProtegidasReservasForestalesProtectorasRegionales"
-    AREAS_PROTEGIDAS_SANTUARIOFAUNA="AreasProtegidasSantuarioFauna"
-    AREAS_PROTEGIDAS_SANTUARIOFAUNAFLORA="AreasProtegidasSantuarioFaunaFlora"
-    AREAS_PROTEGIDAS_AREADECREACION="AreasProtegidasAreaDeRecreacion"
+    AREAS_PROTEGIDAS_SANTUARIOFLORA = "AreasProtegidasSantuarioFlora"
+    AREAS_PROTEGIDAS_VIAPARQUE = "AreasProtegidasViaParque"
+    AREAS_PROTEGIDAS_DISTRICTOSCONSERVACIONSUELOS = (
+        "AreasProtegidasDistritosConservacionSuelos"
+    )
+    AREAS_PROTEGIDAS_DISTRICTOSNACIONALESMANEJOINTEGRADO = (
+        "AreasProtegidasDistritosNacionalesManejoIntegrado"
+    )
+    AREAS_PROTEGIDAS_DISTRICTOSREGIONALESMANEJOINTEGRADO = (
+        "AreasProtegidasDistritosRegionalesManejoIntegrado"
+    )
+    AREAS_PROTEGIDAS_PARQUENACIONALNATURAL = (
+        "AreasProtegidasParqueNacionalNatural"
+    )
+    AREAS_PROTEGIDAS_PARQUESNATURALESREGIONALES = (
+        "AreasProtegidasParquesNaturalesRegionales"
+    )
+    AREAS_PROTEGIDAS_RESENVANATURAL = "AreasProtegidasReservaNatural"
+    AREAS_PROTEGIDAS_RESENVANATURALSOCIEDADCIVIL = (
+        "AreasProtegidasReservaNaturalSociedadCivil"
+    )
+    AREAS_PROTEGIDAS_RESERVASFORESTALESPROTECTORASNACIONALES = (
+        "AreasProtegidasReservasForestalesProtectorasNacionales"
+    )
+    AREAS_PROTEGIDAS_RESERVASFORESTALESPROTECTORASREGIONALES = (
+        "AreasProtegidasReservasForestalesProtectorasRegionales"
+    )
+    AREAS_PROTEGIDAS_SANTUARIOFAUNA = "AreasProtegidasSantuarioFauna"
+    AREAS_PROTEGIDAS_SANTUARIOFAUNAFLORA = "AreasProtegidasSantuarioFaunaFlora"
+    AREAS_PROTEGIDAS_AREADECREACION = "AreasProtegidasAreasRecreacion"
     RIQUEZA_OBSERVADA = "RiquezaObservada"
     RIQUEZA_OBSERVADA_ANFIBIOS = "RiquezaObservadaAnfibios"
     RIQUEZA_OBSERVADA_AVES = "RiquezaObservadaAves"
@@ -72,7 +88,9 @@ class OperationEnum(Enum):
     AVERAGE_MULTIPLE_COLLECTION_ALL_ITEMS = (
         "AVERAGE_MULTIPLE-COLLECTION_ALL-ITEMS"
     )
-    AREA_MULTIPLE_INDEPENDENT_COLLECTIONS = "AREA_MULTIPLE-INDEPENDENT-COLLECTIONS"
+    AREA_MULTIPLE_INDEPENDENT_COLLECTIONS = (
+        "AREA_MULTIPLE-INDEPENDENT-COLLECTIONS"
+    )
     AREA_CATEGORIES_TWO_COLLECTIONS = "AREA_CATEGORIES_TWO-COLLECTIONS"
     AREA_CATEGORIES_SINGLE_COLLECTION_FILTERED = (
         "AREA_CATEGORIES_SINGLE-COLLECTION_FILTERED"

@@ -13,7 +13,7 @@ from app.services.utils.raster import (
     get_frequency_histogram,
     get_polygon_and_mask_averages,
     get_one_raster_gradient_image,
-    get_one_raster_areas_by_category
+    get_one_raster_areas_by_category,
 )
 from app.services.utils.stac import (
     get_item_index_by_resolution,

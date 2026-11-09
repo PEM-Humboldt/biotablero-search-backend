@@ -13,6 +13,7 @@ from app.services.utils.raster import (
     get_frequency_histogram,
     get_polygon_and_mask_averages,
     get_one_raster_gradient_image,
+    get_one_raster_areas_by_category
 )
 from app.services.utils.stac import (
     get_item_index_by_resolution,
@@ -510,7 +511,7 @@ async def calculate_cat_multiple_coll_values(
     """
     metric_collections = [mc for mc in metric.collections]
 
-    if metric_collections is None:
+    if not metric_collections:
         raise ServerError(
             code=500,
             usr_msg=f"There was an error calculating the metric {metric.name}.",
@@ -519,12 +520,13 @@ async def calculate_cat_multiple_coll_values(
 
     polygon_area = polygon_obj.area
     result = {}
+    item_id = ""
     for metric_collection in metric_collections:
 
         await metric_collection.fetch_related("collection")
         collection = metric_collection.collection
 
-        id, raster_url = get_items_asset_url(collection.name)[0]
+        item_id, raster_url = get_items_asset_url(collection.name)[0]
         _, _, _, _, category = await fetch_collection_metadata(collection)
         polygon = geometries.MultiPolygon(**polygon_obj.geometry)
         try:
@@ -534,7 +536,7 @@ async def calculate_cat_multiple_coll_values(
             result[category] = 0
             pass
     result["No Protegida"] = polygon_area - sum(result.values())
-    return {"id": id, **result}
+    return {"id": item_id, **result}
 
 
 async def calculate_cat_single_coll_values(

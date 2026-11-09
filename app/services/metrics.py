@@ -3,7 +3,7 @@ from geojson_pydantic import geometries
 from fastapi import HTTPException
 
 from app.services.utils.raster import (
-    get_one_raster_areas_by_category,
+    get_one_raster_areas_total,
     get_two_raster_areas_by_category,
     get_one_raster_image,
     get_one_raster_areas_by_classes,
@@ -13,6 +13,7 @@ from app.services.utils.raster import (
     get_frequency_histogram,
     get_polygon_and_mask_averages,
     get_one_raster_gradient_image,
+    get_one_raster_areas_by_category,
 )
 from app.services.utils.stac import (
     get_item_index_by_resolution,
@@ -48,7 +49,7 @@ from app.persistence.metric_info_persistence import (
     get_metric_info_by_metric,
 )
 from app.utils.s3_utils import upload_to_s3
-from app.utils.errors import ServerError, MetadataError
+from app.utils.errors import ServerError, MetadataError, UnprocessableError
 from app.persistence.utils.lock_utils import advisory_xact_lock
 
 
@@ -502,6 +503,42 @@ async def calculate_ave_multiple_colls_values(
     return results
 
 
+async def calculate_cat_multiple_coll_values(
+    metric: Metric, polygon_obj: Polygon, _group: str | None = None
+) -> Dict[str, str | float]:
+    """
+    calculates the area of each collection within a polygon
+    """
+    metric_collections = [mc for mc in metric.collections]
+
+    if not metric_collections:
+        raise ServerError(
+            code=500,
+            usr_msg=f"There was an error calculating the metric {metric.name}.",
+            e=Exception("Collections not found"),
+        )
+
+    polygon_area = polygon_obj.area
+    result = {}
+    item_id = ""
+    for metric_collection in metric_collections:
+
+        await metric_collection.fetch_related("collection")
+        collection = metric_collection.collection
+
+        item_id, raster_url = get_items_asset_url(collection.name)[0]
+        _, _, _, _, category = await fetch_collection_metadata(collection)
+        polygon = geometries.MultiPolygon(**polygon_obj.geometry)
+        try:
+            result[category] = get_one_raster_areas_total(raster_url, polygon)
+        except UnprocessableError:
+            # The polygon does not intersect this collection's raster
+            # bounds, so it contains none of its area.
+            result[category] = 0.0
+    result["No Protegida"] = polygon_area - sum(result.values())
+    return {"id": item_id, **result}
+
+
 async def calculate_cat_single_coll_values(
     metric: Metric, polygon_obj: Polygon, _group: str | None = None
 ) -> Dict[str, str | float]:
@@ -894,7 +931,7 @@ class OperationFunctions:
             "AREA_TWO-COLLECTIONS": calculate_two_colls_values,
             "AVERAGE_SINGLE-COLLECTION": calculate_ave_coll_values,
             "AVERAGE_MULTIPLE-COLLECTION_ALL-ITEMS": calculate_ave_multiple_colls_values,
-            "AREA_CATEGORIES_SINGLE-COLLECTION": calculate_cat_single_coll_values,
+            "AREA_MULTIPLE-INDEPENDENT-COLLECTIONS": calculate_cat_multiple_coll_values,
             "AREA_CATEGORIES_TWO-COLLECTIONS": calculate_cat_two_colls_values,
             "AREA_CATEGORIES_SINGLE-COLLECTION_FILTERED": calculate_cat_single_coll_filtered_values,
             "TABLE_PRECALCULATED": calculate_table_precalculated_values,

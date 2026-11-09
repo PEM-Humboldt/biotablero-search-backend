@@ -1,10 +1,19 @@
 import csv
 import logging
+from typing import Dict
 
 from app.models.models import ProtConn, DPC, Polygon, Collection
 from app.services.utils.stac import fetch_collection_metadata
+from database.seed_collections_and_metrics import CollectionEnum
 
 logger = logging.getLogger(__name__)
+
+PA_COLLECTIONS = [
+    e.col_name
+    for e in CollectionEnum
+    if e.col_name.startswith("AreasProtegidas")
+    and e.col_name != "AreasProtegidas"
+]
 
 
 async def seed_connectivity_indicators():
@@ -37,17 +46,32 @@ async def seed_connectivity_indicators():
                 "⚠ No se insertaron registros de protconn. Verifica el archivo protconn.csv",
             )
 
-    pa_collection = await Collection.get_or_none(name="AreasProtegidas")
-    if not pa_collection:
+    pa_names_by_id: Dict[int, str] = {}
+    for collection_name in PA_COLLECTIONS:
+        pa_collection = await Collection.get_or_none(name=collection_name)
+        if not pa_collection:
+            logger.info(
+                f"⚠ No se encuentra la colección {collection_name} en la base de datos",
+            )
+            continue
+        try:
+            _, values, classes, _, _ = await fetch_collection_metadata(
+                pa_collection
+            )
+        except Exception as e:
+            logger.info(
+                f"⚠ No se pudo obtener la metadata de {collection_name}: {e}",
+            )
+            continue
+        pa_names_by_id.update(zip(values, classes))
+
+    if not pa_names_by_id:
         logger.info(
-            "⚠ No se pueden insertar registros de DPC, no se encuentra la colección de áreas protegidas en la base de datos",
+            "⚠ No se pueden insertar registros de DPC, no se encontró ninguna colección de áreas protegidas",
         )
     else:
         errors = 0
         counter = 0
-        _, values, classes, _, _ = await fetch_collection_metadata(
-            pa_collection
-        )
         with open("data/dpc.csv", "r", encoding="utf-8", newline="") as file:
             dpc_reader = csv.DictReader(file)
             for row in dpc_reader:
@@ -64,15 +88,13 @@ async def seed_connectivity_indicators():
                     print("polígono no encontrado, %s" % (row["id"]))
                     errors += 1
                     continue
-                pa_index = None
-                try:
-                    pa_index = values.index(int(row["ap_id"]))
-                except ValueError as e:
+                pa_name = pa_names_by_id.get(int(row["ap_id"]))
+                if pa_name is None:
                     print(
                         "AP id no encontrada en el STAC, %s" % (row["ap_id"])
                     )
+                    errors += 1
                     continue
-                pa_name = classes[pa_index]
                 dpc_obj = DPC(
                     polygon=polygon,
                     dpc=row["dPC"],

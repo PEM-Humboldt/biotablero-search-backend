@@ -15,12 +15,12 @@ class MetadataProperties(BaseModel):
     values: List[int]
     colors: List[str]
     classes: List[str]
-    categories: List[str]
+    categories: str | List[str]
 
 
 async def fetch_collection_metadata(
     collection: Collection,
-) -> Tuple[Dict[str, int], List[int], List[str], List[str], List[str]]:
+) -> Tuple[Dict[str, int], List[int], List[str], List[str], str | List[str]]:
     try:
         collection_url = url.build_url(
             settings.stac_url, f"/collections/{collection.name}"

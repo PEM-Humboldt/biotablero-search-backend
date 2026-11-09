@@ -552,19 +552,14 @@ def get_one_raster_areas_total(
         raster_path, polygon
     )
 
-    if nodata is not None:
-        masked_data = np.where(masked_data == nodata, 0, masked_data)
-
-    data = np.where(
-        masked_data > 0, 1.0, np.where(np.isnan(masked_data), np.nan, 0.0)
-    )
+    valid = masked_data > 0
+    if nodata is not None and not np.isnan(nodata):
+        valid &= masked_data != nodata
 
     pixel_area_ha = _get_raster_pixel_area_ha(window_transform, "EPSG:4326")
-    unique_values, counts = np.unique(data, return_counts=True)
-    pixel_count = counts[np.where(unique_values == 1.0)[0][0]]
+    pixel_count = np.count_nonzero(valid)
 
-    area_ha = float(pixel_count * pixel_area_ha)
-    return area_ha
+    return float(pixel_count * pixel_area_ha)
 
 
 def get_two_raster_areas_by_category(

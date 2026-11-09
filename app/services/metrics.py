@@ -49,7 +49,7 @@ from app.persistence.metric_info_persistence import (
     get_metric_info_by_metric,
 )
 from app.utils.s3_utils import upload_to_s3
-from app.utils.errors import ServerError, MetadataError
+from app.utils.errors import ServerError, MetadataError, UnprocessableError
 from app.persistence.utils.lock_utils import advisory_xact_lock
 
 
@@ -530,11 +530,11 @@ async def calculate_cat_multiple_coll_values(
         _, _, _, _, category = await fetch_collection_metadata(collection)
         polygon = geometries.MultiPolygon(**polygon_obj.geometry)
         try:
-            area_raster = get_one_raster_areas_total(raster_url, polygon)
-            result[category] = area_raster
-        except Exception as e:
-            result[category] = 0
-            pass
+            result[category] = get_one_raster_areas_total(raster_url, polygon)
+        except UnprocessableError:
+            # The polygon does not intersect this collection's raster
+            # bounds, so it contains none of its area.
+            result[category] = 0.0
     result["No Protegida"] = polygon_area - sum(result.values())
     return {"id": item_id, **result}
 

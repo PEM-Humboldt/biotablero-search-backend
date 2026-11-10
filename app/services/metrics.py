@@ -3,7 +3,6 @@ from geojson_pydantic import geometries
 from fastapi import HTTPException
 
 from app.services.utils.raster import (
-    get_one_raster_areas_total,
     get_two_raster_areas_by_category,
     get_one_raster_image,
     get_one_raster_areas_by_classes,
@@ -14,6 +13,8 @@ from app.services.utils.raster import (
     get_polygon_and_mask_averages,
     get_one_raster_gradient_image,
     get_one_raster_areas_by_category,
+    get_multiple_raster_areas_total,
+    get_multiple_raster_areas_total_masked,
 )
 from app.services.utils.stac import (
     get_item_index_by_resolution,
@@ -49,7 +50,7 @@ from app.persistence.metric_info_persistence import (
     get_metric_info_by_metric,
 )
 from app.utils.s3_utils import upload_to_s3
-from app.utils.errors import ServerError, MetadataError, UnprocessableError
+from app.utils.errors import ServerError, MetadataError
 from app.persistence.utils.lock_utils import advisory_xact_lock
 
 
@@ -507,7 +508,7 @@ async def calculate_cat_multiple_coll_values(
     metric: Metric, polygon_obj: Polygon, _group: str | None = None
 ) -> Dict[str, str | float]:
     """
-    calculates the area of each collection within a polygon
+    calculates the area of multiple collections within a polygon
     """
     metric_collections = [mc for mc in metric.collections]
 
@@ -518,25 +519,88 @@ async def calculate_cat_multiple_coll_values(
             e=Exception("Collections not found"),
         )
 
-    polygon_area = polygon_obj.area
-    result = {}
+    rasters_by_category: Dict[str, str] = {}
     item_id = ""
     for metric_collection in metric_collections:
-
         await metric_collection.fetch_related("collection")
         collection = metric_collection.collection
 
         item_id, raster_url = get_items_asset_url(collection.name)[0]
         _, _, _, _, category = await fetch_collection_metadata(collection)
-        polygon = geometries.MultiPolygon(**polygon_obj.geometry)
-        try:
-            result[category] = get_one_raster_areas_total(raster_url, polygon)
-        except UnprocessableError:
-            # The polygon does not intersect this collection's raster
-            # bounds, so it contains none of its area.
-            result[category] = 0.0
-    result["No Protegida"] = polygon_area - sum(result.values())
-    return {"id": item_id, **result}
+        category_key = category if isinstance(category, str) else category[0]
+        rasters_by_category[category_key] = raster_url
+
+    polygon = geometries.MultiPolygon(**polygon_obj.geometry)
+    areas_by_category, not_protected_area = get_multiple_raster_areas_total(
+        rasters_by_category, polygon
+    )
+
+    return {
+        "id": item_id,
+        **areas_by_category,
+        "No Protegida": not_protected_area,
+    }
+
+
+async def calculate_cat_multiple_coll_masked_values(
+    metric: Metric, polygon_obj: Polygon, _group: str | None = None
+) -> Dict[str, str | float]:
+    """
+    calculates the area of each secondary collection within a polygon,
+    only where the primary collection has data
+    """
+    primary_collection = next(
+        (mc for mc in metric.collections if mc.is_primary), None
+    )
+    if primary_collection is None:
+        raise ServerError(
+            code=500,
+            usr_msg=f"There was an error calculating the metric {metric.name}.",
+            e=Exception("Primary collection not found"),
+        )
+
+    metric_collections = [mc for mc in metric.collections if not mc.is_primary]
+    if not metric_collections:
+        raise ServerError(
+            code=500,
+            usr_msg=f"There was an error calculating the metric {metric.name}.",
+            e=Exception("Secondary collections not found"),
+        )
+
+    rasters_by_category: Dict[str, str] = {}
+    item_id = ""
+    for metric_collection in metric_collections:
+        await metric_collection.fetch_related("collection")
+        collection = metric_collection.collection
+
+        item_id, raster_url = get_items_asset_url(collection.name)[0]
+        _, _, _, _, category = await fetch_collection_metadata(collection)
+        category_key = category if isinstance(category, str) else category[0]
+        rasters_by_category[category_key] = raster_url
+
+    await primary_collection.fetch_related("collection")
+    primary_collection = primary_collection.collection
+
+    resol_sec = get_item_resolution_by_item_id(
+        metric_collections[-1].collection.name, item_id
+    )
+    index_pri = get_item_index_by_resolution(primary_collection.name, resol_sec)
+    id_pri, raster_pri_url = get_items_asset_url(primary_collection.name)[
+        index_pri
+    ]
+
+    polygon = geometries.MultiPolygon(**polygon_obj.geometry)
+    areas_by_category, not_protected_area = (
+        get_multiple_raster_areas_total_masked(
+            raster_pri_url, rasters_by_category, polygon
+        )
+    )
+
+    return {
+        "id": id_pri,
+        **areas_by_category,
+        "No Protegida": not_protected_area,
+    }
 
 
 async def calculate_cat_single_coll_values(
@@ -931,7 +995,6 @@ class OperationFunctions:
             "AREA_TWO-COLLECTIONS": calculate_two_colls_values,
             "AVERAGE_SINGLE-COLLECTION": calculate_ave_coll_values,
             "AVERAGE_MULTIPLE-COLLECTION_ALL-ITEMS": calculate_ave_multiple_colls_values,
-            "AREA_MULTIPLE-INDEPENDENT-COLLECTIONS": calculate_cat_multiple_coll_values,
             "AREA_CATEGORIES_TWO-COLLECTIONS": calculate_cat_two_colls_values,
             "AREA_CATEGORIES_SINGLE-COLLECTION_FILTERED": calculate_cat_single_coll_filtered_values,
             "TABLE_PRECALCULATED": calculate_table_precalculated_values,
@@ -943,6 +1006,8 @@ class OperationFunctions:
                 calculate_frequency_selected_coll_values
             ),
             "AVERAGE_SINGLE-SELECTED-COLLECTION_ALL-ITEMS": calculate_average_selected_coll_values_all_items,
+            "AREA_MULTIPLE-INDEPENDENT-COLLECTIONS": calculate_cat_multiple_coll_values,
+            "AREA_MULTIPLE-INDEPENDENT-COLLECTIONS_MASKED": calculate_cat_multiple_coll_masked_values,
         }
         layer_functions = {
             "AREA_SINGLE-COLLECTION": calculate_single_coll_layer,

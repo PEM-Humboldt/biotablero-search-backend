@@ -591,8 +591,10 @@ def get_multiple_raster_areas_total(
         width = int(np.ceil(window.col_off + window.width)) - col_off
         height = int(np.ceil(window.row_off + window.height)) - row_off
         grid_transform = src.window_transform(
-            Window(
-                col_off=col_off, row_off=row_off, width=width, height=height
+            Window.from_slices(
+                (row_off, row_off + height),
+                (col_off, col_off + width),
+                boundless=True,
             )
         )
 
@@ -622,11 +624,6 @@ def get_multiple_raster_areas_total_masked(
     Calculate the total area in hectares (presence, not by class) of each
     raster within a given polygon, only where the mask raster has data, and
     the mask area within the polygon not covered by any of them.
-
-    The grid is the mask raster grid. Each raster is read only where it
-    overlaps the polygon and resampled (nearest) onto the grid, so the
-    rasters may differ in extent and resolution from the mask, but must share
-    its CRS. Overlapping rasters are not counted twice in the uncovered area.
     """
     masked_data, grid_transform, nodata = _crop_raster_by_polygon(
         mask_raster_path, polygon
@@ -689,11 +686,8 @@ def _get_rasters_areas_in_mask(
             if col_end <= col_start or row_end <= row_start:
                 continue
 
-            grid_window = Window(
-                col_off=col_start,
-                row_off=row_start,
-                width=col_end - col_start,
-                height=row_end - row_start,
+            grid_window = Window.from_slices(
+                (row_start, row_end), (col_start, col_end)
             )
             src_window = from_bounds(
                 *window_bounds(grid_window, grid_transform),

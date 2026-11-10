@@ -584,7 +584,9 @@ async def calculate_cat_multiple_coll_masked_values(
     resol_sec = get_item_resolution_by_item_id(
         metric_collections[-1].collection.name, item_id
     )
-    index_pri = get_item_index_by_resolution(primary_collection.name, resol_sec)
+    index_pri = get_item_index_by_resolution(
+        primary_collection.name, resol_sec
+    )
     id_pri, raster_pri_url = get_items_asset_url(primary_collection.name)[
         index_pri
     ]

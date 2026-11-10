@@ -591,17 +591,22 @@ def get_multiple_raster_areas_total(
         width = int(np.ceil(window.col_off + window.width)) - col_off
         height = int(np.ceil(window.row_off + window.height)) - row_off
         grid_transform = src.window_transform(
-            Window(col_off, row_off, width, height)
+            Window(
+                col_off=col_off, row_off=row_off, width=width, height=height
+            )
         )
 
-    mask = rasterize(
+    polygon_mask = rasterize(
         [polygon_geom],
         out_shape=(height, width),
         transform=grid_transform,
         fill=0,
         default_value=1,
         dtype=np.uint8,
-    ).astype(bool)
+    )
+    if polygon_mask is None:
+        raise ValueError("Failed to rasterize polygon")
+    mask = polygon_mask.astype(bool)
 
     return _get_rasters_areas_in_mask(
         mask, grid_transform, grid_crs, rasters_paths
@@ -685,7 +690,10 @@ def _get_rasters_areas_in_mask(
                 continue
 
             grid_window = Window(
-                col_start, row_start, col_end - col_start, row_end - row_start
+                col_off=col_start,
+                row_off=row_start,
+                width=col_end - col_start,
+                height=row_end - row_start,
             )
             src_window = from_bounds(
                 *window_bounds(grid_window, grid_transform),

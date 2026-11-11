@@ -1,8 +1,9 @@
-# Ignore GIT folder and files
+# Ignore GIT folder and CI/CD files
 .git
 .github
 .gitignore
 .gitattributes
+buildspec.yml
 
 # Ignore virtual environment and local dependencies
 .venv
@@ -13,30 +14,36 @@ ENV/
 dist/
 build/
 
-# Ignore some project files
-__pycache__/
-*.py[cod]
-*$py.class
+# Ignore python cache files
+**/__pycache__/
+**/*.py[cod]
+**/*$py.class
 .pytest_cache/
 .coverage
 htmlcov/
 .mypy_cache/
 .pytype/
+.ruff_cache/
+
+# Ignore environment variables and secrets files
 .env
 .env.*
 *.env
 env.sample
-logs/*
-!logs/.gitkeep
-*.log
+
+# Ignore logs
+logs/
+**/*.log
+
+# Ignore documentation and local setup
 README.md
 LICENSE
-
-# Ignore folders with external data
 .vscode/
 .idea/
 *.sublime-project
 *.sublime-workspace
+.DS_Store
+Thumbs.db
 
 # Ignore docker files
 Dockerfile*
@@ -44,8 +51,6 @@ Dockerfile*
 docker-compose*.yml
 docker/
 
-# Ignore base data files
-data/*.geojson
-data/*.csv
-data/*.tif
-data/*.zip
+# Ignore local data
+data/
+database/

@@ -11,7 +11,6 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
-    gcc \
     && rm -rf /var/lib/apt/lists/*
 
 ## Create and enable virtual environment
@@ -49,12 +48,12 @@ COPY --from=builder /opt/venv /opt/venv
 
 WORKDIR /app
 
+## Copy application code
+COPY --chown=app:app . /app
+
 ## Make logs directory and set permissions
 RUN mkdir -p /app/logs && \
     chown -R app:app /app
-
-## Copy application code
-COPY --chown=app:app . /app
 
 # Switch to non-root user
 USER app
@@ -67,4 +66,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
     CMD curl -fsS http://localhost:${PORT}/health > /dev/null || exit 1
 
 ## Execute program
-CMD ["sh", "-c", "uvicorn app.main:app --host ${HOST} --port ${PORT}"]
+CMD ["sh", "-c", "exec uvicorn app.main:app --host ${HOST} --port ${PORT}"]

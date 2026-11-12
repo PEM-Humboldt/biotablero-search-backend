@@ -66,4 +66,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
     CMD curl -fsS http://localhost:${PORT}/health > /dev/null || exit 1
 
 ## Execute program
-CMD ["sh", "-c", "exec uvicorn app.main:app --host ${HOST} --port ${PORT}"]
+CMD ["sh", "-c", "exec uvicorn app.main:app --host ${HOST} --port ${PORT} --workers 2"]

@@ -11,7 +11,6 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     libpq-dev \
-    gcc \
     && rm -rf /var/lib/apt/lists/*
 
 ## Create and enable virtual environment
@@ -38,7 +37,6 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libexpat1 \
     libpq5 \
     curl \
-    netcat-openbsd \
     && rm -rf /var/lib/apt/lists/*
 
 ## User setup
@@ -50,15 +48,12 @@ COPY --from=builder /opt/venv /opt/venv
 
 WORKDIR /app
 
-## Make logs directory and set permissions
-RUN mkdir -p /app/logs && \
-    chown -R app:app /app
-
 ## Copy application code
 COPY --chown=app:app . /app
 
-## Ensure entrypoint script is executable
-RUN chmod +x /app/start.sh
+## Make logs directory and set permissions
+RUN mkdir -p /app/logs && \
+    chown -R app:app /app
 
 # Switch to non-root user
 USER app
@@ -71,4 +66,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
     CMD curl -fsS http://localhost:${PORT}/health > /dev/null || exit 1
 
 ## Execute program
-ENTRYPOINT ["./start.sh"]
+CMD ["sh", "-c", "exec uvicorn app.main:app --host ${HOST} --port ${PORT} --workers 3"]

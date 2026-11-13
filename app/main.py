@@ -12,7 +12,7 @@ from app.middleware.exceptions import UnsupportedMetricException
 
 from app.utils.errors import ServerError, NotFoundError, UnprocessableError
 from app.middleware.log_middleware import log_requests
-from app.routes import metrics, areas, collections, reports
+from app.routes import health, metrics, areas, collections, reports
 from app.utils.config import get_settings, TORTOISE_ORM
 from tortoise.contrib.fastapi import register_tortoise
 
@@ -61,6 +61,7 @@ app.add_middleware(
     allow_credentials=True,
 )
 
+app.include_router(health.router)
 app.include_router(metrics.router)
 app.include_router(areas.router)
 app.include_router(collections.router)

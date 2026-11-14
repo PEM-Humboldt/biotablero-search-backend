@@ -504,7 +504,7 @@ async def calculate_ave_multiple_colls_values(
     return results
 
 
-async def calculate_cat_multiple_coll_values(
+async def calculate_multiple_indp_coll_values(
     metric: Metric, polygon_obj: Polygon, _group: str | None = None
 ) -> Dict[str, str | float]:
     """
@@ -542,7 +542,7 @@ async def calculate_cat_multiple_coll_values(
     }
 
 
-async def calculate_cat_multiple_coll_masked_values(
+async def calculate_multiple_indp_coll_masked_values(
     metric: Metric, polygon_obj: Polygon, _group: str | None = None
 ) -> Dict[str, str | float]:
     """
@@ -1008,8 +1008,8 @@ class OperationFunctions:
                 calculate_frequency_selected_coll_values
             ),
             "AVERAGE_SINGLE-SELECTED-COLLECTION_ALL-ITEMS": calculate_average_selected_coll_values_all_items,
-            "AREA_MULTIPLE-INDEPENDENT-COLLECTIONS": calculate_cat_multiple_coll_values,
-            "AREA_MULTIPLE-INDEPENDENT-COLLECTIONS_MASKED": calculate_cat_multiple_coll_masked_values,
+            "AREA_MULTIPLE-INDEPENDENT-COLLECTIONS": calculate_multiple_indp_coll_values,
+            "AREA_MULTIPLE-INDEPENDENT-COLLECTIONS_MASKED": calculate_multiple_indp_coll_masked_values,
         }
         layer_functions = {
             "AREA_SINGLE-COLLECTION": calculate_single_coll_layer,

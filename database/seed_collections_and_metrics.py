@@ -1,3 +1,5 @@
+import logging
+
 from app.models.models import (
     Collection,
     Metric,
@@ -6,6 +8,8 @@ from app.models.models import (
 )
 from enum import Enum
 from typing import Dict, List, Optional
+
+logger = logging.getLogger(__name__)
 
 
 class CollectionEnum(Enum):
@@ -381,6 +385,10 @@ async def seed_collections_and_metrics():
         await new_collection.save()
         collections_dict[col.value] = new_collection
 
+    logger.info(
+        f"✔ {len(CollectionEnum)} registros insertados en collections",
+    )
+
     for metric in MetricEnum:
 
         new_metric = Metric(
@@ -420,3 +428,6 @@ async def seed_collections_and_metrics():
                     collection=collections_dict[group_col.value],
                     group_name=group_name,
                 )
+    logger.info(
+        f"✔ {len(MetricEnum)} registros insertados en metrics",
+    )

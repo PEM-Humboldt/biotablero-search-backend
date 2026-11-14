@@ -46,7 +46,7 @@ async def seed_connectivity_indicators():
                 "⚠ No se insertaron registros de protconn. Verifica el archivo protconn.csv",
             )
 
-    pa_names_by_id: Dict[int, str] = {}
+    pa_names_by_id: Dict[int, Dict[str, str | int]] = {}
     for collection_name in PA_COLLECTIONS:
         pa_collection = await Collection.get_or_none(name=collection_name)
         if not pa_collection:
@@ -63,54 +63,58 @@ async def seed_connectivity_indicators():
                 f"⚠ No se pudo obtener la metadata de {collection_name}: {e}",
             )
             continue
-        pa_names_by_id.update(zip(values, classes))
+        coll_dict = {
+            x: {"name": y, "collection_id": pa_collection.id}
+            for x, y in zip(values, classes)
+        }
+        pa_names_by_id.update(coll_dict)
 
     if not pa_names_by_id:
         logger.info(
             "⚠ No se pueden insertar registros de DPC, no se encontró ninguna colección de áreas protegidas",
         )
-    else:
-        errors = 0
-        counter = 0
-        with open("data/dpc.csv", "r", encoding="utf-8", newline="") as file:
-            dpc_reader = csv.DictReader(file)
-            for row in dpc_reader:
-                if row["id"] == "NA":
-                    print("id NA, %s" % (row["geofence_type"]))
-                    errors += 1
-                    continue
-                if float(row["dPC"]) < 0:
-                    print("dpc < 0, ignorando registro, %s" % (row))
-                    errors += 1
-                    continue
-                polygon = await Polygon.get_or_none(official_code=row["id"])
-                if not polygon:
-                    print("polígono no encontrado, %s" % (row["id"]))
-                    errors += 1
-                    continue
-                pa_name = pa_names_by_id.get(int(row["ap_id"]))
-                if pa_name is None:
-                    print(
-                        "AP id no encontrada en el STAC, %s" % (row["ap_id"])
-                    )
-                    errors += 1
-                    continue
-                dpc_obj = DPC(
-                    polygon=polygon,
-                    dpc=row["dPC"],
-                    pa_id=row["ap_id"],
-                    pa_name=pa_name,
-                    category=row["dpc_cat"],
-                )
-                await dpc_obj.save()
-                counter += 1
+        return
 
-            if counter > 0:
-                logger.info(
-                    f"✔ {counter} registros insertados de dpc",
-                )
-            else:
-                print("errores: %s" % errors)
-                logger.info(
-                    "⚠ No se insertaron registros de dpc. Verifica el archivo dpc.csv",
-                )
+    errors = 0
+    counter = 0
+    with open("data/dpc.csv", "r", encoding="utf-8", newline="") as file:
+        dpc_reader = csv.DictReader(file)
+        for row in dpc_reader:
+            if row["id"] == "NA":
+                print("id NA, %s" % (row["geofence_type"]))
+                errors += 1
+                continue
+            if float(row["dPC"]) < 0:
+                print("dpc < 0, ignorando registro, %s" % (row))
+                errors += 1
+                continue
+            polygon = await Polygon.get_or_none(official_code=row["id"])
+            if not polygon:
+                print("polígono no encontrado, %s" % (row["id"]))
+                errors += 1
+                continue
+            pa_obj = pa_names_by_id.get(int(row["ap_id"]))
+            if pa_obj is None:
+                print("AP id no encontrada en el STAC, %s" % (row["ap_id"]))
+                errors += 1
+                continue
+            dpc_obj = DPC(
+                polygon=polygon,
+                dpc=row["dPC"],
+                pa_id=row["ap_id"],
+                pa_name=pa_obj["name"],
+                collection_id=pa_obj["collection_id"],
+                category=row["dpc_cat"],
+            )
+            await dpc_obj.save()
+            counter += 1
+
+        if counter > 0:
+            logger.info(
+                f"✔ {counter} registros insertados de dpc",
+            )
+        else:
+            print("errores: %s" % errors)
+            logger.info(
+                "⚠ No se insertaron registros de dpc. Verifica el archivo dpc.csv",
+            )

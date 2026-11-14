@@ -217,6 +217,11 @@ class DPC(Model):
     dpc = fields.FloatField()
     pa_id = fields.IntField()
     pa_name = fields.CharField(max_length=150)
+    collection = fields.ForeignKeyField(
+        "bt_search_bk.Collection",
+        related_name="dpc",
+        on_delete=fields.CASCADE,
+    )
     category = fields.CharField(max_length=150)
     updated_at = fields.DatetimeField(auto_now=True)
 

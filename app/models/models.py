@@ -222,6 +222,7 @@ class DPC(Model):
         related_name="dpc",
         on_delete=fields.CASCADE,
     )
+    collection_id: int
     category = fields.CharField(max_length=150)
     updated_at = fields.DatetimeField(auto_now=True)
 
@@ -231,6 +232,7 @@ class DPC(Model):
             "dpc": self.dpc,
             "pa_id": self.pa_id,
             "pa_name": self.pa_name,
+            "collection_id": self.collection_id,
             "category": self.category,
         }
 

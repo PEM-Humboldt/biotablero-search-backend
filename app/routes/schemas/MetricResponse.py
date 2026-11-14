@@ -151,6 +151,7 @@ class DPCSingleResponse(BaseMetricResult):
     dpc: float
     pa_id: int
     pa_name: str
+    collection_id: int
     category: str
 
 

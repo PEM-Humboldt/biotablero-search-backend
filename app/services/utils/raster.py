@@ -13,7 +13,7 @@ import rasterio
 from rasterio.crs import CRS
 from rasterio.enums import Resampling
 from rasterio.transform import array_bounds
-from rasterio.windows import Window, from_bounds
+from rasterio.windows import Window, from_bounds, bounds as window_bounds
 from rasterio.features import rasterize
 import gc
 
@@ -560,6 +560,158 @@ def get_one_raster_areas_total(
     pixel_count = np.count_nonzero(valid)
 
     return float(pixel_count * pixel_area_ha)
+
+
+def get_multiple_raster_areas_total(
+    rasters_paths: Dict[str, str],
+    polygon: geometries.MultiPolygon,
+) -> Tuple[Dict[str, float], float]:
+    """
+    Calculate the total area in hectares of each raster within a given
+    polygon, and the polygon area not covered by any of them.
+    """
+    if not rasters_paths:
+        raise ValueError("At least one raster is required.")
+
+    polygon_geom = shape(polygon)
+    source_crs = CRS.from_string("EPSG:4326")
+    with rasterio.open(next(iter(rasters_paths.values()))) as src:
+        grid_crs = src.crs
+        if grid_crs != source_crs:
+            transformer = Transformer.from_crs(
+                source_crs, grid_crs, always_xy=True
+            )
+            polygon_geom = shapely_transform(
+                transformer.transform, polygon_geom
+            )
+
+        window = from_bounds(*polygon_geom.bounds, transform=src.transform)
+        col_off = int(np.floor(window.col_off))
+        row_off = int(np.floor(window.row_off))
+        width = int(np.ceil(window.col_off + window.width)) - col_off
+        height = int(np.ceil(window.row_off + window.height)) - row_off
+        grid_transform = src.window_transform(
+            Window.from_slices(
+                (row_off, row_off + height),
+                (col_off, col_off + width),
+                boundless=True,
+            )
+        )
+
+    polygon_mask = rasterize(
+        [polygon_geom],
+        out_shape=(height, width),
+        transform=grid_transform,
+        fill=0,
+        default_value=1,
+        dtype=np.uint8,
+    )
+    if polygon_mask is None:
+        raise ValueError("Failed to rasterize polygon")
+    mask = polygon_mask.astype(bool)
+
+    return _get_rasters_areas_in_mask(
+        mask, grid_transform, grid_crs, rasters_paths
+    )
+
+
+def get_multiple_raster_areas_total_masked(
+    mask_raster_path: str,
+    rasters_paths: Dict[str, str],
+    polygon: geometries.MultiPolygon,
+) -> Tuple[Dict[str, float], float]:
+    """
+    Calculate the total area in hectares (presence, not by class) of each
+    raster within a given polygon, only where the mask raster has data, and
+    the mask area within the polygon not covered by any of them.
+    """
+    masked_data, grid_transform, nodata = _crop_raster_by_polygon(
+        mask_raster_path, polygon
+    )
+    mask = masked_data > 0
+    if nodata is not None and not np.isnan(nodata):
+        mask &= masked_data != nodata
+    del masked_data
+    gc.collect()
+
+    with rasterio.open(mask_raster_path) as src:
+        grid_crs = src.crs
+
+    return _get_rasters_areas_in_mask(
+        mask, grid_transform, grid_crs, rasters_paths
+    )
+
+
+def _get_rasters_areas_in_mask(
+    mask: np.ndarray,
+    grid_transform: rasterio.Affine,
+    grid_crs: CRS,
+    rasters_paths: Dict[str, str],
+) -> Tuple[Dict[str, float], float]:
+    """
+    Calculate, for each raster, the area in hectares of its presence inside
+    mask, and the mask area not covered by any raster.
+    """
+    pixel_area_ha = _get_raster_pixel_area_ha(grid_transform, "EPSG:4326")
+    rows, cols = mask.shape
+    west, south, east, north = array_bounds(rows, cols, grid_transform)
+    covered = np.zeros_like(mask)
+
+    areas: Dict[str, float] = {}
+    for key, raster_path in rasters_paths.items():
+        areas[key] = 0.0
+        with rasterio.open(raster_path) as src:
+            if src.crs != grid_crs:
+                raise ValueError(
+                    "Raster coordinate reference systems do not match."
+                )
+
+            r_west, r_south, r_east, r_north = src.bounds
+            inter_west, inter_east = max(west, r_west), min(east, r_east)
+            inter_south, inter_north = max(south, r_south), min(north, r_north)
+            if inter_west >= inter_east or inter_south >= inter_north:
+                continue
+
+            overlap = from_bounds(
+                inter_west,
+                inter_south,
+                inter_east,
+                inter_north,
+                transform=grid_transform,
+            )
+            col_start = max(int(np.floor(overlap.col_off)), 0)
+            row_start = max(int(np.floor(overlap.row_off)), 0)
+            col_end = min(int(np.ceil(overlap.col_off + overlap.width)), cols)
+            row_end = min(int(np.ceil(overlap.row_off + overlap.height)), rows)
+            if col_end <= col_start or row_end <= row_start:
+                continue
+
+            grid_window = Window.from_slices(
+                (row_start, row_end), (col_start, col_end)
+            )
+            src_window = from_bounds(
+                *window_bounds(grid_window, grid_transform),
+                transform=src.transform,
+            )
+            data = src.read(
+                1,
+                window=src_window,
+                out_shape=(row_end - row_start, col_end - col_start),
+                boundless=True,
+                fill_value=0,
+                resampling=Resampling.nearest,
+            )
+            presence = data > 0
+            if src.nodata is not None and not np.isnan(src.nodata):
+                presence &= data != src.nodata
+            del data
+
+        presence &= mask[row_start:row_end, col_start:col_end]
+        areas[key] = float(np.count_nonzero(presence) * pixel_area_ha)
+        covered[row_start:row_end, col_start:col_end] |= presence
+
+    uncovered_area = float(np.count_nonzero(mask & ~covered) * pixel_area_ha)
+    return areas, uncovered_area
 
 
 def get_two_raster_areas_by_category(

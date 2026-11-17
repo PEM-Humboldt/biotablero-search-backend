@@ -1,3 +1,5 @@
+import logging
+
 from app.models.models import (
     Collection,
     Metric,
@@ -6,6 +8,8 @@ from app.models.models import (
 )
 from enum import Enum
 from typing import Dict, List, Optional
+
+logger = logging.getLogger(__name__)
 
 
 class CollectionEnum(Enum):
@@ -106,9 +110,30 @@ class OperationEnum(Enum):
     AVERAGE_SINGLE_SELECTED_COLLECTION_ALL_ITEMS = (
         "AVERAGE_SINGLE-SELECTED-COLLECTION_ALL-ITEMS"
     )
+    AREA_MULTIPLE_INDEPENDENT_COLLECTIONS_MASKED = (
+        "AREA_MULTIPLE-INDEPENDENT-COLLECTIONS_MASKED"
+    )
 
 
 RICHNESS_EDGES = [1, 2, 3, 6, 11, 21, 51, 101, 201, 501, 1001]
+
+PROTECTED_AREAS_COLLECTIONS = [
+    CollectionEnum.AREAS_PROTEGIDAS_AREANATURALUNICA,
+    CollectionEnum.AREAS_PROTEGIDAS_SANTUARIOFLORA,
+    CollectionEnum.AREAS_PROTEGIDAS_VIAPARQUE,
+    CollectionEnum.AREAS_PROTEGIDAS_DISTRITOSCONSERVACIONSUELOS,
+    CollectionEnum.AREAS_PROTEGIDAS_DISTRITOSNACIONALESMANEJOINTEGRADO,
+    CollectionEnum.AREAS_PROTEGIDAS_DISTRITOSREGIONALESMANEJOINTEGRADO,
+    CollectionEnum.AREAS_PROTEGIDAS_PARQUENACIONALNATURAL,
+    CollectionEnum.AREAS_PROTEGIDAS_PARQUESNATURALESREGIONALES,
+    CollectionEnum.AREAS_PROTEGIDAS_RESERVANATURAL,
+    CollectionEnum.AREAS_PROTEGIDAS_RESERVANATURALSOCIEDADCIVIL,
+    CollectionEnum.AREAS_PROTEGIDAS_RESERVASFORESTALESPROTECTORASNACIONALES,
+    CollectionEnum.AREAS_PROTEGIDAS_RESERVASFORESTALESPROTECTORASREGIONALES,
+    CollectionEnum.AREAS_PROTEGIDAS_SANTUARIOFAUNA,
+    CollectionEnum.AREAS_PROTEGIDAS_SANTUARIOFAUNAFLORA,
+    CollectionEnum.AREAS_PROTEGIDAS_AREADECREACION,
+]
 
 
 class MetricEnum(Enum):
@@ -209,22 +234,22 @@ class MetricEnum(Enum):
     )
     PROTECTED_AREAS_PARAMO = (
         "protectedAreas_paramo",
-        OperationEnum.AREA_CATEGORIES_TWO_COLLECTIONS,
-        CollectionEnum.AREAS_PROTEGIDAS,
-        [CollectionEnum.PARAMO],
+        OperationEnum.AREA_MULTIPLE_INDEPENDENT_COLLECTIONS_MASKED,
+        CollectionEnum.PARAMO,
+        PROTECTED_AREAS_COLLECTIONS,
     )
 
     PROTECTED_AREAS_TROPICAL_DRY_FOREST = (
         "protectedAreas_tropicalDryForest",
-        OperationEnum.AREA_CATEGORIES_TWO_COLLECTIONS,
-        CollectionEnum.AREAS_PROTEGIDAS,
-        [CollectionEnum.BOSQUE_SECO_TROPICAL],
+        OperationEnum.AREA_MULTIPLE_INDEPENDENT_COLLECTIONS_MASKED,
+        CollectionEnum.BOSQUE_SECO_TROPICAL,
+        PROTECTED_AREAS_COLLECTIONS,
     )
     PROTECTED_AREAS_WETLAND = (
         "protectedAreas_wetland",
-        OperationEnum.AREA_CATEGORIES_TWO_COLLECTIONS,
-        CollectionEnum.AREAS_PROTEGIDAS,
-        [CollectionEnum.HUMEDAL],
+        OperationEnum.AREA_MULTIPLE_INDEPENDENT_COLLECTIONS_MASKED,
+        CollectionEnum.HUMEDAL,
+        PROTECTED_AREAS_COLLECTIONS,
     )
     SCIPERSISTENCEHF_PROTECTED_AREAS = (
         "sciPersistenceHF_protectedAreas",
@@ -360,6 +385,10 @@ async def seed_collections_and_metrics():
         await new_collection.save()
         collections_dict[col.value] = new_collection
 
+    logger.info(
+        f"✔ {len(CollectionEnum)} registros insertados en collections",
+    )
+
     for metric in MetricEnum:
 
         new_metric = Metric(
@@ -399,3 +428,6 @@ async def seed_collections_and_metrics():
                     collection=collections_dict[group_col.value],
                     group_name=group_name,
                 )
+    logger.info(
+        f"✔ {len(MetricEnum)} registros insertados en metrics",
+    )

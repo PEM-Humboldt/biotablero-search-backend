@@ -20,38 +20,51 @@ class CollectionEnum(Enum):
     PARAMO = "Paramos"
     BOSQUE_SECO_TROPICAL = "BosqueSeco"
     HUMEDAL = "Humedales"
-    AREAS_PROTEGIDAS = ("AreasProtegidas", True)
-    AREAS_PROTEGIDAS_AREANATURALUNICA = "AreasProtegidasAreaNaturalUnica"
-    AREAS_PROTEGIDAS_SANTUARIOFLORA = "AreasProtegidasSantuarioFlora"
-    AREAS_PROTEGIDAS_VIAPARQUE = "AreasProtegidasViaParque"
+    AREAS_PROTEGIDAS_AREANATURALUNICA = (
+        "AreasProtegidasAreaNaturalUnica",
+        True,
+    )
+    AREAS_PROTEGIDAS_SANTUARIOFLORA = ("AreasProtegidasSantuarioFlora", True)
+    AREAS_PROTEGIDAS_VIAPARQUE = ("AreasProtegidasViaParque", True)
     AREAS_PROTEGIDAS_DISTRITOSCONSERVACIONSUELOS = (
-        "AreasProtegidasDistritosConservacionSuelos"
+        "AreasProtegidasDistritosConservacionSuelos",
+        True,
     )
     AREAS_PROTEGIDAS_DISTRITOSNACIONALESMANEJOINTEGRADO = (
-        "AreasProtegidasDistritosNacionalesManejoIntegrado"
+        "AreasProtegidasDistritosNacionalesManejoIntegrado",
+        True,
     )
     AREAS_PROTEGIDAS_DISTRITOSREGIONALESMANEJOINTEGRADO = (
-        "AreasProtegidasDistritosRegionalesManejoIntegrado"
+        "AreasProtegidasDistritosRegionalesManejoIntegrado",
+        True,
     )
     AREAS_PROTEGIDAS_PARQUENACIONALNATURAL = (
-        "AreasProtegidasParqueNacionalNatural"
+        "AreasProtegidasParqueNacionalNatural",
+        True,
     )
     AREAS_PROTEGIDAS_PARQUESNATURALESREGIONALES = (
-        "AreasProtegidasParquesNaturalesRegionales"
+        "AreasProtegidasParquesNaturalesRegionales",
+        True,
     )
-    AREAS_PROTEGIDAS_RESERVANATURAL = "AreasProtegidasReservaNatural"
+    AREAS_PROTEGIDAS_RESERVANATURAL = ("AreasProtegidasReservaNatural", True)
     AREAS_PROTEGIDAS_RESERVANATURALSOCIEDADCIVIL = (
-        "AreasProtegidasReservaNaturalSociedadCivil"
+        "AreasProtegidasReservaNaturalSociedadCivil",
+        True,
     )
     AREAS_PROTEGIDAS_RESERVASFORESTALESPROTECTORASNACIONALES = (
-        "AreasProtegidasReservasForestalesProtectorasNacionales"
+        "AreasProtegidasReservasForestalesProtectorasNacionales",
+        True,
     )
     AREAS_PROTEGIDAS_RESERVASFORESTALESPROTECTORASREGIONALES = (
-        "AreasProtegidasReservasForestalesProtectorasRegionales"
+        "AreasProtegidasReservasForestalesProtectorasRegionales",
+        True,
     )
-    AREAS_PROTEGIDAS_SANTUARIOFAUNA = "AreasProtegidasSantuarioFauna"
-    AREAS_PROTEGIDAS_SANTUARIOFAUNAFLORA = "AreasProtegidasSantuarioFaunaFlora"
-    AREAS_PROTEGIDAS_AREADECREACION = "AreasProtegidasAreasRecreacion"
+    AREAS_PROTEGIDAS_SANTUARIOFAUNA = ("AreasProtegidasSantuarioFauna", True)
+    AREAS_PROTEGIDAS_SANTUARIOFAUNAFLORA = (
+        "AreasProtegidasSantuarioFaunaFlora",
+        True,
+    )
+    AREAS_PROTEGIDAS_AREADECREACION = ("AreasProtegidasAreasRecreacion", True)
     RIQUEZA_OBSERVADA = "RiquezaObservada"
     RIQUEZA_OBSERVADA_ANFIBIOS = "RiquezaObservadaAnfibios"
     RIQUEZA_OBSERVADA_AVES = "RiquezaObservadaAves"

@@ -258,6 +258,7 @@ METRICS_CONFIG: MetricsConfigType = {
                     dpc=84.6393104,
                     pa_id=473,
                     pa_name="Serranía de los Yariguíes",
+                    collection_id=8,
                     category="muy_alto",
                 ),
                 DPCSingleResponse(
@@ -265,6 +266,7 @@ METRICS_CONFIG: MetricsConfigType = {
                     dpc=8.6459074,
                     pa_id=540,
                     pa_name="DRMI de los Páramos de Guantiva y La Rusia, Bosques de Roble y sus Zonas aledañas",
+                    collection_id=8,
                     category="alto",
                 ),
                 DPCSingleResponse(
@@ -272,6 +274,7 @@ METRICS_CONFIG: MetricsConfigType = {
                     dpc=2.8891138,
                     pa_id=464,
                     pa_name="Del Humedal San Silvestre",
+                    collection_id=8,
                     category="bajo",
                 ),
                 DPCSingleResponse(
@@ -279,6 +282,7 @@ METRICS_CONFIG: MetricsConfigType = {
                     dpc=1.7596195,
                     pa_id=757,
                     pa_name="Pan de Azucar el Consuelo",
+                    collection_id=8,
                     category="medio",
                 ),
                 DPCSingleResponse(
@@ -286,6 +290,7 @@ METRICS_CONFIG: MetricsConfigType = {
                     dpc=1.4764853,
                     pa_id=475,
                     pa_name="Del Rio Minero y sus Zonas Aledañas",
+                    collection_id=8,
                     category="muy_bajo",
                 ),
             ]

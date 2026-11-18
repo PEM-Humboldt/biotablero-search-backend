@@ -2,7 +2,7 @@
 
 This is the backend for the search module of BioTablero. It's build with Python.
 
-V.0.1.0
+V.2.0.0
 
 ## Getting Started
 

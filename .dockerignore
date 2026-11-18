@@ -1,0 +1,56 @@
+# Ignore GIT folder and CI/CD files
+.git
+.github
+.gitignore
+.gitattributes
+buildspec.yml
+
+# Ignore virtual environment and local dependencies
+.venv
+venv/
+env/
+ENV/
+*.egg-info/
+dist/
+build/
+
+# Ignore python cache files
+**/__pycache__/
+**/*.py[cod]
+**/*$py.class
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.pytype/
+.ruff_cache/
+
+# Ignore environment variables and secrets files
+.env
+.env.*
+*.env
+env.sample
+
+# Ignore logs
+logs/
+**/*.log
+
+# Ignore documentation and local setup
+README.md
+LICENSE
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+.DS_Store
+Thumbs.db
+
+# Ignore docker files
+Dockerfile*
+.dockerignore
+docker-compose*.yml
+docker/
+
+# Ignore local data
+data/
+database/

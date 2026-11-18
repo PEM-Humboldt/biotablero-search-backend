@@ -1,0 +1,73 @@
+from typing import Optional
+
+from tortoise.transactions import in_transaction
+from app.models.models import Polygon, AreaType
+from logging import getLogger
+
+from app.routes.schemas.PolygonRequest import PolygonGeometry
+from app.utils import context_vars
+from app.persistence.utils.polygon_utils import (
+    cast_to_multi_polygon,
+    generate_hash,
+    get_polygon_area_ha,
+)
+from geojson_pydantic import MultiPolygon
+
+logger = getLogger(__name__)
+request_id_context = context_vars.request_id_context
+
+
+async def get_polygon(polygon: PolygonGeometry) -> Optional[int]:
+    """
+    Check if a polygon exists in the DB by hash. Return its ID if it exists.
+    """
+    multi_polygon = MultiPolygon.model_validate(
+        cast_to_multi_polygon(polygon.model_dump())
+    )
+    hash_value = generate_hash(multi_polygon)
+    polygon_obj = await Polygon.get_or_none(hash=hash_value)
+    if polygon_obj:
+        logger.info(
+            "Polygon already exists in the database.",
+            extra={"request_id": request_id_context.get()},
+        )
+        return polygon_obj.id
+    return None
+
+
+async def create_polygon(polygon: PolygonGeometry) -> int:
+    """
+    Create a new polygon in the DB .
+    """
+    multi_polygon = MultiPolygon.model_validate(
+        cast_to_multi_polygon(polygon.model_dump())
+    )
+
+    hash_value = generate_hash(multi_polygon)
+    area_ha = get_polygon_area_ha(multi_polygon)
+
+    async with in_transaction():
+        area_type = await AreaType.get(id="custom")
+        polygon_obj = await Polygon.create(
+            hash=hash_value,
+            geometry=multi_polygon.model_dump(),
+            name="Polígono",
+            area=area_ha,
+            area_type=area_type,
+        )
+
+        logger.info(
+            "Polygon inserted into the database.",
+            extra={"request_id": request_id_context.get()},
+        )
+
+    return polygon_obj.id
+
+
+async def get_polygon_by_id(
+    polygon_id: int,
+) -> Polygon | None:
+    """
+    Get Polygon object by id.
+    """
+    return await Polygon.get_or_none(id=polygon_id)

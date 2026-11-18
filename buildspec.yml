@@ -20,7 +20,7 @@ phases:
       - docker push $REPOSITORY_URI:latest
       - docker push $REPOSITORY_URI:$IMAGE_TAG
       - echo Writing image definitions file...
-      - printf '[{"name":"biotableros_bks-service-rvzs1a3f","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
+      - printf '[{"name":"biotablero_search-service","imageUri":"%s"}]' $REPOSITORY_URI:$IMAGE_TAG > imagedefinitions.json
   post_build:
     commands:
       - echo "Assuming cross account role..."
@@ -30,6 +30,6 @@ phases:
       - export AWS_SECRET_ACCESS_KEY=$(echo $CREDS | awk '{print $2}')
       - export AWS_SESSION_TOKEN=$(echo $CREDS | awk '{print $3}')
       - echo "Deploying to ECS..."
-      - aws ecs update-service --cluster arn:aws:ecs:us-east-1:005235113454:cluster/humbolt-cluster-dev  --service biotableros_bks-service-rvzs1a3f --force-new-deployment
+      - aws ecs update-service --cluster arn:aws:ecs:us-east-1:005235113454:cluster/humbolt-cluster-dev  --service biotablero_search-service --force-new-deployment
 artifacts:
     files: imagedefinitions.json

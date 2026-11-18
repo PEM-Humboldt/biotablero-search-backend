@@ -1,17 +1,17 @@
 import fastapi
 
 from typing import Annotated, cast
-from fastapi import Path
+from fastapi import Path, Query
 
 from app.middleware.exceptions import UnsupportedMetricException
 from app.routes.schemas.LayerResponse import LayerResponse
+from app.routes.schemas.MetricInfoResponse import MetricInfoListResponse
 from app.utils.metrics_config import (
     ALLOWED_METRICS,
     METRICS_CONFIG,
     MetricConfig,
     MetricResponse,
 )
-from fastapi import Query
 import app.services.metrics as metrics_service
 
 validation_error_example = {
@@ -63,7 +63,10 @@ async def metric_id_param(
     metric_id: Annotated[
         str,
         Path(
-            description=f"Metric you wish to query. See the examples list",
+            description=(
+                "Metric you wish to query. These are the available metrics; "
+                "please note that not all metrics are available for all endpoints."
+            ),
             examples=ALLOWED_METRICS,
         ),
     ],
@@ -106,15 +109,26 @@ async def get_values_by_polygon(
         tuple[str, MetricConfig], fastapi.Depends(metric_id_param)
     ],
     polygon_id: int,
+    group: Annotated[
+        str | None,
+        Query(
+            description=(
+                "Optional group identifier to filter results by. Use "
+                "GET /metrics/{metric_id}/groups to see the groups available "
+                "for a given metric. If the metric doesn't support groups, "
+                "this parameter is silently ignored and the metric's "
+                "regular (non-grouped) values are returned."
+            ),
+        ),
+    ] = None,
 ) -> MetricResponse:
     """Returns serialized metric values for a given polygon ID and metric."""
     metric_id, metric_config = metric
-    model_response = metric_config["model"]
 
     values = await metrics_service.get_or_create_polygon_metric(
-        polygon_id, metric_id
+        polygon_id, metric_id, group=group
     )
-
+    model_response = metric_config["model"]
     return model_response.model_validate(values, by_alias=True)
 
 
@@ -158,6 +172,18 @@ async def get_layer_by_polygon(
             examples=["Natural"],
         ),
     ],
+    group: Annotated[
+        str | None,
+        Query(
+            description=(
+                "Optional group identifier to filter the layer by. Use "
+                "GET /metrics/{metric_id}/groups to see the groups available "
+                "for a given metric. If the metric doesn't support groups, "
+                "this parameter is silently ignored and the metric's "
+                "regular (non-grouped) layer is returned."
+            ),
+        ),
+    ] = None,
 ) -> LayerResponse:
     """
     Returns the url of rendered image layer for a given metric, polygon ID, item ID, and category,
@@ -166,6 +192,59 @@ async def get_layer_by_polygon(
 
     metric_id, _ = metric
     layer = await metrics_service.get_or_create_polygon_metric_layer(
-        metric_id, polygon_id, item_id, class_id
+        metric_id, polygon_id, item_id, class_id, group=group
     )
     return LayerResponse(**layer)
+
+
+@router.get(
+    "/{metric_id}/info",
+    response_model=MetricInfoListResponse,
+    responses={
+        200: {
+            "description": "Metric information",
+            "content": {
+                "application/json": {
+                    "example": [
+                        {
+                            "type": "meto",
+                            "description": "Descripción de la metodología de la métrica en HTML",
+                        }
+                    ]
+                }
+            },
+        },
+    },
+)
+async def get_metric_info(
+    metric: Annotated[
+        tuple[str, MetricConfig], fastapi.Depends(metric_id_param)
+    ],
+):
+    """Returns the information associated with a given metric."""
+    metric_id, _ = metric
+
+    return await metrics_service.get_metric_info(metric_id)
+
+
+@router.get(
+    "/{metric_id}/groups",
+    responses={
+        200: {
+            "description": "Group identifiers available to filter this metric",
+            "content": {
+                "application/json": {
+                    "example": ["aves", "mamiferos", "reptiles"]
+                }
+            },
+        }
+    },
+)
+async def get_groups_by_metric(
+    metric: Annotated[
+        tuple[str, MetricConfig], fastapi.Depends(metric_id_param)
+    ],
+) -> list[str]:
+    """Returns whether a metric's results can be filtered by group, and which groups are available."""
+    metric_id, _ = metric
+    return await metrics_service.get_metric_groups(metric_id)

@@ -3,6 +3,9 @@ from tortoise.exceptions import IntegrityError
 from logging import getLogger
 
 from app.models.models import Metric, PolygonMetric, Polygon
+from app.persistence.metric_persistence import (
+    normalize_metric_group,
+)
 from app.utils import context_vars
 from app.utils.errors import ServerError
 
@@ -14,6 +17,7 @@ async def create_polygon_metric(
     polygon: Polygon,
     metric: Metric,
     values: list | dict,
+    group: str | None = None,
     db: BaseDBAsyncClient | None = None,
 ):
     """
@@ -27,6 +31,7 @@ async def create_polygon_metric(
             polygon=polygon,
             metric=metric,
             values=values,
+            group_name=normalize_metric_group(metric, group),
             **create_kwargs,
         )
     except IntegrityError as e:
@@ -45,12 +50,17 @@ async def create_polygon_metric(
 async def get_polygon_metric(
     polygon_obj: Polygon,
     metric_obj: Metric,
+    group: str | None = None,
     db: BaseDBAsyncClient | None = None,
 ) -> PolygonMetric | None:
     """
     Get Polygon metric object by polygon and metric.
     """
-    query = PolygonMetric.filter(polygon=polygon_obj, metric=metric_obj)
+    query = PolygonMetric.filter(
+        polygon=polygon_obj,
+        metric=metric_obj,
+        group_name=normalize_metric_group(metric_obj, group),
+    )
     if db is not None:
         query = query.using_db(db)
     return await query.first()

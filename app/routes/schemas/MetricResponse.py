@@ -48,12 +48,16 @@ class CurrentHFResponse(BaseMetricResult):
     Muy_Alta: float = Field(alias="Muy Alta")
 
 
-class AverageResponse(BaseMetricResult):
+class AverageSingleResponse(BaseMetricResult):
     """
     Response model the average of a cropped collection in a given year.
     """
 
     average: float
+
+
+class AverageListResponse(RootModel[list[AverageSingleResponse]]):
+    pass
 
 
 class TimelineHFSingleResponse(BaseMetricResult):
@@ -147,6 +151,7 @@ class DPCSingleResponse(BaseMetricResult):
     dpc: float
     pa_id: int
     pa_name: str
+    collection_id: int
     category: str
 
 
@@ -154,10 +159,25 @@ class DPCListResponse(RootModel[list[DPCSingleResponse]]):
     pass
 
 
-class RecordGapsResponse(BaseMetricResult):
+class FrequencySingleResponse(BaseMetricResult):
     """
-    Response model for record gaps frequency metric in a given year.
+    Response model for frequency metric in a given year.
     """
 
     frequency: list[int]
     bin_edges: list[float]
+
+
+class FrequencyListResponse(RootModel[list[FrequencySingleResponse]]):
+    pass
+
+
+class SpeciesStatsResponse(BaseMetricResult):
+    total: int
+    threatened_total: int
+    threatened_cr: int
+    threatened_en: int
+    threatened_vu: int
+    invasive: int
+    endemic: int
+    endemic_threatened: int

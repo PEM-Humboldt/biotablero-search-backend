@@ -34,6 +34,7 @@ class Polygon(Model):
 class PolygonMetric(Model):
     id = fields.IntField(pk=True)
     values = fields.JSONField()
+    group_name = fields.CharField(max_length=100, default="total")
     polygon = fields.ForeignKeyField(
         "bt_search_bk.Polygon",
         related_name="metrics",
@@ -48,7 +49,7 @@ class PolygonMetric(Model):
 
     class Meta(Model.Meta):
         table = "polygon_metric"
-        unique_together = ("polygon", "metric")
+        unique_together = ("polygon", "metric", "group_name")
 
 
 class PolygonMetricLayer(Model):
@@ -65,17 +66,19 @@ class PolygonMetricLayer(Model):
     )
     class_id = fields.CharField(max_length=100)
     item_id = fields.CharField(max_length=100)
+    group_name = fields.CharField(max_length=100, default="total")
     layer_url = fields.CharField(max_length=255)
     updated_at = fields.DatetimeField(auto_now=True)
 
     class Meta(Model.Meta):
-        table = "polygon_metric_item"
+        table = "polygon_metric_layer"
         unique_together = (
             (
                 "metric",
                 "polygon",
                 "item_id",
                 "class_id",
+                "group_name",
             ),
         )
 
@@ -83,6 +86,7 @@ class PolygonMetricLayer(Model):
 class Collection(Model):
     id = fields.IntField(pk=True)
     name = fields.CharField(max_length=100, unique=True)
+    allows_layer = fields.BooleanField(default=False)
     updated_at = fields.DatetimeField(auto_now=True)
 
     metrics: fields.ReverseRelation["MetricCollection"]
@@ -91,15 +95,34 @@ class Collection(Model):
         table = "collection"
 
 
+class CollectionLayer(Model):
+    id = fields.IntField(pk=True)
+    collection = fields.ForeignKeyField(
+        "bt_search_bk.Collection",
+        related_name="layer_items",
+        on_delete=fields.CASCADE,
+    )
+    value = fields.IntField()
+    layer_url = fields.CharField(max_length=255)
+    bbox = fields.JSONField(default=list)
+    updated_at = fields.DatetimeField(auto_now=True)
+
+    class Meta(Model.Meta):
+        table = "collection_layer"
+
+
 class Metric(Model):
     id = fields.IntField(pk=True)
     name = fields.CharField(max_length=100, unique=True)
     operation_type = fields.CharField(max_length=100)
+    allows_national = fields.BooleanField(default=False)
+    edges = fields.JSONField(null=True)
     updated_at = fields.DatetimeField(auto_now=True)
     indicator_card_id = fields.CharField(max_length=60, null=True)
 
     collections: fields.ReverseRelation["MetricCollection"]
     indicator: fields.ReverseRelation["MetricIndicator"]
+    info: fields.ReverseRelation["MetricInfo"]
 
     class Meta(Model.Meta):
         table = "metric"
@@ -108,6 +131,7 @@ class Metric(Model):
 class MetricCollection(Model):
     id = fields.IntField(pk=True)
     is_primary = fields.BooleanField()
+    group_name = fields.CharField(max_length=100, null=True)
     metric = fields.ForeignKeyField(
         "bt_search_bk.Metric",
         related_name="collections",
@@ -135,10 +159,26 @@ class MetricIndicator(Model):
         on_delete=fields.CASCADE,
     )
     indicator = fields.CharField(max_length=100, unique=True)
+    has_group = fields.BooleanField(default=False)
     updated_at = fields.DatetimeField(auto_now=True)
 
     class Meta(Model.Meta):
         table = "metric_indicator"
+
+
+class MetricInfo(Model):
+    id = fields.IntField(pk=True)
+    metric = fields.ForeignKeyField(
+        "bt_search_bk.Metric",
+        related_name="info",
+        on_delete=fields.CASCADE,
+    )
+    type = fields.CharField(max_length=100)
+    description = fields.TextField()
+    updated_at = fields.DatetimeField(auto_now=True)
+
+    class Meta(Model.Meta):
+        table = "metric_info"
 
 
 class ProtConn(Model):
@@ -177,6 +217,12 @@ class DPC(Model):
     dpc = fields.FloatField()
     pa_id = fields.IntField()
     pa_name = fields.CharField(max_length=150)
+    collection = fields.ForeignKeyField(
+        "bt_search_bk.Collection",
+        related_name="dpc",
+        on_delete=fields.CASCADE,
+    )
+    collection_id: int
     category = fields.CharField(max_length=150)
     updated_at = fields.DatetimeField(auto_now=True)
 
@@ -186,8 +232,54 @@ class DPC(Model):
             "dpc": self.dpc,
             "pa_id": self.pa_id,
             "pa_name": self.pa_name,
+            "collection_id": self.collection_id,
             "category": self.category,
         }
 
     class Meta(Model.Meta):
         table = "dpc"
+
+
+class SpeciesStats(Model):
+    id = fields.IntField(pk=True)
+    polygon = fields.ForeignKeyField(
+        "bt_search_bk.Polygon",
+        related_name="species_stats",
+        on_delete=fields.CASCADE,
+    )
+    group_name = fields.CharField(max_length=100)
+    total = fields.IntField()
+    threatened_total = fields.IntField()
+    threatened_cr = fields.IntField()
+    threatened_en = fields.IntField()
+    threatened_vu = fields.IntField()
+    invasive = fields.IntField()
+    endemic = fields.IntField()
+    endemic_threatened = fields.IntField()
+    updated_at = fields.DatetimeField(auto_now=True)
+
+    def get_result_for_metric(self):
+        return {
+            "id": str(self.id),
+            "total": self.total,
+            "threatened_total": self.threatened_total,
+            "threatened_cr": self.threatened_cr,
+            "threatened_en": self.threatened_en,
+            "threatened_vu": self.threatened_vu,
+            "invasive": self.invasive,
+            "endemic": self.endemic,
+            "endemic_threatened": self.endemic_threatened,
+        }
+
+    class Meta(Model.Meta):
+        table = "species_stats"
+
+
+class ReportData(Model):
+    id = fields.IntField(pk=True)
+    creation_date = fields.DatetimeField(auto_now_add=True)
+    user_name = fields.CharField(max_length=75)
+    description = fields.CharField(max_length=500)
+
+    class Meta(Model.Meta):
+        table = "report_data"

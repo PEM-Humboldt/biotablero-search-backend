@@ -2,7 +2,7 @@
 
 This is the backend for the search module of BioTablero. It's build with Python.
 
-V.0.1.0
+V.2.0.0
 
 ## Getting Started
 
@@ -42,12 +42,15 @@ Aerich only generates schema changes. For data insertion, a script was created t
 ### Prerrequisites
 You must have these files in `./data/` path:
 
+- `colombia.geojson`
 - `departamentos.geojson`
 - `jurisdicciones-ambientales.geojson`
 - `subzonas-hidrograficas.geojson`
 - `paramos.geojson`
 - `dpc.csv`
 - `protconn.csv`
+- `statsOnSpecies.csv`
+- `metric_info.csv`
 
 ### Run script
 
@@ -62,6 +65,7 @@ The script accepts the param `-s` or `--sets` to populate onle some set of data,
 - `areas`: area types and polygons
 - `indicators`: tables associated with precualculated indicators
 - `metrics`: tables associated with metrics, collections and metric relations
+- `metrics_info`: Table with the descriptive information for the different metrics. 
 
 At the end of this file there are some additional commands for database migrations
 

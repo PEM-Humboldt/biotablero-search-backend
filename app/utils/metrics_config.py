@@ -1,11 +1,13 @@
 from typing import Type, TypedDict, Union
+from typing_extensions import Required
 
 
 from app.routes.schemas.MetricResponse import (
     LossPersistenceListResponse,
     CoverageResponse,
     CurrentHFResponse,
-    AverageResponse,
+    AverageSingleResponse,
+    AverageListResponse,
     TimelineHFListResponse,
     TimelineHFSingleResponse,
     LossPersistenceSingleResponse,
@@ -16,14 +18,17 @@ from app.routes.schemas.MetricResponse import (
     ProtConnResponse,
     DPCListResponse,
     DPCSingleResponse,
-    RecordGapsResponse,
+    FrequencySingleResponse,
+    SpeciesStatsResponse,
+    FrequencyListResponse,
 )
 
 MetricResponse = Union[
     LossPersistenceListResponse,
     CoverageResponse,
     CurrentHFResponse,
-    AverageResponse,
+    AverageSingleResponse,
+    AverageListResponse,
     TimelineHFListResponse,
     TimelineHFSingleResponse,
     ParamoResponse,
@@ -33,14 +38,16 @@ MetricResponse = Union[
     ProtConnResponse,
     DPCListResponse,
     DPCSingleResponse,
-    RecordGapsResponse,
+    FrequencySingleResponse,
+    FrequencyListResponse,
+    SpeciesStatsResponse,
 ]
 
 
 class MetricConfig(TypedDict):
-    model: Type[MetricResponse]
-    example: MetricResponse
-    description: str
+    model: Required[Type[MetricResponse]]
+    example: Required[MetricResponse]
+    description: Required[str]
 
 
 class MetricsConfigType(TypedDict):
@@ -62,7 +69,9 @@ class MetricsConfigType(TypedDict):
     protectedAreas_tropicalDryForest: MetricConfig
     protectedAreas_wetland: MetricConfig
     recordGaps: MetricConfig
-    currentRecordsGaps_average: MetricConfig
+    recordGaps_averages: MetricConfig
+    statsOnSpecies: MetricConfig
+    richness: MetricConfig
 
 
 # This config contains everything related to FastAPI and Pydantic validations
@@ -123,8 +132,8 @@ METRICS_CONFIG: MetricsConfigType = {
         "description": "Categorized human footprint index",
     },
     "currentHF_average": {
-        "model": AverageResponse,
-        "example": AverageResponse(
+        "model": AverageSingleResponse,
+        "example": AverageSingleResponse(
             id="2018",
             average=12.34,
         ),
@@ -249,6 +258,7 @@ METRICS_CONFIG: MetricsConfigType = {
                     dpc=84.6393104,
                     pa_id=473,
                     pa_name="Serranía de los Yariguíes",
+                    collection_id=8,
                     category="muy_alto",
                 ),
                 DPCSingleResponse(
@@ -256,6 +266,7 @@ METRICS_CONFIG: MetricsConfigType = {
                     dpc=8.6459074,
                     pa_id=540,
                     pa_name="DRMI de los Páramos de Guantiva y La Rusia, Bosques de Roble y sus Zonas aledañas",
+                    collection_id=8,
                     category="alto",
                 ),
                 DPCSingleResponse(
@@ -263,6 +274,7 @@ METRICS_CONFIG: MetricsConfigType = {
                     dpc=2.8891138,
                     pa_id=464,
                     pa_name="Del Humedal San Silvestre",
+                    collection_id=8,
                     category="bajo",
                 ),
                 DPCSingleResponse(
@@ -270,6 +282,7 @@ METRICS_CONFIG: MetricsConfigType = {
                     dpc=1.7596195,
                     pa_id=757,
                     pa_name="Pan de Azucar el Consuelo",
+                    collection_id=8,
                     category="medio",
                 ),
                 DPCSingleResponse(
@@ -277,6 +290,7 @@ METRICS_CONFIG: MetricsConfigType = {
                     dpc=1.4764853,
                     pa_id=475,
                     pa_name="Del Rio Minero y sus Zonas Aledañas",
+                    collection_id=8,
                     category="muy_bajo",
                 ),
             ]
@@ -353,21 +367,62 @@ METRICS_CONFIG: MetricsConfigType = {
         "description": "Protected areas types",
     },
     "recordGaps": {
-        "model": RecordGapsResponse,
-        "example": RecordGapsResponse(
+        "model": FrequencyListResponse,
+        "example": FrequencyListResponse(
+            [
+                FrequencySingleResponse(
+                    id="2023",
+                    frequency=[10, 20, 30],
+                    bin_edges=[0.0, 1.0, 2.0, 3.0],
+                ),
+                FrequencySingleResponse(
+                    id="2024",
+                    frequency=[12, 18, 25],
+                    bin_edges=[0.0, 1.0, 2.0, 3.0],
+                ),
+            ]
+        ),
+        "description": "Record gaps frequency",
+    },
+    "richness": {
+        "model": FrequencySingleResponse,
+        "example": FrequencySingleResponse(
             id="2021",
             frequency=[10, 20, 30],
             bin_edges=[0.0, 1.0, 2.0, 3.0],
         ),
-        "description": "Record gaps frequency",
+        "description": "Richness frequency",
     },
-    "currentRecordsGaps_average": {
-        "model": AverageResponse,
-        "example": AverageResponse(
-            id="2018",
-            average=0.87,
+    "recordGaps_averages": {
+        "model": AverageListResponse,
+        "example": AverageListResponse(
+            [
+                AverageSingleResponse(
+                    id="2018",
+                    average=0.87,
+                ),
+                AverageSingleResponse(
+                    id="2019",
+                    average=0.92,
+                ),
+            ]
         ),
-        "description": "Average human footprint index",
+        "description": "Average record gaps index",
+    },
+    "statsOnSpecies": {
+        "model": SpeciesStatsResponse,
+        "example": SpeciesStatsResponse(
+            id="1530",
+            total=203,
+            threatened_total=2,
+            threatened_cr=0,
+            threatened_en=1,
+            threatened_vu=1,
+            invasive=0,
+            endemic=9,
+            endemic_threatened=1,
+        ),
+        "description": "Species statistics by category (threatened, invasive, endemic, etc.)",
     },
     # "timelineHF": {},
     # TODO: implementar estas:

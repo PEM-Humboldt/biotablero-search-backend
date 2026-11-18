@@ -7,6 +7,8 @@ from database.seed_area_types import seed_area_types
 from database.seed_collections_and_metrics import seed_collections_and_metrics
 from database.seed_connectivity_indicators import seed_connectivity_indicators
 from database.seed_polygons import seed_polygons
+from database.seed_species_stats import seed_species_stats
+from database.seed_metrics_info import seed_metrics_info
 
 from app.utils.config import get_settings, TORTOISE_ORM
 
@@ -27,13 +29,19 @@ async def populate_db(which_set="all"):
                 await seed_polygons()
                 await seed_collections_and_metrics()
                 await seed_connectivity_indicators()
+                await seed_species_stats()
+                await seed_metrics_info()
             case "areas":
                 await seed_area_types()
                 await seed_polygons()
             case "indicators":
                 await seed_connectivity_indicators()
+                await seed_species_stats()
             case "metrics":
                 await seed_collections_and_metrics()
+                await seed_metrics_info()
+            case "metrics_info":
+                await seed_metrics_info()
     except Exception as e:
         print(e)
 
@@ -52,8 +60,9 @@ if __name__ == "__main__":
         "-s",
         "--sets",
         dest="which_set",
-        help="Especifica que conjunto de datos poblar, opciones: 'all', 'areas', 'metrics', 'indicators",
+        help="Especifica que conjunto de datos poblar, opciones: 'all', 'areas', 'metrics', 'indicators', 'metrics_info'",
         default="all",
+        choices=["all", "areas", "metrics", "indicators", "metrics_info"],
         required=False,
     )
 

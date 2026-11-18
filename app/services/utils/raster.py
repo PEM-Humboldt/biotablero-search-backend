@@ -4,15 +4,16 @@ import io
 from PIL import Image
 import numpy as np
 
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, cast
 from shapely import box
 from shapely.ops import transform as shapely_transform
 from shapely.geometry import shape, Polygon as ShapelyPolygon, MultiPolygon
 
 import rasterio
 from rasterio.crs import CRS
+from rasterio.enums import Resampling
 from rasterio.transform import array_bounds
-from rasterio.windows import from_bounds
+from rasterio.windows import Window, from_bounds, bounds as window_bounds
 from rasterio.features import rasterize
 import gc
 
@@ -20,6 +21,7 @@ from pyproj import Transformer
 from geojson_pydantic import geometries
 
 from app.middleware.log_middleware import logger
+from app.utils.config import get_settings
 from app.utils.errors import (
     NotFoundError,
     ServerError,
@@ -27,12 +29,51 @@ from app.utils.errors import (
     MetadataError,
 )
 
+max_dim = get_settings().layer_max_dimension_px
+
+
+def _decimated_read_params(
+    window: Window,
+    window_transform: rasterio.Affine,
+    max_dim: Optional[int],
+) -> Tuple[Optional[Tuple[int, int]], rasterio.Affine]:
+    """
+    Given a raster window, returns the out_shape to pass to a decimated
+    rasterio read (or None if no decimation is needed) plus the transform
+    that matches that decimated grid.
+    """
+    if max_dim is None:
+        return None, window_transform
+
+    longest_side = max(window.width, window.height)
+    if longest_side <= max_dim:
+        return None, window_transform
+
+    scale = max_dim / longest_side
+    out_height = max(1, round(window.height * scale))
+    out_width = max(1, round(window.width * scale))
+
+    decimated_transform = window_transform * window_transform.scale(
+        window.width / out_width, window.height / out_height
+    )
+    return (out_height, out_width), decimated_transform
+
 
 def _crop_raster_by_polygon(
     raster_path: str,
     polygon: geometries.MultiPolygon,
-) -> Tuple[np.ndarray, np.ndarray, Optional[float]]:
-    """Crop a raster by a given polygon and return the masked data, the window transform, and the nodata value."""
+    max_dim: Optional[int] = None,
+) -> Tuple[np.ndarray, rasterio.Affine, Optional[float]]:
+    """
+    Crop a raster by a given polygon and return the masked data, the window
+    transform, and the nodata value.
+
+    max_dim caps the longest side (in px) of the returned array: when the
+    polygon's window exceeds it, the raster is read at a decimated
+    resolution (nearest-neighbor) instead of its native one, cheaply served
+    from the source's overviews when present. Leave it None (the default)
+    for callers that need exact pixel counts, e.g. area/average metrics.
+    """
 
     polygon_geom = shape(polygon)
     source_crs = CRS.from_string("EPSG:4326")
@@ -55,11 +96,18 @@ def _crop_raster_by_polygon(
 
         minx, miny, maxx, maxy = polygon_geom.bounds
         window = from_bounds(minx, miny, maxx, maxy, src.transform)
-        window_transform = src.window_transform(window)
-        data = src.read(1, window=window)
+        out_shape, window_transform = _decimated_read_params(
+            window, src.window_transform(window), max_dim
+        )
+        data = src.read(
+            1,
+            window=window,
+            out_shape=out_shape,
+            resampling=Resampling.nearest,
+        )
         if data is None:
             raise ValueError("Could not read raster data")
-        data = data.astype(np.float64)
+        data = data.astype(np.float32)
 
         src_nodata = src.nodata
 
@@ -123,25 +171,43 @@ def get_one_raster_image(
             log_msg=f"Class {class_value} not found in the colors metadata.",
         )
 
-    masked_data, _, _ = _crop_raster_by_polygon(raster_path, polygon)
+    masked_data, _, _ = _crop_raster_by_polygon(
+        raster_path, polygon, max_dim=max_dim * 3
+    )
 
     if len(masked_data) == 0 or np.all(masked_data != class_value):
         raise NotFoundError(
             usr_msg="No data available for the selected class.",
             log_msg=f"No data generated for class value {class_value}.",
         )
+
+    presence = masked_data == class_value
+
+    h, w = presence.shape
+    if h > max_dim or w > max_dim:
+        fy, fx = -(-h // max_dim), -(-w // max_dim)
+        h, w = h // fy, w // fx
+        presence = (
+            presence[: h * fy, : w * fx].reshape(h, fy, w, fx).any((1, 3))
+        )
+
+    if not presence.any():
+        raise NotFoundError(
+            usr_msg="No data available for the selected class.",
+            log_msg=f"No data generated for class value {class_value}.",
+        )
     try:
-        h, w = masked_data.shape
+        h, w = presence.shape
         rgba = np.zeros((h, w, 4), dtype=np.uint8)
 
-        rgba[masked_data == class_value] = colormap[class_value]
+        rgba[presence] = colormap[class_value]
 
         pil_image = Image.fromarray(rgba, mode="RGBA")
         img_buffer = io.BytesIO()
         pil_image.save(img_buffer, format="PNG")
         img_buffer.seek(0)
         img_base64 = base64.b64encode(img_buffer.getvalue()).decode("utf-8")
-        del masked_data, rgba, img_buffer, pil_image
+        del presence, rgba, img_buffer, pil_image
     except Exception as e:
         logger.error(
             f"Unexpected error rendering class value {class_value}: {str(e)}"
@@ -192,7 +258,9 @@ def get_one_raster_gradient_image(
             ),
         )
 
-    masked_data, _, nodata = _crop_raster_by_polygon(raster_path, polygon)
+    masked_data, _, nodata = _crop_raster_by_polygon(
+        raster_path, polygon, max_dim=max_dim
+    )
     if nodata is not None:
         masked_data = np.where(masked_data == nodata, np.nan, masked_data)
 
@@ -473,6 +541,179 @@ def get_one_raster_areas_by_category(
     return areas_by_category
 
 
+def get_one_raster_areas_total(
+    raster_path: str,
+    polygon: geometries.MultiPolygon,
+) -> float:
+    """
+    Calculate the total area in hectares of a raster within a given polygon.
+    """
+    masked_data, window_transform, nodata = _crop_raster_by_polygon(
+        raster_path, polygon
+    )
+
+    valid = masked_data > 0
+    if nodata is not None and not np.isnan(nodata):
+        valid &= masked_data != nodata
+
+    pixel_area_ha = _get_raster_pixel_area_ha(window_transform, "EPSG:4326")
+    pixel_count = np.count_nonzero(valid)
+
+    return float(pixel_count * pixel_area_ha)
+
+
+def get_multiple_raster_areas_total(
+    rasters_paths: Dict[str, str],
+    polygon: geometries.MultiPolygon,
+) -> Tuple[Dict[str, float], float]:
+    """
+    Calculate the total area in hectares of each raster within a given
+    polygon, and the polygon area not covered by any of them.
+    """
+    if not rasters_paths:
+        raise ValueError("At least one raster is required.")
+
+    polygon_geom = shape(polygon)
+    source_crs = CRS.from_string("EPSG:4326")
+    with rasterio.open(next(iter(rasters_paths.values()))) as src:
+        grid_crs = src.crs
+        if grid_crs != source_crs:
+            transformer = Transformer.from_crs(
+                source_crs, grid_crs, always_xy=True
+            )
+            polygon_geom = shapely_transform(
+                transformer.transform, polygon_geom
+            )
+
+        window = from_bounds(*polygon_geom.bounds, transform=src.transform)
+        col_off = int(np.floor(window.col_off))
+        row_off = int(np.floor(window.row_off))
+        width = int(np.ceil(window.col_off + window.width)) - col_off
+        height = int(np.ceil(window.row_off + window.height)) - row_off
+        grid_transform = src.window_transform(
+            Window.from_slices(
+                (row_off, row_off + height),
+                (col_off, col_off + width),
+                boundless=True,
+            )
+        )
+
+    polygon_mask = rasterize(
+        [polygon_geom],
+        out_shape=(height, width),
+        transform=grid_transform,
+        fill=0,
+        default_value=1,
+        dtype=np.uint8,
+    )
+    if polygon_mask is None:
+        raise ValueError("Failed to rasterize polygon")
+    mask = polygon_mask.astype(bool)
+
+    return _get_rasters_areas_in_mask(
+        mask, grid_transform, grid_crs, rasters_paths
+    )
+
+
+def get_multiple_raster_areas_total_masked(
+    mask_raster_path: str,
+    rasters_paths: Dict[str, str],
+    polygon: geometries.MultiPolygon,
+) -> Tuple[Dict[str, float], float]:
+    """
+    Calculate the total area in hectares (presence, not by class) of each
+    raster within a given polygon, only where the mask raster has data, and
+    the mask area within the polygon not covered by any of them.
+    """
+    masked_data, grid_transform, nodata = _crop_raster_by_polygon(
+        mask_raster_path, polygon
+    )
+    mask = masked_data > 0
+    if nodata is not None and not np.isnan(nodata):
+        mask &= masked_data != nodata
+    del masked_data
+    gc.collect()
+
+    with rasterio.open(mask_raster_path) as src:
+        grid_crs = src.crs
+
+    return _get_rasters_areas_in_mask(
+        mask, grid_transform, grid_crs, rasters_paths
+    )
+
+
+def _get_rasters_areas_in_mask(
+    mask: np.ndarray,
+    grid_transform: rasterio.Affine,
+    grid_crs: CRS,
+    rasters_paths: Dict[str, str],
+) -> Tuple[Dict[str, float], float]:
+    """
+    Calculate, for each raster, the area in hectares of its presence inside
+    mask, and the mask area not covered by any raster.
+    """
+    pixel_area_ha = _get_raster_pixel_area_ha(grid_transform, "EPSG:4326")
+    rows, cols = mask.shape
+    west, south, east, north = array_bounds(rows, cols, grid_transform)
+    covered = np.zeros_like(mask)
+
+    areas: Dict[str, float] = {}
+    for key, raster_path in rasters_paths.items():
+        areas[key] = 0.0
+        with rasterio.open(raster_path) as src:
+            if src.crs != grid_crs:
+                raise ValueError(
+                    "Raster coordinate reference systems do not match."
+                )
+
+            r_west, r_south, r_east, r_north = src.bounds
+            inter_west, inter_east = max(west, r_west), min(east, r_east)
+            inter_south, inter_north = max(south, r_south), min(north, r_north)
+            if inter_west >= inter_east or inter_south >= inter_north:
+                continue
+
+            overlap = from_bounds(
+                inter_west,
+                inter_south,
+                inter_east,
+                inter_north,
+                transform=grid_transform,
+            )
+            col_start = max(int(np.floor(overlap.col_off)), 0)
+            row_start = max(int(np.floor(overlap.row_off)), 0)
+            col_end = min(int(np.ceil(overlap.col_off + overlap.width)), cols)
+            row_end = min(int(np.ceil(overlap.row_off + overlap.height)), rows)
+            if col_end <= col_start or row_end <= row_start:
+                continue
+
+            grid_window = Window.from_slices(
+                (row_start, row_end), (col_start, col_end)
+            )
+            src_window = from_bounds(
+                *window_bounds(grid_window, grid_transform),
+                transform=src.transform,
+            )
+            data = src.read(
+                1,
+                window=src_window,
+                out_shape=(row_end - row_start, col_end - col_start),
+                boundless=True,
+                fill_value=0,
+                resampling=Resampling.nearest,
+            )
+            presence = data > 0
+            if src.nodata is not None and not np.isnan(src.nodata):
+                presence &= data != src.nodata
+            del data
+
+        presence &= mask[row_start:row_end, col_start:col_end]
+        areas[key] = float(np.count_nonzero(presence) * pixel_area_ha)
+        covered[row_start:row_end, col_start:col_end] |= presence
+
+    uncovered_area = float(np.count_nonzero(mask & ~covered) * pixel_area_ha)
+    return areas, uncovered_area
+
+
 def get_two_raster_areas_by_category(
     raster1_path: str,
     raster2_path: str,
@@ -529,11 +770,13 @@ def get_two_raster_areas_by_category(
 def get_frequency_histogram(
     raster_path: str,
     polygon: geometries.MultiPolygon,
-    bins: int = 20,
-    data_range: Tuple[float, float] = (0, 1),
+    bins: int | list[float] = 20,
+    data_range: Optional[Tuple[float, float]] = None,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
     Calculate the frequency histogram of raster values within a given polygon.
+    bins can be the number of equal-width bins or the list of bin edges; when
+    edges are given, data_range is ignored
     """
 
     masked_data, _, nodata = _crop_raster_by_polygon(raster_path, polygon)
@@ -543,6 +786,17 @@ def get_frequency_histogram(
     valid_data = masked_data[~np.isnan(masked_data)]
     if valid_data.size == 0:
         raise ValueError("No valid data found in the polygon region.")
+
+    if isinstance(bins, list):
+        hist, bin_edges = np.histogram(valid_data, bins=[*bins, np.inf])
+        bin_edges[-1] = max(float(np.max(valid_data)), bins[-1])
+        return hist, bin_edges
+
+    if data_range is None:
+        data_range = (
+            float(np.nanmin(valid_data)),
+            float(np.nanmax(valid_data)),
+        )
 
     hist, bin_edges = np.histogram(valid_data, bins=bins, range=data_range)
     return hist, bin_edges
@@ -563,6 +817,7 @@ def crop_two_rasters_by_polygon(
     raster_path: str,
     mask_raster_path: str,
     polygon: geometries.MultiPolygon,
+    max_dim: Optional[int] = None,
 ) -> Tuple[
     np.ndarray, np.ndarray, rasterio.Affine, ShapelyPolygon | MultiPolygon
 ]:
@@ -593,14 +848,27 @@ def crop_two_rasters_by_polygon(
         window = from_bounds(minx, miny, maxx, maxy, src.transform)
         window_mask = from_bounds(minx, miny, maxx, maxy, mask_src.transform)
 
-        data = src.read(1, window=window)
-        mask_data = mask_src.read(1, window=window_mask)
+        out_shape, window_transform = _decimated_read_params(
+            window, src.window_transform(window), max_dim
+        )
+
+        data = src.read(
+            1,
+            window=window,
+            out_shape=out_shape,
+            resampling=Resampling.nearest,
+        )
+        mask_data = mask_src.read(
+            1,
+            window=window_mask,
+            out_shape=out_shape,
+            resampling=Resampling.nearest,
+        )
 
         data = np.where(np.isnan(data), 0, data)
 
         mask_data = np.where(np.isnan(mask_data), 0, mask_data)
 
-        window_transform = src.window_transform(window)
         return data, mask_data, window_transform, polygon_geom
 
 
@@ -630,6 +898,7 @@ def get_two_raster_image(
                 raster_path=raster_path,
                 mask_raster_path=mask_raster_path,
                 polygon=polygon,
+                max_dim=max_dim * 3,
             )
         )
 
@@ -643,10 +912,17 @@ def get_two_raster_image(
         )
 
         mask_binary = mask_data > 0
-        combined_mask = (polygon_mask == 1) & mask_binary
-        masked_data = np.where(combined_mask, data, np.nan)
+        presence = (polygon_mask == 1) & mask_binary & (data == class_value)
 
-        if len(masked_data) == 0 or np.all(masked_data != class_value):
+        h, w = presence.shape
+        if h > max_dim or w > max_dim:
+            fy, fx = -(-h // max_dim), -(-w // max_dim)
+            h, w = h // fy, w // fx
+            presence = (
+                presence[: h * fy, : w * fx].reshape(h, fy, w, fx).any((1, 3))
+            )
+
+        if not presence.any():
             raise NotFoundError(
                 usr_msg="No data available for the selected class.",
                 log_msg=(
@@ -655,9 +931,8 @@ def get_two_raster_image(
                 ),
             )
 
-        h, w = masked_data.shape
         rgba = np.zeros((h, w, 4), dtype=np.uint8)
-        rgba[masked_data == class_value] = colormap[class_value]
+        rgba[presence] = colormap[class_value]
 
         pil_image = Image.fromarray(rgba, mode="RGBA")
         img_buffer = io.BytesIO()
@@ -665,8 +940,8 @@ def get_two_raster_image(
         img_buffer.seek(0)
         img_base64 = base64.b64encode(img_buffer.getvalue()).decode("utf-8")
 
-        del data, mask_data, polygon_mask, mask_binary, combined_mask
-        del masked_data, rgba, img_buffer, pil_image
+        del data, mask_data, polygon_mask, mask_binary
+        del presence, rgba, img_buffer, pil_image
     except NotFoundError:
         raise
     except Exception as e:
@@ -682,3 +957,117 @@ def get_two_raster_image(
         gc.collect()
 
     return img_base64
+
+
+def _get_value_bbox(
+    raster_path: str,
+    class_value: float,
+) -> Optional[Tuple[int, int, int, int]]:
+    """
+    return the row/col bounding box (row_min, row_max, col_min, col_max)
+    in full-raster pixel coordinates where class_value occurs
+    """
+    bbox: Optional[Tuple[int, int, int, int]] = None
+
+    with rasterio.open(raster_path) as src:
+        for _, window in src.block_windows(1):
+            block = src.read(1, window=window)
+            mask = block == class_value
+            if not np.any(mask):
+                continue
+
+            row_off, col_off = int(window.row_off), int(window.col_off)
+            rows = np.any(mask, axis=1)
+            cols = np.any(mask, axis=0)
+            r0, r1 = np.where(rows)[0][[0, -1]]
+            c0, c1 = np.where(cols)[0][[0, -1]]
+            r0, r1 = r0 + row_off, r1 + row_off
+            c0, c1 = c0 + col_off, c1 + col_off
+
+            if bbox is None:
+                bbox = (r0, r1, c0, c1)
+            else:
+                pr0, pr1, pc0, pc1 = bbox
+                bbox = (
+                    min(pr0, r0),
+                    max(pr1, r1),
+                    min(pc0, c0),
+                    max(pc1, c1),
+                )
+
+    return bbox
+
+
+def generate_image_for_value(
+    raster_path: str,
+    class_value: int,
+    values: List[int],
+    colors: List[str],
+) -> Tuple[str, Tuple[float, float, float, float]]:
+    """
+    Generate a single PNG for class_value in its bounding box
+    """
+    Image.MAX_IMAGE_PIXELS = None
+
+    value_idx = None
+    try:
+        value_idx = values.index(class_value)
+    except ValueError:
+        raise NotFoundError(
+            usr_msg=f"Value {class_value} not found in collection",
+            log_msg=f"{class_value} not found in the values metadata.",
+        )
+
+    color = None
+    try:
+        color = colors[value_idx]
+    except IndexError:
+        raise MetadataError(
+            code=501,
+            usr_msg="There was an internal error processing the request",
+            log_msg=f"Value {class_value} doesn't have ab associated color in metadata.",
+        )
+
+    bbox = _get_value_bbox(raster_path, class_value)
+    if bbox is None:
+        raise NotFoundError(
+            usr_msg="No data available for the selected class.",
+            log_msg=f"No data generated for class value {class_value}.",
+        )
+
+    row_min, row_max, col_min, col_max = bbox
+    window = Window.from_slices((row_min, row_max + 1), (col_min, col_max + 1))
+
+    with rasterio.open(raster_path) as src:
+        block = src.read(1, window=window)
+
+        lon_min, lat_max = src.xy(row_min, col_min)
+        lon_max, lat_min = src.xy(row_max, col_max)
+        bbox_geo = [lon_min, lat_min, lon_max, lat_max]
+
+    mask = block == class_value
+    try:
+
+        h, w = mask.shape
+        rgba = np.zeros((h, w, 4), dtype=np.uint8)
+        rgba[mask] = hex_to_rgba(color)
+
+        pil_image = Image.fromarray(rgba, mode="RGBA")
+
+        img_buffer = io.BytesIO()
+        pil_image.save(img_buffer, format="PNG")
+        img_buffer.seek(0)
+        img_base64 = base64.b64encode(img_buffer.getvalue()).decode("utf-8")
+        del block, mask, rgba, img_buffer, pil_image
+    except Exception as e:
+        logger.error(
+            f"Unexpected error rendering class value {class_value}: {str(e)}"
+        )
+        raise ServerError(
+            code=500,
+            usr_msg=f"There was an error processing the requested class.",
+            e=e,
+        )
+    gc.collect()
+
+    return img_base64, cast(tuple[float, float, float, float], bbox_geo)
